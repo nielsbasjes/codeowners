@@ -1,0 +1,203 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+ 
+  <groupId>nl.basjes.maven.enforcer</groupId>
+  <artifactId>codeowners</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+ 
+  <name>Maven Enforcer rules to check the CODEOWNERS</name>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
+
+    <maven.version>3.9.2</maven.version>
+
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.release>11</maven.compiler.release>
+
+    <enforcer-api.version>3.3.0</enforcer-api.version>
+    <antlr.version>4.12.0</antlr.version>
+    <junit5.version>5.9.3</junit5.version>
+    <log4j2.version>2.20.0</log4j2.version>
+
+
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit5.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+
+    <!-- Direct dependencies -->
+    <dependency>
+      <groupId>org.antlr</groupId>
+      <artifactId>antlr4-runtime</artifactId>
+      <version>[${antlr.version}]</version> <!-- Pin is HARD to this specific version -->
+    </dependency>
+
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.12.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.antlr</groupId>
+      <artifactId>ST4</artifactId>
+      <version>4.3.4</version>
+    </dependency>
+
+    <!-- Enforcer provided dependencies -->
+    <dependency>
+      <groupId>org.apache.maven.enforcer</groupId>
+      <artifactId>enforcer-api</artifactId>
+      <version>${enforcer-api.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-core</artifactId>
+      <version>${maven.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+      <version>1</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.7.36</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+ 
+  <build>
+    <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-toolchains-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>toolchain</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <toolchains>
+            <jdk>
+              <version>17</version>
+            </jdk>
+          </toolchains>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr4-maven-plugin</artifactId>
+        <version>${antlr.version}</version>
+        <executions>
+          <execution>
+            <id>antlr</id>
+            <goals>
+              <goal>antlr4</goal>
+            </goals>
+            <configuration>
+              <visitor>true</visitor>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <!-- generate index of project components -->
+        <groupId>org.eclipse.sisu</groupId>
+        <artifactId>sisu-maven-plugin</artifactId>
+        <version>0.9.0.M2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>main-index</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.4.1</version>
+        <configuration>
+          <minimizeJar>true</minimizeJar>
+          <createDependencyReducedPom>true</createDependencyReducedPom>
+          <useDependencyReducedPomInJar>true</useDependencyReducedPomInJar>
+          <filters>
+            <filter>
+              <artifact>org.antlr:antlr4-runtime</artifact>
+              <excludes>
+                <exclude>META-INF/services/**</exclude>
+                <exclude>META-INF/MANIFEST.MF</exclude>
+              </excludes>
+            </filter>
+          </filters>
+          <relocations>
+            <relocation>
+              <pattern>org.antlr</pattern>
+              <shadedPattern>nl.basjes.shaded.org.antlr</shadedPattern>
+            </relocation>
+          </relocations>
+        </configuration>
+
+        <executions>
+          <execution>
+            <id>inject-problematic-dependencies</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <artifactSet>
+                <includes>
+                  <include>org.antlr:antlr4-runtime</include>
+                </includes>
+              </artifactSet>
+            </configuration>
+          </execution>
+
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+ 
+</project>
+
