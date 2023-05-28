@@ -44,7 +44,7 @@ NEWLINE
 
 
 FILEEXPRESSION
-    : [a-zA-Z0-9/*_.-]+
+    : ('\\ '|'\\#'|[a-zA-Z0-9/*_.-])+
     ;
 
 mode SECTION_MODE;

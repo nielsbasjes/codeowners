@@ -1,9 +1,11 @@
-import nl.basjes.maven.enforcer.codeowners.CodeOwners;
+package nl.basjes.codeowners;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static nl.basjes.codeowners.TestUtils.assertOwners;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TestCodeOwnersGithub {
@@ -175,17 +177,8 @@ class TestCodeOwnersGithub {
         // /apps/github
 
         assertOwners(codeOwners, "/apps/RandomName.txt", "@octocat");
-        // TODO: What should be the permissions for a file somewhere under /apps/github ???????
+        // No owners for this file
         assertOwners(codeOwners, "/apps/github/RandomName.txt");
     }
-
-    private void assertOwners(CodeOwners codeOwners, String filename, String... expectedOwners) {
-        List<String> allApprovers = codeOwners.getAllApprovers(filename);
-        assertEquals(
-                Arrays.asList(expectedOwners),
-                allApprovers,
-                "Filename \""+filename+"\" should have owners " + Arrays.toString(expectedOwners) + " but got " + allApprovers);
-    }
-
 
 }

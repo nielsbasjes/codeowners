@@ -1,9 +1,9 @@
-package nl.basjes.maven.enforcer.codeowners;
+package nl.basjes.codeowners;
 
-import nl.basjes.codeowners.CodeOwnersBaseVisitor;
-import nl.basjes.codeowners.CodeOwnersLexer;
-import nl.basjes.codeowners.CodeOwnersParser;
-import nl.basjes.codeowners.CodeOwnersParser.ApprovalRuleContext;
+import nl.basjes.codeowners.parser.CodeOwnersBaseVisitor;
+import nl.basjes.codeowners.parser.CodeOwnersLexer;
+import nl.basjes.codeowners.parser.CodeOwnersParser;
+import nl.basjes.codeowners.parser.CodeOwnersParser.ApprovalRuleContext;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -17,7 +17,6 @@ import org.stringtemplate.v4.STGroupString;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -34,6 +33,10 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
         return sections;
     }
 
+    public boolean getHasMultipleSections() {
+        return sections.size() > 1;
+    }
+
     // Map name of Section to Sections
     private Map<String, Section> sections = new TreeMap<>();
 
@@ -42,8 +45,10 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
         this(FileUtils.readFileToString(file, UTF_8));
     }
 
+    private static final String IMPLICIT_SECTION_NAME = "Implicit Default Section";
+
     public CodeOwners(String codeownersContent) {
-        currentSection = new Section("Implicit Default Section");
+        currentSection = new Section(IMPLICIT_SECTION_NAME);
 
         CodePointCharStream input = CharStreams.fromString(codeownersContent);
         CodeOwnersLexer lexer = new CodeOwnersLexer(input);
@@ -53,39 +58,93 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
         visit(codeowners);
 
         // Make sure we retain the last section also
-        // Only if the previous Section had ANY rules do we keep it.
-        if (!currentSection.approvalRules.isEmpty()) {
-            sections.put(currentSection.name, currentSection);
-        }
-        warnAboutStructuralProblems();
+        storeCurrentSection();
+        checkForAnyStructuralProblems();
     }
 
-    private void warnAboutStructuralProblems() {
-        for (Section section : sections.values()) {
-            Integer minimalNumberOfApprovers = section.getMinimalNumberOfApprovers();
-            if (minimalNumberOfApprovers != null) {
-                if (section.isOptional() && minimalNumberOfApprovers != 0) {
-                    LOG.warn("CODEOWNERS Section \"{}\" is Optional so the specified MinimalNumberOfApprovers {} is IGNORED!",
-                            section.getName(), minimalNumberOfApprovers);
+    private void storeCurrentSection() {
+        // Only if the previous Section had ANY rules do we keep it.
+        if (!currentSection.approvalRules.isEmpty()) {
+            List<String> existingSectionsWithSameName = sections.values().stream().map(Section::getName).filter(name -> name.equalsIgnoreCase(currentSection.name)).collect(Collectors.toList());
+            if (existingSectionsWithSameName.isEmpty()) {
+                sections.put(currentSection.name, currentSection);
+            } else {
+                Section existingSection = sections.get(existingSectionsWithSameName.get(0));
+                currentSection.getDefaultApprovers().forEach(existingSection::addDefaultApprover);
+                currentSection.getApprovalRules().forEach(existingSection::addApprovalRule);
+                if (currentSection.isOptional() != existingSection.isOptional()) {
+                    // You cannot MIX these two, it is bad.
+                    LOG.error("Merging two sections with a different Optional flag is BAD. Section [{}] has optional={} and Section [{}] has optional={}.",
+                        existingSection.getName(), existingSection.isOptional(), currentSection.getName(), currentSection.isOptional());
+                    hasStructuralProblems = true;
                 }
             }
         }
     }
 
+    /**
+     * @return true if any kind of (even minor) problem is found.
+     */
+    public boolean hasStructuralProblems() {
+        return hasStructuralProblems;
+    }
+
+    private boolean hasStructuralProblems = false;
+    /**
+     * Check if any problems are present in the config
+     */
+    public void checkForAnyStructuralProblems() {
+        for (Section section : sections.values()) {
+            // An optional section where you expect a MinimalNumberOfApprovers is a problem
+            Integer minimalNumberOfApprovers = section.getMinimalNumberOfApprovers();
+            if (minimalNumberOfApprovers != null) {
+                if (section.isOptional() && minimalNumberOfApprovers != 0) {
+                    LOG.warn("CODEOWNERS Section \"{}\" is Optional so the specified MinimalNumberOfApprovers {} is IGNORED!",
+                            section.getName(), minimalNumberOfApprovers);
+                    hasStructuralProblems = true;
+                }
+            }
+
+            // Having in the same section the same file pattern multiple times is bad.
+            List<String> duplicates = section
+                .getApprovalRules().stream()
+                .collect(Collectors.groupingBy(ApprovalRule::getFileExpression, Collectors.counting()))
+                .entrySet().stream()
+                .filter(m -> m.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .sorted()
+                .collect(Collectors.toList());
+            if (!duplicates.isEmpty()) {
+                LOG.warn("In section [{}] these file patterns occur multiple times: {}", section.getName(), duplicates);
+                hasStructuralProblems = true;
+            }
+        }
+    }
+
     public List<String> getMandatoryApprovers(String filename) {
+        String matchFileName = filename;
+        if (!filename.startsWith("/")) {
+            matchFileName = "/" + filename;
+        }
+
         List<String> approvers = new ArrayList<>();
         for (Section section: sections.values()) {
             if (!section.isOptional()) {
-                approvers.addAll(section.getApprovers(filename));
+                approvers.addAll(section.getApprovers(matchFileName));
             }
         }
         return approvers.stream().sorted().distinct().collect(Collectors.toList());
     }
 
     public List<String> getAllApprovers(String filename) {
+        String matchFileName = filename;
+        if (!filename.startsWith("/")) {
+            matchFileName = "/" + filename;
+        }
+
         List<String> approvers = new ArrayList<>();
         for (Section section: sections.values()) {
-            approvers.addAll(section.getApprovers(filename));
+            approvers.addAll(section.getApprovers(matchFileName));
         }
         return approvers.stream().sorted().distinct().collect(Collectors.toList());
     }
@@ -106,13 +165,10 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
             for (TerminalNode user : ctx.USERID()) {
                 section.addDefaultApprover(user.getText());
             }
-
         }
 
         // Only if the previous Section had ANY rules do we keep it.
-        if (!currentSection.approvalRules.isEmpty()) {
-            sections.put(currentSection.name, currentSection);
-        }
+        storeCurrentSection();
         currentSection = section;
         return null;
     }
@@ -136,19 +192,20 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
     }
 
     public static class Section {
-        boolean optional = false;
-        String name;
-        Integer minimalNumberOfApprovers = null;
-        List<String> defaultApprovers = new ArrayList<>();
-        List<ApprovalRule> approvalRules = new ArrayList<>();
+        private boolean optional = false;
+        private final String name;
+        private Integer minimalNumberOfApprovers = null;
+        private final List<String> defaultApprovers = new ArrayList<>();
+        private final List<ApprovalRule> approvalRules = new ArrayList<>();
 
         public Section(String name) {
             this.name = name;
         }
 
         void addDefaultApprover(String name) {
-            if (!defaultApprovers.contains(name)) {
-                defaultApprovers.add(name);
+            String cleanedName = name.trim();
+            if (!defaultApprovers.contains(cleanedName)) {
+                defaultApprovers.add(cleanedName);
             }
         }
 
@@ -176,6 +233,8 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
             return optional;
         }
 
+        public boolean isDefaultSection() { return IMPLICIT_SECTION_NAME.equals(name); }
+
         void setMinimalNumberOfApprovers(Integer minimalNumberOfApprovers) {
             this.minimalNumberOfApprovers = minimalNumberOfApprovers;
         }
@@ -192,7 +251,11 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
                     // GitHub: Order is important; the last matching pattern takes the most precedence.
                     // Gitlab: When a file or directory matches multiple entries in the CODEOWNERS file, the users from last pattern matching the file or directory are used.
                     approvers.clear();
-                    approvers.addAll(ruleApprovers);
+                    if (ruleApprovers.isEmpty()) {
+                        approvers.addAll(defaultApprovers);
+                    } else {
+                        approvers.addAll(ruleApprovers);
+                    }
                 }
             }
             return approvers;
@@ -207,7 +270,6 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
     public static class ApprovalRule {
         private final String fileExpression;
         private final List<String> approvers;
-
         private final Pattern filePattern;
 
         public ApprovalRule(String fileExpression, List<String> approvers) {
@@ -215,17 +277,29 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
             this.approvers = approvers;
 
             String fileRegex = fileExpression
-                    .replace(".", "\\.") // Avoid bad wildcards
-                    .replace("**",".*") // Convert to the Regex wildcards
-                    // "/foo" --> End can be a filename (so we pin to the end) or a directory name (so we expect another / )
-                    .replaceAll("([^/*])$", "$1(/|\\$)")
+                .replace("\\ ", " ") // The escaped spaces must become spaces again.
 
-                    .replaceAll("/\\*$","/[^/]+\\$") // A trailing '/*' means no further subdirs should be matched
-                    .replaceAll("^\\*", ".*") // Match anything at the start
-                    .replaceAll("^/", "^/") // If starts with / then pin to the start.
-                    ;
+                // If a path does not start with a /, the path is treated as if it starts with a globstar. README.md is treated the same way as /**/README.md
+                .replaceAll("^([^/*.])", "/**/$1")
+                // "/foo" --> End can be a filename (so we pin to the end) or a directory name (so we expect another / )
+                .replaceAll("([^/*])$", "$1(/|\\$)")
 
-            LOG.info("{}     -->     {}", fileExpression, fileRegex);
+                .replace(".", "\\.") // Avoid bad wildcards
+
+                // The Globstar "foo/**/bar" must also match "foo/bar"
+                .replace("/**","(/.*)?")
+
+                .replace("**",".*") // Convert to the Regex wildcards
+
+                .replaceAll("/\\*$","/[^/]+\\$") // A trailing '/*' means NO further subdirs should be matched
+                .replaceAll("^\\*", ".*") // Match anything at the start
+
+                .replace("/*","/.*") // "/foo/*\.js"  --> "/foo/.*\.js"
+
+                .replaceAll("^/", "^/") // If starts with / then pin to the start.
+                ;
+
+//            LOG.info("{}     -->     {}", fileExpression, fileRegex);
             filePattern = Pattern.compile(fileRegex);
         }
 
@@ -239,8 +313,10 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
         public List<String> getApprovers(String filename) {
             if (!filePattern.matcher(filename).find()) {
+//                LOG.warn("FAIL  {} --> {}", fileExpression, filename);
                 return null;
             }
+//            LOG.warn("MATCH {} --> {}", fileExpression, filename);
             return new ArrayList<>(approvers);
         }
 
@@ -252,20 +328,31 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
     private static final STGroupString ST_GROUP_STRING = new STGroupString(
         "CodeOwners(codeowners) ::= <<\n" +
-        "CodeOwnwer:\n" +
-        "  <codeowners.sections.values:Section() ;separator=\"\n\n\">\n" +
+        "<if(codeowners.hasMultipleSections)>" +
+        "<codeowners.sections.values:Section() ;separator=\"\n\n\">\n" +
+        "<else>\n" +
+        "<codeowners.sections.values:DefaultSection() ;separator=\"\n\n\">\n" +
+        "<endif>\n" +
         ">>\n" +
 
         "Section(section) ::= <<\n" +
         "<if(section.optional)>^<endif>" +
             "[<section.name>]" +
             "<if(section.minimalNumberOfApprovers)>[<section.minimalNumberOfApprovers>]<endif>" +
-            "<if(section.defaultApprovers)> Default Users: <section.defaultApprovers;separator=\" ~ \"><endif>" +
-        "<section.approvalRules:{ rule | - <ApprovalRule(rule)>};separator=\"\n\">\n" +
+            "<if(section.defaultApprovers)> <section.defaultApprovers;separator=\" \"><endif>\n" +
+        "<section.approvalRules:{ rule | <ApprovalRule(rule)>};separator=\"\n\">\n" +
+        ">>\n" +
+
+        "DefaultSection(section) ::= <<\n" +
+        "<if(section.defaultSection)>\n" +
+        "<section.approvalRules:{ rule | <ApprovalRule(rule)>};separator=\"\n\">\n" +
+        "<else>\n" +
+        "<Section(section)>\n" +
+        "<endif>\n" +
         ">>\n" +
 
         "ApprovalRule(approvalRule) ::= <<\n" +
-        "<approvalRule.fileExpression><if(approvalRule.approvers)> <approvalRule.approvers; separator=\",\"><else>#NO Approvers specified<endif>\n" +
+        "<approvalRule.fileExpression><if(approvalRule.approvers)> <approvalRule.approvers; separator=\" \"><endif>\n" +
         ">>\n"
     );
 }
