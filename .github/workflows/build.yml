@@ -1,0 +1,63 @@
+#
+# CodeOwners Tools
+# Copyright (C) 2023 Niels Basjes
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an AS IS BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: 'CodeOwners Tools'
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Declare default permissions as read only.
+permissions: read-all
+
+jobs:
+  build:
+    name: 'Build and test'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 'Checkout sourcecode'
+      uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+
+    - name: 'Cache Local Maven Repository'
+      uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
+    - name: 'Setup: Install JDK 17'
+      uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+      with:
+        distribution: 'temurin'
+        java-version: |
+          17
+
+    - name: 'Build'
+      run: ./mvnw clean install -PuseLocalReproduceRepo
+
+    - name: 'Codecov'
+      uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: 'Ensure build is reproducible'
+      run: |
+        ./mvnw clean verify -PskipQuality -PuseLocalReproduceRepo -PartifactCompare

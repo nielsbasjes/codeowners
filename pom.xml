@@ -1,3 +1,19 @@
+<!--
+ ~ CodeOwners Tools
+ ~ Copyright (C) 2023 Niels Basjes
+ ~
+ ~ Licensed under the Apache License, Version 2.0 (the "License");
+ ~ you may not use this file except in compliance with the License.
+ ~ You may obtain a copy of the License at
+ ~
+ ~  https://www.apache.org/licenses/LICENSE-2.0
+ ~
+ ~ Unless required by applicable law or agreed to in writing, software
+ ~ distributed under the License is distributed on an AS IS BASIS,
+ ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ ~ See the License for the specific language governing permissions and
+ ~ limitations under the License.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -8,22 +24,49 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>CODEOWNERS Tools: </name>
+  <name>CODEOWNERS Tools:</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
 
     <maven.version>3.9.2</maven.version>
-
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <maven.compiler.release>11</maven.compiler.release>
-
+    <maven.minimal.version>3.9.2</maven.minimal.version>
     <enforcer-api.version>3.3.0</enforcer-api.version>
+
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+    <maven.compiler.release>8</maven.compiler.release>
+
+    <maven-artifact-plugin.version>3.4.1</maven-artifact-plugin.version>
+    <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
+    <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+    <maven-enforcer-plugin.version>3.3.0</maven-enforcer-plugin.version>
+    <maven-failsafe-plugin.version>3.1.0</maven-failsafe-plugin.version>
+    <maven-gpg-plugin.version>3.1.0</maven-gpg-plugin.version>
+    <maven-install-plugin.version>3.1.1</maven-install-plugin.version>
+    <maven-invoker-plugin.version>3.5.1</maven-invoker-plugin.version>
+    <maven-javadoc-plugin.version>3.5.0</maven-javadoc-plugin.version>
+    <maven-release-plugin.version>3.0.0</maven-release-plugin.version>
+    <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
+    <maven-surefire-plugin.version>3.1.0</maven-surefire-plugin.version>
+    <maven-toolchains-plugin.version>3.1.0</maven-toolchains-plugin.version>
+
+    <apache-rat-plugin.version>0.15</apache-rat-plugin.version>
+    <git-commit-id-maven-plugin.version>6.0.0</git-commit-id-maven-plugin.version>
+    <cyclonedx-maven-plugin.version>2.7.9</cyclonedx-maven-plugin.version>
+
+
     <antlr.version>4.12.0</antlr.version>
     <junit5.version>5.9.3</junit5.version>
     <log4j2.version>2.20.0</log4j2.version>
+
+
+    <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
+    <!-- See http://www.eclemma.org/jacoco/trunk/doc/prepare-agent-mojo.html-->
+    <jacoco.surefireArgLine/>
+    <argLine>@{jacoco.surefireArgLine} -Xmx2048m</argLine>
+
   </properties>
 
   <dependencyManagement>
@@ -43,5 +86,506 @@
     <module>enforcer</module>
   </modules>
 
-</project>
 
+  <profiles>
+
+    <profile>
+      <id>skipQuality</id>
+      <properties>
+        <skipTests>true</skipTests>
+        <sonar.skip>true</sonar.skip>
+        <rat.skip>true</rat.skip>
+        <checkstyle.skip>true</checkstyle.skip>
+        <jacoco.skip>true</jacoco.skip>
+        <spotbugs.skip>true</spotbugs.skip>
+        <dependency-convergence.phase>none</dependency-convergence.phase>
+        <docker-based-tests.skip>true</docker-based-tests.skip>
+        <invoker.skip>true</invoker.skip>
+        <cyclonedx.skip>true</cyclonedx.skip>
+        <gpg.skip>true</gpg.skip>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>useLocalReproduceRepo</id>
+      <properties>
+        <!--suppress UnresolvedMavenProperty -->
+        <altReleaseDeploymentRepository>localReproduceRepo::file://${maven.multiModuleProjectDirectory}/__tmp_deploy/
+        </altReleaseDeploymentRepository>
+        <!--suppress UnresolvedMavenProperty -->
+        <altSnapshotDeploymentRepository>localReproduceRepo::file://${maven.multiModuleProjectDirectory}/__tmp_deploy/
+        </altSnapshotDeploymentRepository>
+      </properties>
+      <repositories>
+        <repository>
+          <id>localReproduceRepo</id>
+          <!--suppress UnresolvedMavenProperty -->
+          <url>file://${maven.multiModuleProjectDirectory}/__tmp_deploy/</url>
+        </repository>
+      </repositories>
+    </profile>
+
+
+    <profile>
+      <id>artifactCompare</id>
+      <build>
+        <defaultGoal>clean verify</defaultGoal>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-artifact-plugin</artifactId>
+            <version>${maven-artifact-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>compare</id>
+                <goals>
+                  <goal>compare</goal>
+                </goals>
+                <phase>verify</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>packageForRelease</id>
+      <build>
+        <plugins>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-artifact-plugin</artifactId>
+            <version>${maven-artifact-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>Ensure plugins are reproducible</id>
+                <phase>validate</phase>
+                <goals>
+                  <goal>check-buildplan</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>Generate buildinfo</id>
+                <goals>
+                  <goal>buildinfo</goal>
+                </goals>
+                <configuration>
+                  <attach>true</attach>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>${maven-gpg-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <configuration>
+                  <gpgArguments>
+                    <arg>--pinentry-mode</arg>
+                    <arg>loopback</arg>
+                  </gpgArguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>${maven-javadoc-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <!-- explicitly define maven-deploy-plugin after other to force exec order -->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <version>${maven-deploy-plugin.version}</version>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <!-- Description: https://github.com/git-commit-id/git-commit-id-maven-plugin -->
+            <groupId>io.github.git-commit-id</groupId>
+            <artifactId>git-commit-id-maven-plugin</artifactId>
+            <version>${git-commit-id-maven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>Validate-Revision-Information</id>
+                <phase>validate</phase>
+                <goals>
+                  <goal>validateRevision</goal>
+                </goals>
+                <configuration>
+                  <validationProperties>
+                    <!-- verify that the current repository is not dirty -->
+                    <validationProperty>
+                      <name>Don't try to release if something has not yet been committed.</name>
+                      <!--suppress UnresolvedMavenProperty -->
+                      <value>${git.dirty}</value>
+                      <shouldMatchTo>false</shouldMatchTo>
+                    </validationProperty>
+                    <!-- verify that the current commit has a tag -->
+                    <validationProperty>
+                      <name>validating current commit has a tag</name>
+                      <!--suppress UnresolvedMavenProperty -->
+                      <value>${git.closest.tag.commit.count}</value>
+                      <shouldMatchTo>0</shouldMatchTo>
+                    </validationProperty>
+                  </validationProperties>
+                  <validationShouldFailIfNoMatch>true</validationShouldFailIfNoMatch>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>deployToSonatype</id>
+      <distributionManagement>
+        <repository>
+          <id>Sonatype</id>
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+          <id>SonatypeSnapshots</id>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+      </distributionManagement>
+      <properties>
+        <altReleaseDeploymentRepository>sonatype::https://oss.sonatype.org/service/local/staging/deploy/maven2/</altReleaseDeploymentRepository>
+        <altSnapshotDeploymentRepository>sonatype::https://oss.sonatype.org/content/repositories/snapshots/</altSnapshotDeploymentRepository>
+      </properties>
+    </profile>
+
+  </profiles>
+
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-toolchains-plugin</artifactId>
+        <version>${maven-toolchains-plugin.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>toolchain</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <toolchains>
+            <jdk>
+              <version>17</version>
+            </jdk>
+          </toolchains>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>${maven-source-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>${maven-enforcer-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>Check build environment requirements</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <fail>true</fail>
+              <rules>
+                <requireMavenVersion>
+                  <version>[${maven.minimal.version},)</version>
+                  <message>You must use Maven version ${maven.minimal.version} or newer to build this project.</message>
+                  <!-- Reasons for this need:                            -->
+                  <!-- https://issues.apache.org/jira/browse/MDEPLOY-221 -->
+                  <!-- https://issues.apache.org/jira/browse/MNG-6581    -->
+                </requireMavenVersion>
+
+                <banDuplicateClasses>
+                  <scopes>
+                    <scope>compile</scope>
+                    <scope>runtime</scope>
+                    <scope>provided</scope>
+                  </scopes>
+                  <findAllDuplicates>true</findAllDuplicates>
+                  <ignoreWhenIdentical>true</ignoreWhenIdentical>
+                </banDuplicateClasses>
+
+                <enforceBytecodeVersion>
+                  <maxJdkVersion>8</maxJdkVersion>
+                  <ignoredScopes>
+                    <ignoredScope>test</ignoredScope>
+                  </ignoredScopes>
+                </enforceBytecodeVersion>
+
+                <dependencyConvergence/>
+
+              </rules>
+            </configuration>
+          </execution>
+
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>extra-enforcer-rules</artifactId>
+            <version>1.6.2</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
+        <configuration>
+          <compilerArgs>
+            <!-- Enable almost all warnings.                                                                      -->
+            <!-- Ignore 'classfile' to allow leaving Kryo out.                                                    -->
+            <!-- Ignore 'processing' to avoid "No processor claimed any of these annotations" in several places.  -->
+            <!-- Ignore 'serial' warnings about not having a serialVersionUID                                     -->
+            <!-- Ignore 'path' warnings (some dependencies have a bad classpath in their MANIFEST.MF)             -->
+            <!--   [WARNING] [path] bad path element                                                              -->
+            <!--     "/home/nbasjes/.m2/repository/org/scala-lang/scala-compiler/2.12.7/scala-reflect.jar":       -->
+            <!--     no such file or directory                                                                    -->
+            <!--   https://stackoverflow.com/questions/41944939/maven-build-failure-involving-manifest-mf-classpath-in-dependency-jars  -->
+            <!--   https://stackoverflow.com/questions/1344202/bad-path-warning-where-is-it-coming-from                                 -->
+            <arg>-Xlint:all,-classfile,-processing,-serial,-path</arg>
+            <arg>-Werror</arg>
+            <arg>-implicit:class</arg>
+          </compilerArgs>
+          <showWarnings>true</showWarnings>
+          <showDeprecation>true</showDeprecation>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <!-- Description: https://github.com/git-commit-id/git-commit-id-maven-plugin -->
+        <groupId>io.github.git-commit-id</groupId>
+        <artifactId>git-commit-id-maven-plugin</artifactId>
+        <version>${git-commit-id-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>get-the-git-infos</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>revision</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <dateFormat>yyyy-MM-dd '@' HH:mm:ss z</dateFormat>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <version>${apache-rat-plugin.version}</version>
+        <inherited>false</inherited>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <consoleOutput>true</consoleOutput>
+          <excludeSubProjects>false</excludeSubProjects>
+          <excludes>
+            <!-- Build config files -->
+            <exclude>.mvn/jvm.config</exclude>
+            <!-- Version control files -->
+            <exclude>**/.git/**</exclude>
+            <exclude>**/.gitignore</exclude>
+            <exclude>**/.gitmodules</exclude>
+            <!-- IDE settings and files -->
+            <exclude>**/.classpath</exclude>
+            <exclude>**/.project</exclude>
+            <exclude>**/.settings/**</exclude>
+            <exclude>**/.idea/**</exclude>
+            <exclude>**/*.iml</exclude>
+            <exclude>**/.run/**</exclude>
+            <exclude>**/*.patch</exclude>
+            <exclude>**/*.diff</exclude>
+            <!-- Files that cannot be 'polluted' -->
+            <exclude>.github/**</exclude>
+            <exclude>**/*.json</exclude>
+            <exclude>**/*.ndjson</exclude>
+            <!-- Files generated during build and/or development -->
+            <exclude>**/target/**</exclude>
+            <exclude>**/gen/**</exclude>
+            <exclude>**/dependency-reduced-pom.xml</exclude>
+            <!-- Test scripts -->
+            <exclude>*.sh</exclude>
+            <exclude>**/_*/**</exclude>
+            <exclude>**/*_/**</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+
+
+      <!-- Coverage analysis for tests -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco-maven-plugin.version}</version>
+        <executions>
+          <!--
+              Prepares the property pointing to the JaCoCo runtime agent which
+              is passed as VM argument when Maven the Surefire plugin is executed.
+          -->
+          <execution>
+            <id>pre-unit-test</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <!--
+                  Sets the name of the property containing the settings
+                  for JaCoCo runtime agent.
+              -->
+              <propertyName>jacoco.surefireArgLine</propertyName>
+            </configuration>
+          </execution>
+          <!--
+              Ensures that the code coverage report for unit tests is created after
+              unit tests have been run.
+          -->
+          <execution>
+            <id>post-unit-test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>3.0.0</version>
+        <dependencies>
+          <dependency>
+            <groupId>nl.basjes.maven.release</groupId>
+            <artifactId>conventional-commits-version-policy</artifactId>
+            <version>1.0.1</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+
+          <scmCommentPrefix>Release:</scmCommentPrefix>
+          <scmReleaseCommitComment>Release: Version @{releaseLabel}</scmReleaseCommitComment>
+          <scmDevelopmentCommitComment>Release: Start development of next version</scmDevelopmentCommitComment>
+          <scmRollbackCommitComment>Release: Rollback the release of @{releaseLabel}</scmRollbackCommitComment>
+
+          <tagNameFormat>v@{project.version}</tagNameFormat>
+          <projectVersionPolicyId>ConventionalCommitsVersionPolicy</projectVersionPolicyId>
+          <projectVersionPolicyConfig>
+            <versionTag>^v([0-9]+\.[0-9]+\.[0-9]+)$</versionTag>
+          </projectVersionPolicyConfig>
+
+          <preparationProfiles>prepareRelease,packageForRelease</preparationProfiles>
+          <preparationGoals>clean verify</preparationGoals>
+          <releaseProfiles>packageForRelease,release,deployToSonatype</releaseProfiles>
+          <pushChanges>false</pushChanges>
+          <remoteTagging>false</remoteTagging>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.cyclonedx</groupId>
+        <artifactId>cyclonedx-maven-plugin</artifactId>
+        <version>${cyclonedx-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>makeAggregateBom</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+
+    </plugins>
+  </build>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Niels Basjes</name>
+      <email>niels@basjes.nl</email>
+      <roles>
+        <role>Architect</role>
+        <role>Developer</role>
+      </roles>
+      <timezone>Europe/Amsterdam</timezone>
+    </developer>
+  </developers>
+
+  <scm>
+    <url>https://github.com/nielsbasjes/stringtemplate-maven-plugin</url>
+    <connection>scm:git:https://github.com/nielsbasjes/stringtemplate-maven-plugin.git</connection>
+    <developerConnection>scm:git:file:///${project.basedir}</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+</project>

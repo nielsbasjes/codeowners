@@ -1,5 +1,23 @@
+/*
+ * CodeOwners Tools
+ * Copyright (C) 2023 Niels Basjes
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an AS IS BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package nl.basjes.codeowners;
 
+import nl.basjes.codeowners.CodeOwners.ApprovalRule;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,14 +41,6 @@ class TestCodeOwnersGitlab {
             "internal\\ stuff/README.md @user2\n"
         );
 
-        Optional<CodeOwners.Section> section1 = codeOwners.getSections().values().stream().findFirst();
-        assertTrue(section1.isPresent());
-
-        CodeOwners.Section section = section1.get();
-
-        for (CodeOwners.ApprovalRule approvalRule : section.getApprovalRules()) {
-            LOG.info("{}    --> {}", approvalRule.getFileExpression(), approvalRule.getApprovers());
-        }
         assertOwners(codeOwners, "internalstuff/README.md",  "@user1");
         assertOwners(codeOwners, "internal stuff/README.md", "@user2");
         assertOwners(codeOwners, "internal  stuff/README.md"); // No owners
@@ -175,7 +185,7 @@ class TestCodeOwnersGitlab {
             "^[DoCuMeNtAtIoN] @default-user2\n" +
             "README.md @docs-team2\n");
 
-        LOG.info("Merged codeowners:\n{}", codeOwners);
+        LOG.info("Merged codeowners:\n------------------\n{}\n------------------", codeOwners);
         assertOwners(codeOwners, "docs/api/graphql/index.md",   "@docs-team1");
         assertOwners(codeOwners, "/something/README.md",        "@docs-team2");
         assertOwners(codeOwners, "README.md",                   "@docs-team2");
@@ -259,7 +269,7 @@ class TestCodeOwnersGitlab {
         "README.md  @docs";
 
     @Test
-    void testCodeOwnersExample() {
+    void gitlabCodeOwnersExample() {
         CodeOwners codeOwners = new CodeOwners(GITLAB_CODEOWNERS_DOC_EXAMPLE);
         assertOwners(codeOwners, "Foo.txt","@code","@multiple","@owners", "@dev-team");
         assertOwners(codeOwners, "Foo.rb","@ruby-owner", "@dev-team");

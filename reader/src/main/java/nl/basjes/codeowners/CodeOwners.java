@@ -1,3 +1,20 @@
+/*
+ * CodeOwners Tools
+ * Copyright (C) 2023 Niels Basjes
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an AS IS BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package nl.basjes.codeowners;
 
 import nl.basjes.codeowners.parser.CodeOwnersBaseVisitor;
@@ -29,16 +46,18 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CodeOwners.class);
 
+    @SuppressWarnings("unused") // Used in StringTemplate
     public Map<String, Section> getSections() {
         return sections;
     }
 
+    @SuppressWarnings("unused") // Used in StringTemplate
     public boolean getHasMultipleSections() {
         return sections.size() > 1;
     }
 
     // Map name of Section to Sections
-    private Map<String, Section> sections = new TreeMap<>();
+    private final Map<String, Section> sections = new TreeMap<>();
 
     // Load the code owners from a file
     public CodeOwners(File file) throws IOException {
