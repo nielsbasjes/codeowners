@@ -1,3 +1,10 @@
+[![Github actions Build status](https://img.shields.io/github/actions/workflow/status/nielsbasjes/codeowners/build.yml?branch=main)](https://github.com/nielsbasjes/codeowners/actions)
+[![Coverage Status](https://img.shields.io/codecov/c/github/nielsbasjes/codeowners)](https://app.codecov.io/gh/nielsbasjes/codeowners)
+[![License](https://img.shields.io/:license-apache-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
+[![Maven Central](https://img.shields.io/maven-central/v/nl.basjes.stringtemplate/codeowners.svg)](https://central.sonatype.com/namespace/nl.basjes.stringtemplate)
+[![GitHub stars](https://img.shields.io/github/stars/nielsbasjes/codeowners?label=GitHub%20stars)](https://github.com/nielsbasjes/codeowners/stargazers)
+[![If this project has business value for you then don't hesitate to support me with a small donation.](https://img.shields.io/badge/Donations-via%20Paypal-blue.svg)](https://www.paypal.me/nielsbasjes)
+
 # CodeOwners
 In several systems (like Github and Gitlab) you can have a CODEOWNERS file which is used to ensure all changes are approved by the right people.
 
@@ -39,7 +46,7 @@ In one of my projects it looks like this:
         <dependency>
           <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
           <artifactId>codeowners-enforcer-rules</artifactId>
-          <version>0.0.1-SNAPSHOT</version>
+          <version>0.1.0</version>
         </dependency>
       </dependencies>
       <executions>
