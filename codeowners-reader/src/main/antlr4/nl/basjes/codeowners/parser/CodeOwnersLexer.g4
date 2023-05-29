@@ -40,15 +40,20 @@ fragment EOL
     : '\r'? '\n' | '\r'
     ;
 
+fragment SPACE
+     : (' '| '\u2002' | '\u0220' |'\t'|'+')
+     ;
+
+
 OPTIONAL    : '^';
-BLOCKOPEN   : '[' -> channel(HIDDEN), pushMode(SECTION_MODE);
+BLOCKOPEN   : '[' SPACE* -> channel(HIDDEN), pushMode(SECTION_MODE);
 
 COMMENT
     : '#' ~[\n\r]* EOL -> skip
     ;
 
-SPACE
-    : (' '| '\u2002' | '\u0220' |'\t'|'+') -> skip
+SPACES
+    : SPACE+ -> skip
     ;
 
 USERID
@@ -65,5 +70,6 @@ FILEEXPRESSION
     ;
 
 mode SECTION_MODE;
-    BLOCKCLOSE      : ']' -> channel(HIDDEN), type(BLOCKOPEN), popMode ;
-    SECTIONVALUE    : [0-9]+|[a-zA-Z]|[a-zA-Z0-9][ a-zA-Z0-9.-]*[a-zA-Z0-9];
+    SECTION_SPACES : SPACE+ -> skip;
+    BLOCKCLOSE      : SPACE* ']' -> channel(HIDDEN), type(BLOCKOPEN), popMode ;
+    SECTIONVALUE    : [0-9]+|[a-zA-Z]|~[\]]+;

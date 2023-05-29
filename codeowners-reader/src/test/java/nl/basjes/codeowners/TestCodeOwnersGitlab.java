@@ -279,4 +279,14 @@ class TestCodeOwnersGitlab {
         assertOwners(codeOwners, "docs/README.md", "@docs","@docs-team","@root-docs");
     }
 
+    @Test
+    void allowElaborateSectionNames() {
+        CodeOwners codeOwners = new CodeOwners(
+        "[ Some Thing | And & Some $ Thing @ More ]\n" +
+        "README.md @docs-team\n");
+        String codeOwnersString = codeOwners.toString();
+        LOG.info("\n{}", codeOwnersString);
+        assertOwners(codeOwners, "README.md", "@docs-team");
+    }
+
 }
