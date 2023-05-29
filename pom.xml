@@ -24,6 +24,10 @@
 
   <name>CODEOWNERS Tools:</name>
 
+  <description>A library to use and verify the CODEOWNERS and .gitignore files.</description>
+
+  <url>https://github.com/nielsbasjes/codeowners</url>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.build.outputEncoding>UTF-8</project.build.outputEncoding>

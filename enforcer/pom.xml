@@ -28,6 +28,10 @@
 
   <name>CODEOWNERS Tools: Maven Enforcer rules</name>
 
+  <description>A library to use and verify the CODEOWNERS and .gitignore files.</description>
+
+  <url>https://github.com/nielsbasjes/codeowners</url>
+
   <dependencies>
 
     <dependency>
@@ -169,5 +173,34 @@
 
     </plugins>
   </build>
+
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Niels Basjes</name>
+      <email>niels@basjes.nl</email>
+      <roles>
+        <role>Architect</role>
+        <role>Developer</role>
+      </roles>
+      <timezone>Europe/Amsterdam</timezone>
+    </developer>
+  </developers>
+
+  <scm>
+    <url>https://github.com/nielsbasjes/codeowners</url>
+    <connection>scm:git:https://github.com/nielsbasjes/codeowners.git</connection>
+    <developerConnection>scm:git:file:///${project.basedir}</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
 </project>
 
