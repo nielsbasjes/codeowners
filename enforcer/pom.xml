@@ -146,7 +146,7 @@
         <version>${maven-invoker-plugin.version}</version>
         <configuration>
           <failIfNoProjects>true</failIfNoProjects>
-          <!--          <debug>true</debug>-->
+          <debug>true</debug>
           <streamLogsOnFailures>true</streamLogsOnFailures>
           <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
           <postBuildHookScript>verify</postBuildHookScript>

@@ -20,8 +20,9 @@ package nl.basjes.gitignore;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import static nl.basjes.gitignore.TestUtils.assertMatch;
-import static nl.basjes.gitignore.TestUtils.assertNotMatch;
+import static nl.basjes.gitignore.TestUtils.assertIgnore;
+import static nl.basjes.gitignore.TestUtils.assertNotIgnore;
+import static nl.basjes.gitignore.TestUtils.assertNullMatch;
 
 class TestGitIgnore {
 
@@ -32,8 +33,8 @@ class TestGitIgnore {
             "*.log\n" +
             "!\\#important?/debug[0-9]/debug[!01]/**/*debug[a-z]/*.log";
         GitIgnore gitIgnore = new GitIgnore(input);
-        assertMatch(gitIgnore, "logs/debug.log");
-        assertNotMatch(gitIgnore, "#important_/debug4/debug4/something/something/local_debugb/Something.log");
+        assertIgnore(gitIgnore, "logs/debug.log");
+        assertNullMatch(gitIgnore, "#important_/debug4/debug4/something/something/local_debugb/Something.logxxx");
     }
 
 
@@ -46,9 +47,9 @@ class TestGitIgnore {
         // You can prepend a pattern with a double asterisk to match directories anywhere in the repository.
         GitIgnore gitIgnore = new GitIgnore("**/logs");
 
-        assertMatch(gitIgnore, "logs/debug.log");
-        assertMatch(gitIgnore, "logs/monday/foo.bar");
-        assertMatch(gitIgnore, "build/logs/debug.log");
+        assertIgnore(gitIgnore, "logs/debug.log");
+        assertIgnore(gitIgnore, "logs/monday/foo.bar");
+        assertIgnore(gitIgnore, "build/logs/debug.log");
     }
 
     // ------------------------------------------
@@ -58,10 +59,10 @@ class TestGitIgnore {
         //You can also use a double asterisk to match files based on their name and the name of their parent directory.
         GitIgnore gitIgnore = new GitIgnore("**/logs/debug.log");
 
-        assertMatch(gitIgnore, "logs/debug.log");
-        assertMatch(gitIgnore, "build/logs/debug.log");
+        assertIgnore(gitIgnore, "logs/debug.log");
+        assertIgnore(gitIgnore, "build/logs/debug.log");
 
-        assertNotMatch(gitIgnore, "logs/build/debug.log");
+        assertNotIgnore(gitIgnore, "logs/build/debug.log");
     }
 
     // ------------------------------------------
@@ -71,10 +72,10 @@ class TestGitIgnore {
         //An asterisk is a wildcard that matches zero or more characters.
         GitIgnore gitIgnore = new GitIgnore("*.log");
 
-        assertMatch(gitIgnore, "debug.log");
-        assertMatch(gitIgnore, "foo.log");
-        assertMatch(gitIgnore, ".log");
-        assertMatch(gitIgnore, "logs/debug.log");
+        assertIgnore(gitIgnore, "debug.log");
+        assertIgnore(gitIgnore, "foo.log");
+        assertIgnore(gitIgnore, ".log");
+        assertIgnore(gitIgnore, "logs/debug.log");
     }
 
     // ------------------------------------------
@@ -87,11 +88,11 @@ class TestGitIgnore {
             "*.log\n" +
             "!important.log");
 
-        assertMatch(gitIgnore, "debug.log");
-        assertMatch(gitIgnore, "trace.log");
+        assertIgnore(gitIgnore, "debug.log");
+        assertIgnore(gitIgnore, "trace.log");
 
-        assertNotMatch(gitIgnore, "important.log");
-        assertNotMatch(gitIgnore, "logs/important.log");
+        assertNotIgnore(gitIgnore, "important.log");
+        assertNotIgnore(gitIgnore, "logs/important.log");
     }
 
     // ------------------------------------------
@@ -103,10 +104,10 @@ class TestGitIgnore {
             "*.log\n" +
             "!important/*.log\n" +
             "trace.* ");
-        assertMatch(gitIgnore, "debug.log");
-        assertMatch(gitIgnore, "important/trace.log");
+        assertIgnore(gitIgnore, "debug.log");
+        assertIgnore(gitIgnore, "important/trace.log");
 
-        assertNotMatch(gitIgnore, "important/debug.log");
+        assertNotIgnore(gitIgnore, "important/debug.log");
     }
 
     // ------------------------------------------
@@ -115,9 +116,9 @@ class TestGitIgnore {
     void testPinRoot() {
         // Prepending a slash matches files only in the repository root.
         GitIgnore gitIgnore = new GitIgnore("/debug.log ");
-        assertMatch(gitIgnore, "debug.log");
+        assertIgnore(gitIgnore, "debug.log");
 
-        assertNotMatch(gitIgnore, "logs/debug.log");
+        assertNotIgnore(gitIgnore, "logs/debug.log");
     }
 
     // ------------------------------------------
@@ -126,8 +127,8 @@ class TestGitIgnore {
     void testdefaultAnyDirectory() {
         // By default, patterns match files in any directory
         GitIgnore gitIgnore = new GitIgnore("debug.log");
-        assertMatch(gitIgnore, "debug.log");
-        assertMatch(gitIgnore, "logs/debug.log");
+        assertIgnore(gitIgnore, "debug.log");
+        assertIgnore(gitIgnore, "logs/debug.log");
     }
 
     // ------------------------------------------
@@ -136,10 +137,10 @@ class TestGitIgnore {
     void testSingleCharWildcard() {
         // A question mark matches exactly one character.
         GitIgnore gitIgnore = new GitIgnore("debug?.log ");
-        assertMatch(gitIgnore, "debug0.log");
-        assertMatch(gitIgnore, "debugg.log");
+        assertIgnore(gitIgnore, "debug0.log");
+        assertIgnore(gitIgnore, "debugg.log");
 
-        assertNotMatch(gitIgnore, "debug10.log");
+        assertNotIgnore(gitIgnore, "debug10.log");
     }
 
     // ------------------------------------------
@@ -149,10 +150,10 @@ class TestGitIgnore {
         // Square brackets can also be used to match a single character from a specified range.
         GitIgnore gitIgnore = new GitIgnore("debug[0-9].log ");
 
-        assertMatch(gitIgnore, "debug0.log");
-        assertMatch(gitIgnore, "debug1.log");
+        assertIgnore(gitIgnore, "debug0.log");
+        assertIgnore(gitIgnore, "debug1.log");
 
-        assertNotMatch(gitIgnore, "debug10.log");
+        assertNotIgnore(gitIgnore, "debug10.log");
     }
 
     // ------------------------------------------
@@ -162,11 +163,11 @@ class TestGitIgnore {
         // Square brackets match a single character form the specified set.
         GitIgnore gitIgnore = new GitIgnore("debug[01].log");
 
-        assertMatch(gitIgnore, "debug0.log");
-        assertMatch(gitIgnore, "debug1.log");
+        assertIgnore(gitIgnore, "debug0.log");
+        assertIgnore(gitIgnore, "debug1.log");
 
-        assertNotMatch(gitIgnore, "debug2.log");
-        assertNotMatch(gitIgnore, "debug01.log");
+        assertNotIgnore(gitIgnore, "debug2.log");
+        assertNotIgnore(gitIgnore, "debug01.log");
     }
 
     // ------------------------------------------
@@ -176,11 +177,11 @@ class TestGitIgnore {
         // An exclamation mark can be used to match any character except one from the specified set.
         GitIgnore gitIgnore = new GitIgnore("debug[!01].log ");
 
-        assertMatch(gitIgnore, "debug2.log");
+        assertIgnore(gitIgnore, "debug2.log");
 
-        assertNotMatch(gitIgnore, "debug0.log");
-        assertNotMatch(gitIgnore, "debug1.log");
-        assertNotMatch(gitIgnore, "debug01.log");
+        assertNotIgnore(gitIgnore, "debug0.log");
+        assertNotIgnore(gitIgnore, "debug1.log");
+        assertNotIgnore(gitIgnore, "debug01.log");
     }
 
     // ------------------------------------------
@@ -190,10 +191,10 @@ class TestGitIgnore {
         // Ranges can be numeric or alphabetic.
         GitIgnore gitIgnore = new GitIgnore("debug[a-z].log ");
 
-        assertMatch(gitIgnore, "debuga.log");
-        assertMatch(gitIgnore, "debugb.log");
+        assertIgnore(gitIgnore, "debuga.log");
+        assertIgnore(gitIgnore, "debugb.log");
 
-        assertNotMatch(gitIgnore, "debug1.log");
+        assertNotIgnore(gitIgnore, "debug1.log");
     }
 
     // ------------------------------------------
@@ -203,11 +204,11 @@ class TestGitIgnore {
         // If you don't append a slash, the pattern will match both files and the contents of directories with that name.
         // In the example matches on the left, both directories and files named logs are ignored
         GitIgnore gitIgnore = new GitIgnore("logs");
-        assertMatch(gitIgnore, "logs");
-        assertMatch(gitIgnore, "logs/debug.log");
-        assertMatch(gitIgnore, "logs/latest/foo.bar");
-        assertMatch(gitIgnore, "build/logs");
-        assertMatch(gitIgnore, "build/logs/debug.log");
+        assertIgnore(gitIgnore, "logs");
+        assertIgnore(gitIgnore, "logs/debug.log");
+        assertIgnore(gitIgnore, "logs/latest/foo.bar");
+        assertIgnore(gitIgnore, "build/logs");
+        assertIgnore(gitIgnore, "build/logs/debug.log");
     }
 
     // ------------------------------------------
@@ -219,10 +220,10 @@ class TestGitIgnore {
         // including all of its files and subdirectories – will be ignored
         GitIgnore gitIgnore = new GitIgnore("logs/");
 
-        assertMatch(gitIgnore, "logs/debug.log");
-        assertMatch(gitIgnore, "logs/latest/foo.bar");
-        assertMatch(gitIgnore, "build/logs/foo.bar");
-        assertMatch(gitIgnore, "build/logs/latest/debug.log");
+        assertIgnore(gitIgnore, "logs/debug.log");
+        assertIgnore(gitIgnore, "logs/latest/foo.bar");
+        assertIgnore(gitIgnore, "build/logs/foo.bar");
+        assertIgnore(gitIgnore, "build/logs/latest/debug.log");
     }
 
     // ------------------------------------------
@@ -238,8 +239,8 @@ class TestGitIgnore {
             "logs/\n" +
             "!logs/important.log");
 
-        assertMatch(gitIgnore, "logs/debug.log");
-        assertMatch(gitIgnore, "logs/important.log");
+        assertIgnore(gitIgnore, "logs/debug.log");
+        assertIgnore(gitIgnore, "logs/important.log");
     }
 
     // ------------------------------------------
@@ -249,9 +250,9 @@ class TestGitIgnore {
         // A double asterisk matches zero or more directories.
         GitIgnore gitIgnore = new GitIgnore("logs/**/debug.log");
 
-        assertMatch(gitIgnore, "logs/debug.log");
-        assertMatch(gitIgnore, "logs/monday/debug.log");
-        assertMatch(gitIgnore, "logs/monday/pm/debug.log");
+        assertIgnore(gitIgnore, "logs/debug.log");
+        assertIgnore(gitIgnore, "logs/monday/debug.log");
+        assertIgnore(gitIgnore, "logs/monday/pm/debug.log");
     }
 
     // ------------------------------------------
@@ -261,10 +262,10 @@ class TestGitIgnore {
         // Wildcards can be used in directory names as well.
         GitIgnore gitIgnore = new GitIgnore("logs/*day/debug.log");
 
-        assertMatch(gitIgnore, "logs/monday/debug.log");
-        assertMatch(gitIgnore, "logs/tuesday/debug.log");
+        assertIgnore(gitIgnore, "logs/monday/debug.log");
+        assertIgnore(gitIgnore, "logs/tuesday/debug.log");
 
-        assertNotMatch(gitIgnore, "logs/latest/debug.log");
+        assertNotIgnore(gitIgnore, "logs/latest/debug.log");
     }
 
     // ------------------------------------------
@@ -275,10 +276,10 @@ class TestGitIgnore {
         // (You can prepend a slash if you like, but it doesn't do anything special.)
         GitIgnore gitIgnore = new GitIgnore("logs/debug.log");
 
-        assertMatch(gitIgnore, "logs/debug.log");
+        assertIgnore(gitIgnore, "logs/debug.log");
 
-        assertNotMatch(gitIgnore, "debug.log");
-        assertNotMatch(gitIgnore, "build/logs/debug.log");
+        assertNotIgnore(gitIgnore, "debug.log");
+        assertNotIgnore(gitIgnore, "build/logs/debug.log");
     }
 
     // ------------------------------------------
@@ -287,10 +288,10 @@ class TestGitIgnore {
     void testIgnoreEscapedSpecials() {
         GitIgnore gitIgnore = new GitIgnore("foo\\[01\\].txt ");
 
-        assertMatch(gitIgnore, "foo[01].txt");
-        assertNotMatch(gitIgnore, "foo01.txt");
-        assertNotMatch(gitIgnore, "foo0.txt");
-        assertNotMatch(gitIgnore, "foo1.txt");
+        assertIgnore(gitIgnore, "foo[01].txt");
+        assertNotIgnore(gitIgnore, "foo01.txt");
+        assertNotIgnore(gitIgnore, "foo0.txt");
+        assertNotIgnore(gitIgnore, "foo1.txt");
     }
 
 }

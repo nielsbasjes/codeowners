@@ -18,31 +18,39 @@
 package nl.basjes.gitignore;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestUtils {
-    public static void assertMatch(GitIgnore gitIgnore, String filename) {
+    public static void assertIgnore(GitIgnore gitIgnore, String filename) {
         assertTrue(
             gitIgnore.isIgnoredFile(filename),
             "Filename \""+filename+"\" should match but did not.");
     }
 
-    public static void assertMatch(String baseDir, String gitIgnore, String filename) {
+    public static void assertIgnore(String baseDir, String gitIgnore, String filename) {
+        assertIgnore(new GitIgnore(baseDir, gitIgnore), filename);
+    }
+
+    public static void assertNotIgnore(GitIgnore gitIgnore, String filename) {
+        Boolean isIgnoredFile = gitIgnore.isIgnoredFile(filename);
         assertTrue(
-            new GitIgnore(baseDir, gitIgnore).isIgnoredFile(filename),
-            "Filename \""+filename+"\" should match but did not.");
+            isIgnoredFile == null || isIgnoredFile == Boolean.FALSE,
+            "Filename \""+filename+"\" should NOT match but did.");
     }
 
-    public static void assertNotMatch(GitIgnore gitIgnore, String filename) {
-        assertFalse(
+    public static void assertNotIgnore(String baseDir, String gitIgnore, String filename) {
+        assertNotIgnore(new GitIgnore(baseDir, gitIgnore), filename);
+    }
+
+    public static void assertNullMatch(GitIgnore gitIgnore, String filename) {
+        assertNull(
             gitIgnore.isIgnoredFile(filename),
-            "Filename \""+filename+"\" should match NOT but did.");
+            "Filename \""+filename+"\" should NOT match but did.");
     }
 
-    public static void assertNotMatch(String baseDir, String gitIgnore, String filename) {
-        assertFalse(
-            new GitIgnore(baseDir, gitIgnore).isIgnoredFile(filename),
-            "Filename \""+filename+"\" should match NOT but did.");
+    public static void assertNullMatch(String baseDir, String gitIgnore, String filename) {
+        assertNullMatch(new GitIgnore(baseDir, gitIgnore), filename);
     }
 
 }

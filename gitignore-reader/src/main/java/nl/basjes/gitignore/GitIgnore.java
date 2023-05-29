@@ -68,19 +68,25 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
         visit(gitignore);
     }
 
-    public boolean isIgnoredFile(String filename) {
+    /**
+     * Checks if the file matches the stored expressions.
+     * @param filename The filename to be checked
+     * @return NULL: not matched, True: must be ignored, False: it must be UNignored
+     */
+    public Boolean isIgnoredFile(String filename) {
         String matchFileName = filename;
         if (!filename.startsWith("/")) {
             matchFileName = "/" + filename;
         }
 
+        // If a file is NOT matched at all then there is no verdict.
+        Boolean mustBeIgnored = null;
+
         if (!matchFileName.startsWith(baseDir)) {
             // Not for me
-            return false;
+            return mustBeIgnored;
         }
 
-        // If a file is NOT matched at all then it must not be ignored.
-        boolean mustBeIgnored = false;
         for (IgnoreRule ignoreRule : ignoreRules) {
             Boolean ruleVerdict = ignoreRule.isIgnoredFile(matchFileName);
             if (ruleVerdict == null) {

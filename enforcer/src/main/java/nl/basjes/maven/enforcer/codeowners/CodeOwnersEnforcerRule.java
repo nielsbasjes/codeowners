@@ -23,11 +23,16 @@ import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import nl.basjes.codeowners.CodeOwners;
 import nl.basjes.gitignore.GitIgnore;
 import org.apache.maven.enforcer.rule.api.AbstractEnforcerRule;
 import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
@@ -41,20 +46,9 @@ import org.apache.maven.rtinfo.RuntimeInformation;
 @Named("codeOwners") // rule name - must start from lowercase character
 public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
 
-    /**
-     * Simple param. This rule fails if the value is true.
-     */
     private File codeOwnersFile;
 
-    /**
-     * Simple param. This rule fails if the value is true.
-     */
     private boolean allFilesMustHaveCodeOwner = false;
-
-    /**
-     * Rule parameter as list of items.
-     */
-    private List<String> listParameters;
 
     // Inject needed Maven components
 
@@ -68,40 +62,78 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
     private RuntimeInformation runtimeInformation;
 
     public void execute() throws EnforcerRuleException {
-        if (codeOwnersFile == null) {
-            codeOwnersFile = new File("CODEOWNERS");
-        }
-        GitIgnore codeOwners;
-        try {
-            codeOwners = new GitIgnore(codeOwnersFile);
-        } catch (IOException e) {
-            throw new EnforcerRuleException("Unable to read the CODEOWNERS: " + codeOwnersFile, e);
-        }
-
-        getLog().info("CODEOWNER:\n"+codeOwners);
-
         List<String> allFilesInProject = null;
+        String baseDir = project.getBasedir().getPath();
 
+        // Get a list of all files in the project
         try {
-            String baseDir = project.getBasedir().getPath();
-            // FIXME: Not sure how to do this right
-            allFilesInProject = Files
-                .find(Paths.get(baseDir), 999, (p, bfa) -> bfa.isRegularFile())
-                .map(file -> file.toString().replace(baseDir.toString(),""))
-                .collect(Collectors.toList());
+            Path baseDirPath = Paths.get(baseDir);
+            try(Stream<Path> projectFiles = Files.find(baseDirPath, 128, (filePath, fileAttr) -> fileAttr.isRegularFile())) {
+                allFilesInProject = projectFiles
+                    .map(file -> file.toString().replace(baseDir,""))
+                    .sorted()
+                    .collect(Collectors.toList());
+            }
         } catch (IOException e) {
             throw new EnforcerRuleException("Unable to list the files", e);
         }
 
-        // TODO: Remove the .gitignore files
+        // Get the files that are ignored by the SCM
+        List<GitIgnore> gitIgnores = new ArrayList<>();
+
+        // Start with the internal files that are used by git.
+        gitIgnores.add(new GitIgnore(
+            "/.git/\n"
+        ));
+
+        List<Object> commonCodeOwnersFiles = Arrays.asList(
+            "/CODEOWNERS",
+            "/.github/CODEOWNERS",
+            "/.gitlab/CODEOWNERS",
+            "/docs/CODEOWNERS"
+            );
+
+        for (String projectFile : allFilesInProject) {
+            if (projectFile.endsWith("/.gitignore")){
+                try {
+                    getLog().info("Using gitignore: " + projectFile);
+                    gitIgnores.add(new GitIgnore(new File(baseDir + projectFile)));
+                } catch (IOException e) {
+                    throw new EnforcerRuleException("Unable to open the gitignore file: " + projectFile);
+                }
+            }
+            if (codeOwnersFile == null) {
+                if (commonCodeOwnersFiles.contains(projectFile)) {
+                    getLog().info("Using CODEOWNERS: " + projectFile);
+                    codeOwnersFile = new File(baseDir + projectFile);
+                }
+            }
+        }
+
+        if (codeOwnersFile == null) {
+            throw new EnforcerRuleException("This project does NOT have a CODEOWNERS file");
+        }
+
+        CodeOwners codeOwners;
+        try {
+            codeOwners = new CodeOwners(codeOwnersFile);
+        } catch (IOException e) {
+            throw new EnforcerRuleException("Unable to read the CODEOWNERS: " + codeOwnersFile, e);
+        }
+        getLog().debug("CODEOWNER:\n"+codeOwners);
 
         boolean pass = true;
-        if (allFilesMustHaveCodeOwner) {
-            for (String path : allFilesInProject) {
-                getLog().info("File: " + path + " --> " + codeOwners.getAllApprovers(path));
-                if (codeOwners.getAllApprovers(path).isEmpty()) {
-                    getLog().error("Missing approvers for: " + path);
-                    pass = false;
+        for (String projectFile : allFilesInProject) {
+            getLog().debug("Checking: " + projectFile);
+            if (allFilesMustHaveCodeOwner) {
+                if (ignore(gitIgnores, projectFile)) {
+                    getLog().debug("- Ignored");
+                } else {
+                    getLog().debug("- Approvers: " + codeOwners.getAllApprovers(projectFile));
+                    if (codeOwners.getAllApprovers(projectFile).isEmpty()) {
+                        getLog().error("No approvers for " + projectFile);
+                        pass = false;
+                    }
                 }
             }
             if (!pass) {
@@ -109,6 +141,18 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             }
         }
     }
+
+    boolean ignore(List<GitIgnore> gitIgnoreList, String filename) {
+        Boolean ignore=null;
+        for (GitIgnore gitIgnore : gitIgnoreList) {
+            Boolean ignoreResult = gitIgnore.isIgnoredFile(filename);
+            if (ignoreResult != null) {
+                ignore = ignoreResult;
+            }
+        }
+        return !(ignore == null || !ignore);
+    }
+
 
     /**
      * If your rule is cacheable, you must return a unique id when parameters or conditions
@@ -123,8 +167,7 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
     public String getCacheId() {
         return String.valueOf(Objects.hash(
             codeOwnersFile,
-            allFilesMustHaveCodeOwner,
-            listParameters));
+            allFilesMustHaveCodeOwner));
     }
 
     /**
@@ -136,7 +179,9 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
      */
     @Override
     public String toString() {
-        return String.format("MyCustomRule[allFilesMustHaveCodeOwner=%b]", allFilesMustHaveCodeOwner);
+        return String.format(
+            "CodeOwnersEnforcerRule[codeOwnersFile=%s ; allFilesMustHaveCodeOwner=%b]",
+            codeOwnersFile, allFilesMustHaveCodeOwner);
     }
 }
 
