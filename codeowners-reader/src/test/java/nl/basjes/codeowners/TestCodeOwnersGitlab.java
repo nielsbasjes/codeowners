@@ -17,15 +17,11 @@
 
 package nl.basjes.codeowners;
 
-import nl.basjes.codeowners.CodeOwners.ApprovalRule;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
-
 import static nl.basjes.codeowners.TestUtils.assertOwners;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

@@ -66,8 +66,8 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
     private RuntimeInformation runtimeInformation;
 
     public void execute() throws EnforcerRuleException {
-        List<String> allFilesInProject = null;
-        List<String> allDirectoriesInProject = null;
+        List<String> allFilesInProject;
+        List<String> allDirectoriesInProject;
         String baseDir = project.getBasedir().getPath();
 
         getLog().debug("BaseDir=|"+baseDir+"|");

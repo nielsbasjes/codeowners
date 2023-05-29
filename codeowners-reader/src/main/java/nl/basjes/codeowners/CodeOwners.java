@@ -346,10 +346,6 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
             return fileExpression;
         }
 
-        public List<String> getApprovers() {
-            return new ArrayList<>(approvers);
-        }
-
         public List<String> getApprovers(String filename) {
             if (!filePattern.matcher(filename).find()) {
 //                LOG.warn("FAIL  {} --> {}", fileExpression, filename);

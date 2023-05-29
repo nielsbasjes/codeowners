@@ -19,11 +19,7 @@ package nl.basjes.codeowners;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.List;
-
 import static nl.basjes.codeowners.TestUtils.assertOwners;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TestCodeOwnersGithub {
 
