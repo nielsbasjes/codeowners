@@ -63,6 +63,7 @@ In one of my projects it looks like this:
                 <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
                 <codeOwnersFile>${maven.multiModuleProjectDirectory}/CODEOWNERS</codeOwnersFile>
                 <allFilesMustHaveCodeOwner>true</allFilesMustHaveCodeOwner>
+                <!-- <verbose>true</verbose> -->
               </codeOwners>
             </rules>
           </configuration>
