@@ -288,6 +288,9 @@ class TestGitIgnore {
         GitIgnore gitIgnore = new GitIgnore("foo\\[01\\].txt ");
 
         assertMatch(gitIgnore, "foo[01].txt");
+        assertNotMatch(gitIgnore, "foo01.txt");
+        assertNotMatch(gitIgnore, "foo0.txt");
+        assertNotMatch(gitIgnore, "foo1.txt");
     }
 
 }
