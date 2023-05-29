@@ -122,8 +122,8 @@ class TestCodeOwners {
             "/.* @user1\n" + // Intended to match '/.foo' NOT '/'
             "*.xml @user2\n"
         );
-//        codeOwners.setVerbose(true);
-//        LOG.info("CODEOWNERS:\n{}", codeOwners);
+        codeOwners.setVerbose(true);
+        LOG.info("CODEOWNERS:\n{}", codeOwners);
         assertOwners(codeOwners, "/.foo", "@user1");
         assertOwners(codeOwners, "/.foo/bar", "@user1");
         assertOwners(codeOwners, "/xfoo"); // No users

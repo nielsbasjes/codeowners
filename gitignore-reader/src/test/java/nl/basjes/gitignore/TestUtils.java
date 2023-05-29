@@ -17,15 +17,15 @@
 
 package nl.basjes.gitignore;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestUtils {
     public static void assertIgnore(GitIgnore gitIgnore, String filename) {
-        assertTrue(
+        assertSame(Boolean.TRUE,
             gitIgnore.isIgnoredFile(filename),
-            "Filename \""+filename+"\" should match but did not.");
+            "Filename \"" + filename + "\" should match but did not.");
     }
 
     public static void assertIgnore(String baseDir, String gitIgnore, String filename) {

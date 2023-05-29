@@ -43,6 +43,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
     private final String baseDir;
 
     private final List<IgnoreRule> ignoreRules = new ArrayList<>();
+    private boolean verbose = false;
 
     // Load the gitignore from a file
     public GitIgnore(File file) throws IOException {
@@ -58,7 +59,12 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
     }
 
     public GitIgnore(String baseDir, String gitIgnoreContent) {
-        this.baseDir = baseDir;
+        this.baseDir =
+            (
+                (baseDir.startsWith("/")?"":"/") +
+                baseDir +
+                (baseDir.endsWith("/")?"":"/")
+            ).replace("//", "/");
         CodePointCharStream input = CharStreams.fromString(gitIgnoreContent);
         GitIgnoreLexer lexer = new GitIgnoreLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -73,25 +79,46 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
      * @return NULL: not matched, True: must be ignored, False: it must be UNignored
      */
     public Boolean isIgnoredFile(String filename) {
+        if (verbose) {
+            LOG.info("# vvvvvvvvvvvvvvvvvvvvvvvvvvv");
+            LOG.info("Checking: {}", filename);
+        }
         String matchFileName = filename;
         if (!filename.startsWith("/")) {
             matchFileName = "/" + filename;
+        }
+
+        if (verbose) {
+            LOG.info("Matching: {}", matchFileName);
         }
 
         // If a file is NOT matched at all then there is no verdict.
         Boolean mustBeIgnored = null;
 
         if (!matchFileName.startsWith(baseDir)) {
-            // Not for me
-            return null;
+            if (verbose) {
+                LOG.info("# Not in my baseDir: {}", baseDir);
+            }
+        } else {
+            for (IgnoreRule ignoreRule : ignoreRules) {
+                Boolean ruleVerdict = ignoreRule.isIgnoredFile(matchFileName);
+                if (ruleVerdict == null) {
+                    continue;
+                }
+                mustBeIgnored = ruleVerdict;
+            }
         }
 
-        for (IgnoreRule ignoreRule : ignoreRules) {
-            Boolean ruleVerdict = ignoreRule.isIgnoredFile(matchFileName);
-            if (ruleVerdict == null) {
-                continue;
+        if (verbose) {
+            if (mustBeIgnored == null) {
+                LOG.info("Conclusion: Not matched: Not ignored");
+            } else {
+                if (Boolean.TRUE.equals(mustBeIgnored)) {
+                    LOG.info("Conclusion: Must be ignored");
+                } else {
+                    LOG.info("Conclusion: Must NOT be ignored");
+                }
             }
-            mustBeIgnored = ruleVerdict;
         }
         return mustBeIgnored;
     }
@@ -101,6 +128,11 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
         String filePattern = ctx.fileExpression.getText();
         ignoreRules.add(new IgnoreRule(ctx.not != null, filePattern));
         return null;
+    }
+
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
+        ignoreRules.forEach(rule->rule.setVerbose(verbose));
     }
 
     @Override
@@ -118,6 +150,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
         private final boolean negate;
         private final String fileExpression;
         private final Pattern filePattern;
+        private boolean verbose = false;
 
         public IgnoreRule(boolean negate, String fileExpression) {
             this.negate = negate;
@@ -176,16 +209,26 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
          */
         public Boolean isIgnoredFile(String filename) {
             if (!filePattern.matcher(filename).find()) {
-                LOG.debug("NO MATCH     |{}| ~ |{}| --> |{}|", fileExpression, filePattern, filename);
+                if (verbose) {
+                    LOG.info("NO MATCH     |{}| ~ |{}| --> |{}|", fileExpression, filePattern, filename);
+                }
                 return null;
             }
             if (negate) {
-                LOG.debug("MATCH NEGATE |{}| ~ |{}| --> |{}|", fileExpression, filePattern, filename);
+                if (verbose) {
+                    LOG.info("MATCH NEGATE |{}| ~ |{}| --> |{}|", fileExpression, filePattern, filename);
+                }
                 return Boolean.FALSE;
             } else {
-                LOG.debug("MATCH IGNORE |{}| ~ |{}| --> |{}|", fileExpression, filePattern, filename);
+                if (verbose) {
+                    LOG.info("MATCH IGNORE |{}| ~ |{}| --> |{}|", fileExpression, filePattern, filename);
+                }
                 return Boolean.TRUE;
             }
+        }
+
+        public void setVerbose(boolean verbose) {
+            this.verbose = verbose;
         }
 
         @Override

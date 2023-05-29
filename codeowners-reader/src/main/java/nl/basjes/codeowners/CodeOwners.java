@@ -46,6 +46,8 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CodeOwners.class);
 
+    private boolean verbose = false;
+
     // Map name of Section to Sections
     private final Map<String, Section> sections = new TreeMap<>();
 
@@ -128,6 +130,11 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
         }
     }
 
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
+        sections.values().forEach(section->section.setVerbose(verbose));
+    }
+
     public List<String> getMandatoryApprovers(String filename) {
         String matchFileName = filename;
         if (!filename.startsWith("/")) {
@@ -144,16 +151,35 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
     }
 
     public List<String> getAllApprovers(String filename) {
+        if (verbose) {
+            LOG.info("# vvvvvvvvvvvvvvvvvvvvvvvvvvv");
+            LOG.info("Checking: {}", filename);
+        }
         String matchFileName = filename;
         if (!filename.startsWith("/")) {
             matchFileName = "/" + filename;
         }
 
+        if (verbose) {
+            LOG.info("Matching: {}", matchFileName);
+        }
+
         List<String> approvers = new ArrayList<>();
         for (Section section: sections.values()) {
+            if (verbose) {
+                LOG.info("# ---------------------------");
+                LOG.info("# Section: {}", section.getName());
+            }
             approvers.addAll(section.getApprovers(matchFileName));
         }
-        return approvers.stream().sorted().distinct().collect(Collectors.toList());
+        List<String> endResultApprovers = approvers.stream().sorted().distinct().collect(Collectors.toList());
+        if (verbose) {
+            LOG.info("# ---------------------------");
+            LOG.info("# Approvers: {}", endResultApprovers);
+            LOG.info("# ^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            LOG.info("");
+        }
+        return endResultApprovers;
     }
 
     private Section currentSection;
@@ -239,6 +265,10 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
             approvalRules.add(rule);
         }
 
+        public void setVerbose(boolean verbose) {
+            approvalRules.forEach(rule->rule.setVerbose(verbose));
+        }
+
         public String getName() {
             return name;
         }
@@ -308,6 +338,7 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
         private final String fileExpression;
         private final List<String> approvers;
         private final Pattern filePattern;
+        private boolean verbose = false;
 
         public ApprovalRule(String fileExpression, List<String> approvers) {
             this.fileExpression = fileExpression;
@@ -349,16 +380,26 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
         public List<String> getApprovers(String filename) {
             if (!filePattern.matcher(filename).find()) {
-//                LOG.warn("FAIL  {} --> {}", fileExpression, filename);
+                if (verbose) {
+                    LOG.info("NO MATCH  |{}| ~ |{}| --> {}", fileExpression, filePattern, filename);
+                }
                 return null;
             }
-//            LOG.warn("MATCH {} --> {}", fileExpression, filename);
+            if (verbose) {
+                LOG.info("MATCH     |{}| ~ |{}| --> {}    approvers:{}", fileExpression, filePattern, filename, approvers);
+            }
             return new ArrayList<>(approvers);
+        }
+
+        public void setVerbose(boolean verbose) {
+            this.verbose = verbose;
         }
 
         @Override
         public String toString() {
-            return fileExpression + " " + String.join(" ", approvers);
+            return
+                "# Regex used for the next rule:   " + filePattern + '\n' +
+                fileExpression + " " + String.join(" ", approvers);
         }
     }
 }

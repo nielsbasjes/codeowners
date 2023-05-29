@@ -300,4 +300,23 @@ class TestGitIgnore {
         assertNotIgnore(gitIgnore, "foo1.txt");
     }
 
+    @Test
+    void testIgnoreBaseDir() {
+        GitIgnore gitIgnore = new GitIgnore("src/test", "*.properties");
+        gitIgnore.setVerbose(true);
+        assertIgnore(gitIgnore, "src/test/test.properties");
+        assertIgnore(gitIgnore, "/src/test/test.properties");
+
+        // Note: This actually contains the '/src/test/' !!
+        assertNotIgnore(gitIgnore, "/somethingelse/src/test/test.properties");
+
+        // Note: This actually contains the 'src/test' !!
+        assertNotIgnore(gitIgnore, "src/test.properties");
+
+        assertNotIgnore(gitIgnore, "src/main/test.properties");
+        assertNotIgnore(gitIgnore, "test.properties");
+    }
+
+
+
 }

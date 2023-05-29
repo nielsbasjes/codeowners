@@ -17,9 +17,14 @@
 
 package nl.basjes.maven.enforcer.codeowners;
 
+import nl.basjes.codeowners.CodeOwners;
+import nl.basjes.gitignore.GitIgnore;
+import org.apache.maven.enforcer.rule.api.AbstractEnforcerRule;
+import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
+import org.apache.maven.project.MavenProject;
+
 import javax.inject.Inject;
 import javax.inject.Named;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,19 +37,13 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import nl.basjes.codeowners.CodeOwners;
-import nl.basjes.gitignore.GitIgnore;
-import org.apache.maven.enforcer.rule.api.AbstractEnforcerRule;
-import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
-import org.apache.maven.execution.MavenSession;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.rtinfo.RuntimeInformation;
-
 /**
  * Custom Enforcer Rule - example
  */
 @Named("codeOwners") // rule name - must start from lowercase character
 public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
+
+    private String baseDir;
 
     private File codeOwnersFile;
 
@@ -59,17 +58,19 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
     @Inject
     private MavenProject project;
 
-    @Inject
-    private MavenSession session;
-
-    @Inject
-    private RuntimeInformation runtimeInformation;
+//    @Inject
+//    private MavenSession session;
+//
+//    @Inject
+//    private RuntimeInformation runtimeInformation;
 
     public void execute() throws EnforcerRuleException {
         List<String> allFilesInProject;
         List<String> allDirectoriesInProject;
-        String baseDir = project.getBasedir().getPath();
 
+        if (baseDir == null) {
+            baseDir = project.getBasedir().getPath();
+        }
         getLog().debug("BaseDir=|"+baseDir+"|");
 
         // Get a list of all files in the project
@@ -115,7 +116,6 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         CodeOwners codeOwners = null;
 
         for (String projectFile : allFilesInProject) {
-            getLog().info("==>"+projectFile);
             if (projectFile.endsWith("/.gitignore")){
                 try {
                     getLog().info("Using gitignore: " + projectFile);
@@ -154,8 +154,13 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             }
         }
 
+        List<String> allNonIgnoredFilesInProject = allFilesInProject
+                .stream()
+                .filter(filename -> ignore(gitIgnores, filename))
+                .collect(Collectors.toList());
+
         if (allFilesMustHaveCodeOwner || allExisingFilesMustHaveCodeOwner) {
-            allNonIgnoredFilesHaveApprovers(allFilesInProject, gitIgnores, codeOwners);
+            allNonIgnoredFilesHaveApprovers(allNonIgnoredFilesInProject, gitIgnores, codeOwners);
         }
 
         if (allFilesMustHaveCodeOwner || allNewlyCreatedFilesMustHaveCodeOwner) {
