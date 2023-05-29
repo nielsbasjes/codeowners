@@ -368,6 +368,9 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
                 .replace("/*","/.*") // "/foo/*\.js"  --> "/foo/.*\.js"
 
                 .replaceAll("^/", "^/") // If starts with / then pin to the start.
+
+                .replaceAll("([^.])\\*", "$1.*") // Match anything at the start
+
                 ;
 
 //            LOG.info("{}     -->     {}", fileExpression, fileRegex);

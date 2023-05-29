@@ -133,5 +133,20 @@ class TestCodeOwners {
         assertOwners(codeOwners, "/foo/bar.xml", "@user2");
     }
 
+    @Test
+    void testMidStarCase() {
+        CodeOwners codeOwners = new CodeOwners(
+            "/tool-*/ @user1\n" + // Intended to match '/tool-library/bar.txt'
+            "*.xml @user2\n"
+        );
+        codeOwners.setVerbose(true);
+        LOG.info("CODEOWNERS:\n{}", codeOwners);
+        assertOwners(codeOwners, "/tool-app/bar.txt", "@user1");
+        assertOwners(codeOwners, "/tool-app/foo/bar.txt", "@user1");
+        assertOwners(codeOwners, "/tool-app/bar.xml", "@user2");
+        assertOwners(codeOwners, "/tool-app/foo/bar.xml", "@user2");
+        assertOwners(codeOwners, "/bar.txt");
+        assertOwners(codeOwners, "/bar.xml", "@user2");
+    }
 
 }
