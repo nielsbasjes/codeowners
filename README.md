@@ -1,7 +1,7 @@
 # CodeOwners
 In several systems (like Github and Gitlab) you can have a CODEOWNERS file which is used to ensure all changes are approved by the right people.
 
-Reality: The systax of thes files can be tricky and it is quite easy to write a config that has the effect that not all files are covered.
+Reality: The syntax of these files can be tricky, and it is quite easy to write a config that has the effect that not all files are covered.
 
 # What is this
 1) Some software to read and parse a CODEOWNER file.
@@ -24,6 +24,9 @@ The intended goal is to make the build fail if the codeowners file does not cove
   - Check that if a new file is created in any of the directories in the project that it would automatically have a mandatory code owner.
 - **allFilesMustHaveCodeOwner**
   - Do both allExisingFilesMustHaveCodeOwner and allNewlyCreatedFilesMustHaveCodeOwner
+- **verbose**
+    - Make the rule output much more details than you would normally like to see.
+
 
 ## Example
 In one of my projects it looks like this:

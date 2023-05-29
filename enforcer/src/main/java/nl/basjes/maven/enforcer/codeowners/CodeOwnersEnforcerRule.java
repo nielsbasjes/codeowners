@@ -53,6 +53,8 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
 
     private boolean allNewlyCreatedFilesMustHaveCodeOwner = false;
 
+    private boolean verbose = false;
+
     private String unlikelyFilename = "NewlyCreated_NiElSbAsJeSwRoTeThIs.qwerty";
 
     @Inject
@@ -154,22 +156,27 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             }
         }
 
+        // Set everything to the requested verbosity
+        codeOwners.setVerbose(verbose);
+        gitIgnores.forEach(gi->gi.setVerbose(verbose));
+
         List<String> allNonIgnoredFilesInProject = allFilesInProject
                 .stream()
-                .filter(filename -> ignore(gitIgnores, filename))
+                .filter(filename -> !ignore(gitIgnores, filename))
                 .collect(Collectors.toList());
 
         if (allFilesMustHaveCodeOwner || allExisingFilesMustHaveCodeOwner) {
-            allNonIgnoredFilesHaveApprovers(allNonIgnoredFilesInProject, gitIgnores, codeOwners);
+            allNonIgnoredFilesHaveApprovers(allNonIgnoredFilesInProject, codeOwners);
         }
 
         if (allFilesMustHaveCodeOwner || allNewlyCreatedFilesMustHaveCodeOwner) {
             List<String> newFileForEveryDirectory = allDirectoriesInProject
                 .stream()
                 .map(directoryName -> (directoryName + "/" + unlikelyFilename).replace("//", "/"))
+                .filter(filename->!ignore(gitIgnores, filename))
                 .collect(Collectors.toList());
 
-            allNonIgnoredFilesHaveApprovers(newFileForEveryDirectory, gitIgnores, codeOwners);
+            allNonIgnoredFilesHaveApprovers(newFileForEveryDirectory, codeOwners);
         }
     }
 
@@ -184,24 +191,23 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         return !(ignore == null || !ignore);
     }
 
-    void allNonIgnoredFilesHaveApprovers(List<String> filenames, List<GitIgnore> gitIgnores, CodeOwners codeOwners) throws EnforcerRuleException {
+    void allNonIgnoredFilesHaveApprovers(List<String> filenames, CodeOwners codeOwners) throws EnforcerRuleException {
         boolean pass = true;
+        List<String> filesWithoutApprover = new ArrayList<>();
+
         for (String filename : filenames) {
             getLog().debug("Checking: " + filename);
-
-            if (ignore(gitIgnores, filename)) {
-                getLog().debug("- Ignored");
-            } else {
-                List<String> approvers = codeOwners.getMandatoryApprovers(filename);
-                getLog().debug("- Approvers: " + approvers);
-                if (approvers.isEmpty()) {
-                    getLog().error("No approvers for " + filename);
-                    pass = false;
-                }
+            List<String> approvers = codeOwners.getMandatoryApprovers(filename);
+            getLog().debug("- Approvers: " + approvers);
+            if (approvers.isEmpty()) {
+                getLog().error("No approvers for " + filename);
+                filesWithoutApprover.add(filename);
+                pass = false;
             }
-            if (!pass) {
-                throw new EnforcerRuleException("Not all files had an approver.");
-            }
+        }
+        if (!pass) {
+            throw new EnforcerRuleException("Not all files had an approver: \n--> " +
+                String.join("\n--> ", filesWithoutApprover));
         }
     }
 
