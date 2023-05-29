@@ -4,8 +4,9 @@ In several systems (like Github and Gitlab) you can have a CODEOWNERS file which
 Reality: The systax of thes files can be tricky and it is quite easy to write a config that has the effect that not all files are covered.
 
 # What is this
-1) Some software to read and parse the CODEOWNER file.
-2) An extra set of rules for the Maven Enforcer plugin to check if everything is good.
+1) Some software to read and parse a CODEOWNER file.
+2) Some software to read and parse a .gitignore file.
+3) An extra set of rules for the Maven Enforcer plugin to check if everything is good.
 
 # Usage
 

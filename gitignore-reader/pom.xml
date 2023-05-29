@@ -25,23 +25,30 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
 
-  <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
-  <artifactId>codeowners-enforcer-rules</artifactId>
+  <groupId>nl.basjes.gitignore</groupId>
+  <artifactId>gitignore-reader</artifactId>
 
-  <name>CODEOWNERS Tools: Maven Enforcer rules</name>
+  <name>CODEOWNERS Tools: .gitignore reader</name>
 
   <dependencies>
 
+    <!-- Direct dependencies -->
     <dependency>
-      <groupId>nl.basjes.codeowners</groupId>
-      <artifactId>codeowners-reader</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.antlr</groupId>
+      <artifactId>antlr4-runtime</artifactId>
+      <version>[${antlr.version}]</version> <!-- Pin is HARD to this specific version -->
     </dependency>
 
     <dependency>
-      <groupId>nl.basjes.gitignore</groupId>
-      <artifactId>gitignore-reader</artifactId>
-      <version>${project.version}</version>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.12.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.antlr</groupId>
+      <artifactId>ST4</artifactId>
+      <version>4.3.4</version>
     </dependency>
 
     <!-- Enforcer provided dependencies -->
@@ -88,7 +95,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-toolchains-plugin</artifactId>
-        <version>${maven-toolchains-plugin.version}</version>
+        <version>3.1.0</version>
         <executions>
           <execution>
             <goals>
@@ -105,14 +112,29 @@
         </configuration>
       </plugin>
 
+      <plugin>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr4-maven-plugin</artifactId>
+        <version>${antlr.version}</version>
+        <executions>
+          <execution>
+            <id>antlr</id>
+            <goals>
+              <goal>antlr4</goal>
+            </goals>
+            <configuration>
+              <visitor>true</visitor>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.4.1</version>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
         <configuration>
-          <minimizeJar>true</minimizeJar>
-          <createDependencyReducedPom>false</createDependencyReducedPom>
+          <failIfNoTests>true</failIfNoTests>
         </configuration>
       </plugin>
 
@@ -130,46 +152,52 @@
         </executions>
       </plugin>
 
-<!--      <plugin>-->
-<!--        <groupId>org.apache.maven.plugins</groupId>-->
-<!--        <artifactId>maven-surefire-plugin</artifactId>-->
-<!--        <version>${maven-surefire-plugin.version}</version>-->
-<!--        <configuration>-->
-<!--          <failIfNoTests>true</failIfNoTests>-->
-<!--        </configuration>-->
-<!--      </plugin>-->
-
-      <!-- Always run integration tests -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-invoker-plugin</artifactId>
-        <version>${maven-invoker-plugin.version}</version>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.4.1</version>
         <configuration>
-          <failIfNoProjects>true</failIfNoProjects>
-          <!--          <debug>true</debug>-->
-          <streamLogsOnFailures>true</streamLogsOnFailures>
-          <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
-          <postBuildHookScript>verify</postBuildHookScript>
-          <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
-          <settingsFile>./src/it/settings.xml</settingsFile>
-          <goals>
-            <goal>clean</goal>
-            <goal>test</goal>
-          </goals>
+          <minimizeJar>true</minimizeJar>
+          <createDependencyReducedPom>true</createDependencyReducedPom>
+          <useDependencyReducedPomInJar>true</useDependencyReducedPomInJar>
+          <filters>
+            <filter>
+              <artifact>org.antlr:antlr4-runtime</artifact>
+              <excludes>
+                <exclude>META-INF/services/**</exclude>
+                <exclude>META-INF/MANIFEST.MF</exclude>
+              </excludes>
+            </filter>
+          </filters>
+          <relocations>
+            <relocation>
+              <pattern>org.antlr</pattern>
+              <shadedPattern>nl.basjes.codeowners.shaded.org.antlr</shadedPattern>
+            </relocation>
+          </relocations>
         </configuration>
+
         <executions>
           <execution>
-            <id>integration-test</id>
+            <id>inject-problematic-dependencies</id>
+            <phase>package</phase>
             <goals>
-              <goal>install</goal>
-              <goal>run</goal>
+              <goal>shade</goal>
             </goals>
+            <configuration>
+              <artifactSet>
+                <includes>
+                  <include>org.antlr:antlr4-runtime</include>
+                </includes>
+              </artifactSet>
+            </configuration>
           </execution>
+
         </executions>
       </plugin>
 
-
     </plugins>
   </build>
+
 </project>
 

@@ -23,13 +23,12 @@ import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import nl.basjes.codeowners.CodeOwners;
+import nl.basjes.gitignore.GitIgnore;
 import org.apache.maven.enforcer.rule.api.AbstractEnforcerRule;
 import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
 import org.apache.maven.execution.MavenSession;
@@ -72,9 +71,9 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         if (codeOwnersFile == null) {
             codeOwnersFile = new File("CODEOWNERS");
         }
-        CodeOwners codeOwners;
+        GitIgnore codeOwners;
         try {
-            codeOwners = new CodeOwners(codeOwnersFile);
+            codeOwners = new GitIgnore(codeOwnersFile);
         } catch (IOException e) {
             throw new EnforcerRuleException("Unable to read the CODEOWNERS: " + codeOwnersFile, e);
         }

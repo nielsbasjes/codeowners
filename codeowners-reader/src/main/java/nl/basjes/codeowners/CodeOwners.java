@@ -21,6 +21,7 @@ import nl.basjes.codeowners.parser.CodeOwnersBaseVisitor;
 import nl.basjes.codeowners.parser.CodeOwnersLexer;
 import nl.basjes.codeowners.parser.CodeOwnersParser;
 import nl.basjes.codeowners.parser.CodeOwnersParser.ApprovalRuleContext;
+import nl.basjes.codeowners.parser.CodeOwnersParser.CodeownersContext;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -73,7 +74,7 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
         CodeOwnersLexer lexer = new CodeOwnersLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         CodeOwnersParser parser = new CodeOwnersParser(tokens);
-        CodeOwnersParser.CodeownersContext codeowners = parser.codeowners();
+        CodeownersContext codeowners = parser.codeowners();
         visit(codeowners);
 
         // Make sure we retain the last section also
@@ -296,6 +297,8 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
             this.approvers = approvers;
 
             String fileRegex = fileExpression
+                .trim() // Clear leading and trailing spaces
+
                 .replace("\\ ", " ") // The escaped spaces must become spaces again.
 
                 // If a path does not start with a /, the path is treated as if it starts with a globstar. README.md is treated the same way as /**/README.md
