@@ -60,11 +60,9 @@
     <git-commit-id-maven-plugin.version>6.0.0</git-commit-id-maven-plugin.version>
     <cyclonedx-maven-plugin.version>2.7.9</cyclonedx-maven-plugin.version>
 
-
     <antlr.version>4.12.0</antlr.version>
     <junit5.version>5.9.3</junit5.version>
     <log4j2.version>2.20.0</log4j2.version>
-
 
     <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
     <!-- See http://www.eclemma.org/jacoco/trunk/doc/prepare-agent-mojo.html-->

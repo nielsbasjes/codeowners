@@ -27,7 +27,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stringtemplate.v4.STGroupString;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,9 +40,9 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
 
     private static final Logger LOG = LoggerFactory.getLogger(GitIgnore.class);
 
-    private String baseDir;
+    private final String baseDir;
 
-    private List<IgnoreRule> ignoreRules = new ArrayList<>();
+    private final List<IgnoreRule> ignoreRules = new ArrayList<>();
 
     // Load the gitignore from a file
     public GitIgnore(File file) throws IOException {
@@ -84,7 +83,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
 
         if (!matchFileName.startsWith(baseDir)) {
             // Not for me
-            return mustBeIgnored;
+            return null;
         }
 
         for (IgnoreRule ignoreRule : ignoreRules) {
@@ -106,9 +105,14 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
 
     @Override
     public String toString() {
-        return ST_GROUP_STRING.getInstanceOf("GitIgnore").add("gitIgnore", this).render();
-    }
+        StringBuilder result = new StringBuilder();
+        result.append("# GitIgnore file:\n");
 
+        for (IgnoreRule ignoreRule : ignoreRules) {
+            result.append(ignoreRule).append('\n');
+        }
+        return result.toString();
+    }
 
     public static class IgnoreRule {
         private final boolean negate;
@@ -165,11 +169,6 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
             filePattern = Pattern.compile(fileRegex);
         }
 
-        public String getFileExpression() {
-            return fileExpression;
-        }
-
-
         /**
          * Checks if the file matches the stored expression.
          * @param filename The filename to be checked
@@ -191,37 +190,8 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
 
         @Override
         public String toString() {
-            return ST_GROUP_STRING.getInstanceOf("ApprovalRule").add("approvalRule", this).render();
+            return (negate?"!":"")+ fileExpression + "          # Used Regex: " + filePattern;
         }
     }
 
-    private static final STGroupString ST_GROUP_STRING = new STGroupString(
-        "GitIgnore(gitIgnore) ::= <<\n" +
-        "<if(gitIgnore.hasMultipleSections)>" +
-        "<gitIgnore.sections.values:Section() ;separator=\"\n\n\">\n" +
-        "<else>\n" +
-        "<gitIgnore.sections.values:DefaultSection() ;separator=\"\n\n\">\n" +
-        "<endif>\n" +
-        ">>\n" +
-
-        "Section(section) ::= <<\n" +
-        "<if(section.optional)>^<endif>" +
-            "[<section.name>]" +
-            "<if(section.minimalNumberOfApprovers)>[<section.minimalNumberOfApprovers>]<endif>" +
-            "<if(section.defaultApprovers)> <section.defaultApprovers;separator=\" \"><endif>\n" +
-        "<section.approvalRules:{ rule | <ApprovalRule(rule)>};separator=\"\n\">\n" +
-        ">>\n" +
-
-        "DefaultSection(section) ::= <<\n" +
-        "<if(section.defaultSection)>\n" +
-        "<section.approvalRules:{ rule | <ApprovalRule(rule)>};separator=\"\n\">\n" +
-        "<else>\n" +
-        "<Section(section)>\n" +
-        "<endif>\n" +
-        ">>\n" +
-
-        "ApprovalRule(approvalRule) ::= <<\n" +
-        "<approvalRule.fileExpression><if(approvalRule.approvers)> <approvalRule.approvers; separator=\" \"><endif>\n" +
-        ">>\n"
-    );
 }

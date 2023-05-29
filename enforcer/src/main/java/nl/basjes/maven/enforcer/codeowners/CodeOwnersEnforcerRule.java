@@ -50,7 +50,11 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
 
     private boolean allFilesMustHaveCodeOwner = false;
 
-    // Inject needed Maven components
+    private boolean allExisingFilesMustHaveCodeOwner = false;
+
+    private boolean allNewlyCreatedFilesMustHaveCodeOwner = false;
+
+    private String unlikelyFilename = "NewlyCreated_NiElSbAsJeSwRoTeThIs.qwerty";
 
     @Inject
     private MavenProject project;
@@ -63,7 +67,10 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
 
     public void execute() throws EnforcerRuleException {
         List<String> allFilesInProject = null;
+        List<String> allDirectoriesInProject = null;
         String baseDir = project.getBasedir().getPath();
+
+        getLog().debug("BaseDir=|"+baseDir+"|");
 
         // Get a list of all files in the project
         try {
@@ -74,6 +81,13 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
                     .sorted()
                     .collect(Collectors.toList());
             }
+            try(Stream<Path> projectFiles = Files.find(baseDirPath, 128, (filePath, fileAttr) -> fileAttr.isDirectory())) {
+                allDirectoriesInProject = projectFiles
+                    .map(file -> file.toString().replace(baseDir,""))
+                    .sorted()
+                    .collect(Collectors.toList());
+            }
+
         } catch (IOException e) {
             throw new EnforcerRuleException("Unable to list the files", e);
         }
@@ -81,10 +95,15 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         // Get the files that are ignored by the SCM
         List<GitIgnore> gitIgnores = new ArrayList<>();
 
-        // Start with the internal files that are used by git.
+        // Start with the internal files that are used by common SCMs.
         gitIgnores.add(new GitIgnore(
-            "/.git/\n"
+            "/.git/\n" +
+            "/.hg/\n" +
+            ".svn/\n"
         ));
+
+        getLog().info("Using gitignore: Built in base rules.");
+        getLog().debug(gitIgnores.get(0).toString());
 
         List<Object> commonCodeOwnersFiles = Arrays.asList(
             "/CODEOWNERS",
@@ -93,11 +112,16 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             "/docs/CODEOWNERS"
             );
 
+        CodeOwners codeOwners = null;
+
         for (String projectFile : allFilesInProject) {
+            getLog().info("==>"+projectFile);
             if (projectFile.endsWith("/.gitignore")){
                 try {
                     getLog().info("Using gitignore: " + projectFile);
-                    gitIgnores.add(new GitIgnore(new File(baseDir + projectFile)));
+                    GitIgnore gitIgnore = new GitIgnore(new File(baseDir + projectFile));
+                    getLog().debug(gitIgnore.toString());
+                    gitIgnores.add(gitIgnore);
                 } catch (IOException e) {
                     throw new EnforcerRuleException("Unable to open the gitignore file: " + projectFile);
                 }
@@ -106,6 +130,12 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
                 if (commonCodeOwnersFiles.contains(projectFile)) {
                     getLog().info("Using CODEOWNERS: " + projectFile);
                     codeOwnersFile = new File(baseDir + projectFile);
+                    try {
+                        codeOwners = new CodeOwners(codeOwnersFile);
+                    } catch (IOException e) {
+                        throw new EnforcerRuleException("Unable to read the CODEOWNERS: " + codeOwnersFile, e);
+                    }
+                    getLog().debug(codeOwners.toString());
                 }
             }
         }
@@ -114,31 +144,27 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             throw new EnforcerRuleException("This project does NOT have a CODEOWNERS file");
         }
 
-        CodeOwners codeOwners;
-        try {
-            codeOwners = new CodeOwners(codeOwnersFile);
-        } catch (IOException e) {
-            throw new EnforcerRuleException("Unable to read the CODEOWNERS: " + codeOwnersFile, e);
+        if (codeOwners == null) {
+            getLog().info("Using CODEOWNERS: " + codeOwnersFile);
+            try {
+                codeOwners = new CodeOwners(codeOwnersFile);
+                getLog().debug(codeOwners.toString());
+            } catch (IOException e) {
+                throw new EnforcerRuleException("Unable to read the CODEOWNERS: " + codeOwnersFile, e);
+            }
         }
-        getLog().debug("CODEOWNER:\n"+codeOwners);
 
-        boolean pass = true;
-        for (String projectFile : allFilesInProject) {
-            getLog().debug("Checking: " + projectFile);
-            if (allFilesMustHaveCodeOwner) {
-                if (ignore(gitIgnores, projectFile)) {
-                    getLog().debug("- Ignored");
-                } else {
-                    getLog().debug("- Approvers: " + codeOwners.getAllApprovers(projectFile));
-                    if (codeOwners.getAllApprovers(projectFile).isEmpty()) {
-                        getLog().error("No approvers for " + projectFile);
-                        pass = false;
-                    }
-                }
-            }
-            if (!pass) {
-                throw new EnforcerRuleException("Not all files had an approver.");
-            }
+        if (allFilesMustHaveCodeOwner || allExisingFilesMustHaveCodeOwner) {
+            allNonIgnoredFilesHaveApprovers(allFilesInProject, gitIgnores, codeOwners);
+        }
+
+        if (allFilesMustHaveCodeOwner || allNewlyCreatedFilesMustHaveCodeOwner) {
+            List<String> newFileForEveryDirectory = allDirectoriesInProject
+                .stream()
+                .map(directoryName -> (directoryName + "/" + unlikelyFilename).replace("//", "/"))
+                .collect(Collectors.toList());
+
+            allNonIgnoredFilesHaveApprovers(newFileForEveryDirectory, gitIgnores, codeOwners);
         }
     }
 
@@ -151,6 +177,27 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             }
         }
         return !(ignore == null || !ignore);
+    }
+
+    void allNonIgnoredFilesHaveApprovers(List<String> filenames, List<GitIgnore> gitIgnores, CodeOwners codeOwners) throws EnforcerRuleException {
+        boolean pass = true;
+        for (String filename : filenames) {
+            getLog().debug("Checking: " + filename);
+
+            if (ignore(gitIgnores, filename)) {
+                getLog().debug("- Ignored");
+            } else {
+                List<String> approvers = codeOwners.getMandatoryApprovers(filename);
+                getLog().debug("- Approvers: " + approvers);
+                if (approvers.isEmpty()) {
+                    getLog().error("No approvers for " + filename);
+                    pass = false;
+                }
+            }
+            if (!pass) {
+                throw new EnforcerRuleException("Not all files had an approver.");
+            }
+        }
     }
 
 

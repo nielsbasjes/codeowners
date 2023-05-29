@@ -30,7 +30,6 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stringtemplate.v4.STGroupString;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,16 +45,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CodeOwners.class);
-
-    @SuppressWarnings("unused") // Used in StringTemplate
-    public Map<String, Section> getSections() {
-        return sections;
-    }
-
-    @SuppressWarnings("unused") // Used in StringTemplate
-    public boolean getHasMultipleSections() {
-        return sections.size() > 1;
-    }
 
     // Map name of Section to Sections
     private final Map<String, Section> sections = new TreeMap<>();
@@ -116,13 +105,11 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
     public void checkForAnyStructuralProblems() {
         for (Section section : sections.values()) {
             // An optional section where you expect a MinimalNumberOfApprovers is a problem
-            Integer minimalNumberOfApprovers = section.getMinimalNumberOfApprovers();
-            if (minimalNumberOfApprovers != null) {
-                if (section.isOptional() && minimalNumberOfApprovers != 0) {
-                    LOG.warn("CODEOWNERS Section \"{}\" is Optional so the specified MinimalNumberOfApprovers {} is IGNORED!",
-                            section.getName(), minimalNumberOfApprovers);
-                    hasStructuralProblems = true;
-                }
+            int minimalNumberOfApprovers = section.getMinimalNumberOfApprovers();
+            if (section.isOptional() && minimalNumberOfApprovers != 0) {
+                LOG.warn("CODEOWNERS Section \"{}\" is Optional so the specified MinimalNumberOfApprovers {} is IGNORED!",
+                        section.getName(), minimalNumberOfApprovers);
+                hasStructuralProblems = true;
             }
 
             // Having in the same section the same file pattern multiple times is bad.
@@ -180,7 +167,7 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
             section = new Section(sectionName);
             section.optional = ctx.OPTIONAL() != null;
             if (ctx.approvers != null) {
-                section.setMinimalNumberOfApprovers(Integer.valueOf(ctx.approvers.getText().trim()));
+                section.setMinimalNumberOfApprovers(Integer.parseInt(ctx.approvers.getText().trim()));
             }
             for (TerminalNode user : ctx.USERID()) {
                 section.addDefaultApprover(user.getText());
@@ -208,13 +195,32 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
     @Override
     public String toString() {
-        return ST_GROUP_STRING.getInstanceOf("CodeOwners").add("codeowners", this).render();
+        StringBuilder result = new StringBuilder();
+        result.append("# CODEOWNERS file:\n");
+        if (sections.size() < 1) {
+            return result.append("# No CODEOWNER rules were defined.\n").toString();
+        }
+
+        if (sections.size() == 1) {
+            Section firstSection = sections.values().iterator().next();
+            if (firstSection.isDefaultSection()) {
+                // If ONLY the default section then no section header
+                for (ApprovalRule approvalRule : firstSection.getApprovalRules()) {
+                    result.append(approvalRule).append('\n');
+                }
+                return result.toString();
+            }
+        }
+        for (Section section : sections.values()) {
+            result.append(section).append('\n');
+        }
+        return result.toString();
     }
 
     public static class Section {
         private boolean optional = false;
         private final String name;
-        private Integer minimalNumberOfApprovers = null;
+        private int minimalNumberOfApprovers = 0;
         private final List<String> defaultApprovers = new ArrayList<>();
         private final List<ApprovalRule> approvalRules = new ArrayList<>();
 
@@ -231,10 +237,6 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
         void addApprovalRule(ApprovalRule rule) {
             approvalRules.add(rule);
-        }
-
-        void setOptional(boolean optional) {
-            this.optional = optional;
         }
 
         public String getName() {
@@ -255,11 +257,11 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
         public boolean isDefaultSection() { return IMPLICIT_SECTION_NAME.equals(name); }
 
-        void setMinimalNumberOfApprovers(Integer minimalNumberOfApprovers) {
+        void setMinimalNumberOfApprovers(int minimalNumberOfApprovers) {
             this.minimalNumberOfApprovers = minimalNumberOfApprovers;
         }
 
-        public Integer getMinimalNumberOfApprovers() {
+        public int getMinimalNumberOfApprovers() {
             return minimalNumberOfApprovers;
         }
 
@@ -283,7 +285,22 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
         @Override
         public String toString() {
-            return ST_GROUP_STRING.getInstanceOf("Section").add("section", this).render();
+            StringBuilder result = new StringBuilder();
+            if (optional) {
+                result.append('^');
+            }
+            result.append('[').append(name).append(']');
+            if (minimalNumberOfApprovers > 0) {
+                result.append('[').append(minimalNumberOfApprovers).append(']');
+            }
+            if (!defaultApprovers.isEmpty()) {
+                result.append(' ').append(String.join(" ", defaultApprovers));
+            }
+            result.append('\n');
+            for (ApprovalRule approvalRule : approvalRules) {
+                result.append(approvalRule).append('\n');
+            }
+            return result.toString();
         }
     }
 
@@ -344,37 +361,7 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
         @Override
         public String toString() {
-            return ST_GROUP_STRING.getInstanceOf("ApprovalRule").add("approvalRule", this).render();
+            return fileExpression + " " + String.join(" ", approvers);
         }
     }
-
-    private static final STGroupString ST_GROUP_STRING = new STGroupString(
-        "CodeOwners(codeowners) ::= <<\n" +
-        "<if(codeowners.hasMultipleSections)>" +
-        "<codeowners.sections.values:Section() ;separator=\"\n\n\">\n" +
-        "<else>\n" +
-        "<codeowners.sections.values:DefaultSection() ;separator=\"\n\n\">\n" +
-        "<endif>\n" +
-        ">>\n" +
-
-        "Section(section) ::= <<\n" +
-        "<if(section.optional)>^<endif>" +
-            "[<section.name>]" +
-            "<if(section.minimalNumberOfApprovers)>[<section.minimalNumberOfApprovers>]<endif>" +
-            "<if(section.defaultApprovers)> <section.defaultApprovers;separator=\" \"><endif>\n" +
-        "<section.approvalRules:{ rule | <ApprovalRule(rule)>};separator=\"\n\">\n" +
-        ">>\n" +
-
-        "DefaultSection(section) ::= <<\n" +
-        "<if(section.defaultSection)>\n" +
-        "<section.approvalRules:{ rule | <ApprovalRule(rule)>};separator=\"\n\">\n" +
-        "<else>\n" +
-        "<Section(section)>\n" +
-        "<endif>\n" +
-        ">>\n" +
-
-        "ApprovalRule(approvalRule) ::= <<\n" +
-        "<approvalRule.fileExpression><if(approvalRule.approvers)> <approvalRule.approvers; separator=\" \"><endif>\n" +
-        ">>\n"
-    );
 }

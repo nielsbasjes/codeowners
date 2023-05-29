@@ -19,12 +19,16 @@ package nl.basjes.gitignore;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static nl.basjes.gitignore.TestUtils.assertIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNotIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNullMatch;
 
 class TestGitIgnore {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TestGitIgnore.class);
 
     @Test
     void testFullRangeExpression() {
@@ -35,8 +39,10 @@ class TestGitIgnore {
         GitIgnore gitIgnore = new GitIgnore(input);
         assertIgnore(gitIgnore, "logs/debug.log");
         assertNullMatch(gitIgnore, "#important_/debug4/debug4/something/something/local_debugb/Something.logxxx");
+        LOG.info("Input:\n{}\nParsed:\n{}\n", input, gitIgnore);
     }
 
+    // ------------------------------------------
 
     // I used the examples provided by Atlassian in their gitignore tutorial as test cases
     // https://www.atlassian.com/git/tutorials/saving-changes/gitignore
