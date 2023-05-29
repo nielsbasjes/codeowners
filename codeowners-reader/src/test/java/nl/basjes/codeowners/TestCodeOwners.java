@@ -116,4 +116,22 @@ class TestCodeOwners {
         assertOwners(codeOwners, "#file_with_pound.rb","@owner-file-with-pound", "@dev-team");
     }
 
+    @Test
+    void testDotStarCase() {
+        CodeOwners codeOwners = new CodeOwners(
+            "/.* @user1\n" + // Intended to match '/.foo' NOT '/'
+            "*.xml @user2\n"
+        );
+//        codeOwners.setVerbose(true);
+//        LOG.info("CODEOWNERS:\n{}", codeOwners);
+        assertOwners(codeOwners, "/.foo", "@user1");
+        assertOwners(codeOwners, "/.foo/bar", "@user1");
+        assertOwners(codeOwners, "/xfoo"); // No users
+        assertOwners(codeOwners, "/xfoo/bar");
+        assertOwners(codeOwners, "/.foo/bar.xml", "@user2");
+        assertOwners(codeOwners, "/foo"); // No users
+        assertOwners(codeOwners, "/foo/bar.xml", "@user2");
+    }
+
+
 }

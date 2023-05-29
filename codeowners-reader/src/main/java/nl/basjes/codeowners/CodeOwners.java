@@ -324,6 +324,7 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
                 .replaceAll("([^/*])$", "$1(/|\\$)")
 
                 .replace(".", "\\.") // Avoid bad wildcards
+                .replace("\\.*", "\\..*")//  matching  /.* onto /.foo/bar.xml
 
                 // The Globstar "foo/**/bar" must also match "foo/bar"
                 .replace("/**","(/.*)?")
