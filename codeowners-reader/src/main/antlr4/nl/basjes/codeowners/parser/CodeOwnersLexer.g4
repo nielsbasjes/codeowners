@@ -57,7 +57,7 @@ SPACES
     ;
 
 USERID
-    : [a-zA-Z]* '@' [a-zA-Z0-9/.-]+ EOL?
+    : [a-zA-Z_-]* '@' [a-zA-Z0-9/._-]+ EOL?
     ;
 
 NEWLINE
