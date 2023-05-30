@@ -37,9 +37,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Custom Enforcer Rule - example
- */
+@SuppressWarnings("unused") // Used by the enforcer-plugin that finds it via the @Named annotation
 @Named("codeOwners") // rule name - must start from lowercase character
 public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
 
@@ -55,6 +53,7 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
 
     private boolean verbose = false;
 
+    private boolean showApprovers = false;
     private String unlikelyFilename = "NewlyCreated_NiElSbAsJeSwRoTeThIs.qwerty";
 
     @Inject
@@ -156,13 +155,22 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             }
         }
 
+        if (showApprovers) {
+            // Run this listing without the verbose set to keep the output usable
+            printApprovers(allFilesInProject
+                .stream()
+                .filter(filename -> keepFile(gitIgnores, filename))
+                .collect(Collectors.toList()),
+                codeOwners);
+        }
+
         // Set everything to the requested verbosity
         codeOwners.setVerbose(verbose);
         gitIgnores.forEach(gi->gi.setVerbose(verbose));
 
         List<String> allNonIgnoredFilesInProject = allFilesInProject
                 .stream()
-                .filter(filename -> !ignore(gitIgnores, filename))
+                .filter(filename -> keepFile(gitIgnores, filename))
                 .collect(Collectors.toList());
 
         if (allFilesMustHaveCodeOwner || allExisingFilesMustHaveCodeOwner) {
@@ -173,14 +181,14 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             List<String> newFileForEveryDirectory = allDirectoriesInProject
                 .stream()
                 .map(directoryName -> (directoryName + "/" + unlikelyFilename).replace("//", "/"))
-                .filter(filename->!ignore(gitIgnores, filename))
+                .filter(filename -> keepFile(gitIgnores, filename))
                 .collect(Collectors.toList());
 
             allNonIgnoredFilesHaveApprovers(newFileForEveryDirectory, codeOwners);
         }
     }
 
-    boolean ignore(List<GitIgnore> gitIgnoreList, String filename) {
+    boolean keepFile(List<GitIgnore> gitIgnoreList, String filename) {
         Boolean ignore=null;
         for (GitIgnore gitIgnore : gitIgnoreList) {
             Boolean ignoreResult = gitIgnore.isIgnoredFile(filename);
@@ -188,7 +196,7 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
                 ignore = ignoreResult;
             }
         }
-        return !(ignore == null || !ignore);
+        return (ignore == null || ignore == Boolean.FALSE);
     }
 
     void allNonIgnoredFilesHaveApprovers(List<String> filenames, CodeOwners codeOwners) throws EnforcerRuleException {
@@ -211,6 +219,15 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         }
     }
 
+    void printApprovers(List<String> filenames, CodeOwners codeOwners) {
+        getLog().info("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
+        getLog().info("Listing all Mandatory Approvers:");
+        getLog().info("--------------------------------");
+        for (String filename : filenames) {
+            getLog().info("Approvers for: " + filename + " : " + codeOwners.getMandatoryApprovers(filename));
+        }
+        getLog().info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+    }
 
     /**
      * If your rule is cacheable, you must return a unique id when parameters or conditions

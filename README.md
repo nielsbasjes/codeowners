@@ -33,7 +33,8 @@ The intended goal is to make the build fail if the codeowners file does not cove
   - Do both allExisingFilesMustHaveCodeOwner and allNewlyCreatedFilesMustHaveCodeOwner
 - **verbose**
     - Make the rule output much more details than you would normally like to see.
-
+- **showApprovers**
+    - Make the rule output show the approvers for all non-ignored files in the entire project.
 
 ## Example
 In one of my projects it looks like this:

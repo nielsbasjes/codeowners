@@ -43,6 +43,7 @@
             <codeOwners>
               <codeOwnersFile>.config/CODEOWNERS</codeOwnersFile>
               <allFilesMustHaveCodeOwner>true</allFilesMustHaveCodeOwner>
+              <showApprovers>true</showApprovers>
             </codeOwners>
           </rules>
         </configuration>
