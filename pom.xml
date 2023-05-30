@@ -19,7 +19,7 @@
 
   <groupId>nl.basjes.codeowners</groupId>
   <artifactId>codeowners-parent</artifactId>
-  <version>0.1.2-SNAPSHOT</version>
+  <version>0.2.0</version>
   <packaging>pom</packaging>
 
   <name>CODEOWNERS Tools:</name>
@@ -33,7 +33,7 @@
     <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
 
     <!-- Needed to make the build reproducible https://reproducible-builds.org/ -->
-    <project.build.outputTimestamp>2023-05-29T16:28:33Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2023-05-30T19:14:02Z</project.build.outputTimestamp>
 
     <maven.version>3.9.2</maven.version>
     <maven.minimal.version>3.9.2</maven.minimal.version>
@@ -606,7 +606,7 @@
     <url>https://github.com/nielsbasjes/codeowners</url>
     <connection>scm:git:https://github.com/nielsbasjes/codeowners.git</connection>
     <developerConnection>scm:git:file:///${project.basedir}</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v0.2.0</tag>
   </scm>
 
 </project>
