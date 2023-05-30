@@ -1,7 +1,9 @@
 [![Github actions Build status](https://img.shields.io/github/actions/workflow/status/nielsbasjes/codeowners/build.yml?branch=main)](https://github.com/nielsbasjes/codeowners/actions)
 [![Coverage Status](https://img.shields.io/codecov/c/github/nielsbasjes/codeowners)](https://app.codecov.io/gh/nielsbasjes/codeowners)
 [![License](https://img.shields.io/:license-apache-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
-[![Maven Central](https://img.shields.io/maven-central/v/nl.basjes.stringtemplate/codeowners.svg)](https://central.sonatype.com/namespace/nl.basjes.stringtemplate)
+[![Maven Central: codeowners-reader](https://img.shields.io/maven-central/v/nl.basjes.codeowners/codeowners-reader.svg?label=codeowners-reader)](https://central.sonatype.com/namespace/nl.basjes.codeowners)
+[![Maven Central: gitignore-reader](https://img.shields.io/maven-central/v/nl.basjes.gitignore/gitignore-reader.svg?label=gitignore-reader)](https://central.sonatype.com/namespace/nl.basjes.gitignore)
+[![Maven Central: codeowners-enforcer-rules](https://img.shields.io/maven-central/v/nl.basjes.maven.enforcer.codeowners/codeowners-enforcer-rules.svg?label=codeowners-enforcer-rules)](https://central.sonatype.com/namespace/nl.basjes.maven.enforcer.codeowners)
 [![GitHub stars](https://img.shields.io/github/stars/nielsbasjes/codeowners?label=GitHub%20stars)](https://github.com/nielsbasjes/codeowners/stargazers)
 [![If this project has business value for you then don't hesitate to support me with a small donation.](https://img.shields.io/badge/Donations-via%20Paypal-blue.svg)](https://www.paypal.me/nielsbasjes)
 
@@ -11,9 +13,9 @@ In several systems (like Github and Gitlab) you can have a CODEOWNERS file which
 Reality: The syntax of these files can be tricky, and it is quite easy to write a config that has the effect that not all files are covered.
 
 # What is this
-1) Some software to read and parse a CODEOWNER file.
-2) Some software to read and parse a .gitignore file.
-3) An extra set of rules for the Maven Enforcer plugin to check if everything is good.
+1) A Java library to read a CODEOWNER file.
+2) A Java library to read a .gitignore file.
+3) An extra rule for the Maven Enforcer plugin to check the CODEOWNERS against the actual project files. (See Usage below)
 
 The intended goal is to make the build fail if the codeowners file does not cover all files and directories in the project.
 
@@ -34,7 +36,7 @@ The intended goal is to make the build fail if the codeowners file does not cove
 - **verbose**
     - Make the rule output much more details than you would normally like to see.
 - **showApprovers**
-    - Make the rule output show the approvers for all non-ignored files in the entire project.
+    - Make the rule output show the approvers for all non-ignored files in the entire project. The intended usage is that with this you can debug the CODEOWNERS result and manually see for every file in your project if you are happy with the resulting approvers.
 
 ## Example
 In one of my projects it looks like this:
@@ -65,6 +67,7 @@ In one of my projects it looks like this:
                 <codeOwnersFile>${maven.multiModuleProjectDirectory}/CODEOWNERS</codeOwnersFile>
                 <allFilesMustHaveCodeOwner>true</allFilesMustHaveCodeOwner>
                 <!-- <verbose>true</verbose> -->
+                <!-- <showApprovers>true</showApprovers> -->
               </codeOwners>
             </rules>
           </configuration>
