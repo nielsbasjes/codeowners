@@ -362,14 +362,15 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
                 .replace("**",".*") // Convert to the Regex wildcards
 
-                .replaceAll("/\\*$","/[^/]+\\$") // A trailing '/*' means NO further subdirs should be matched
                 .replaceAll("^\\*", ".*") // Match anything at the start
-
-                .replace("/*","/.*") // "/foo/*\.js"  --> "/foo/.*\.js"
 
                 .replaceAll("^/", "^/") // If starts with / then pin to the start.
 
-                .replaceAll("([^.])\\*", "$1.*") // Match anything at the start
+                .replaceAll("/\\*([^/]*)$","/[^/]*$1\\$") // A trailing '/*something' means NO further subdirs should be matched
+
+                .replace("/*","/.*") // "/foo/*\.js"  --> "/foo/.*\.js"
+
+                .replaceAll("([^.\\]])\\*", "$1.*") // Match anything at the start
 
                 ;
 

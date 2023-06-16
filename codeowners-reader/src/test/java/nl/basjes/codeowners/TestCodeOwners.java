@@ -119,18 +119,19 @@ class TestCodeOwners {
     @Test
     void testDotStarCase() {
         CodeOwners codeOwners = new CodeOwners(
-            "/.* @user1\n" + // Intended to match '/.foo' NOT '/'
+            "/foo/.* @user1\n" + // Intended to match '/foo/.bar' NOT '/foo/' and NOT '/foo/foo/.bar'
             "*.xml @user2\n"
         );
-        codeOwners.setVerbose(true);
+//        codeOwners.setVerbose(true);
         LOG.info("CODEOWNERS:\n{}", codeOwners);
-        assertOwners(codeOwners, "/.foo", "@user1");
-        assertOwners(codeOwners, "/.foo/bar", "@user1");
-        assertOwners(codeOwners, "/xfoo"); // No users
-        assertOwners(codeOwners, "/xfoo/bar");
-        assertOwners(codeOwners, "/.foo/bar.xml", "@user2");
-        assertOwners(codeOwners, "/foo"); // No users
-        assertOwners(codeOwners, "/foo/bar.xml", "@user2");
+        assertOwners(codeOwners, "/foo/.foo", "@user1");
+        assertOwners(codeOwners, "/foo/.foo/bar", "@user1");
+        assertOwners(codeOwners, "/foo/foo/.bar"); // No users
+        assertOwners(codeOwners, "/foo/xfoo"); // No users
+        assertOwners(codeOwners, "/foo/xfoo/bar");
+        assertOwners(codeOwners, "/foo/.foo/bar.xml", "@user2");
+        assertOwners(codeOwners, "/foo/foo"); // No users
+        assertOwners(codeOwners, "/foo/foo/bar.xml", "@user2");
     }
 
     @Test
