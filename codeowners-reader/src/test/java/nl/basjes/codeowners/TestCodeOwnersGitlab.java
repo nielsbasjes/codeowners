@@ -296,7 +296,14 @@ class TestCodeOwnersGitlab {
             "\n" +
             "[Two][22] @database-team\n" +
             "model/db/\n" +
-            "config/db/database-setup.md @docs-team");
+            "config/db/database-setup.md @docs-team\n" +
+            "\n" +
+            "[Three]\n" +
+            "three/\n" +
+            "\n" +
+            "^[Four]\n" +
+            "four/\n"
+        );
 
         assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team");
         assertMandatoryOwners(codeOwners, "docs/api/graphql/index.md");
@@ -308,15 +315,20 @@ class TestCodeOwnersGitlab {
 
         assertEquals(
             "# CODEOWNERS file:\n" +
+            "^[Four]\n" +
+            "four/ \n" +
+            "\n" +
             "^[One][11] @docs-team\n" +
             "docs/ \n" +
             "*.md \n" +
+            "\n" +
+            "[Three]\n" +
+            "three/ \n" +
             "\n" +
             "[Two][22] @database-team\n" +
             "model/db/ \n" +
             "config/db/database-setup.md @docs-team\n" +
             "\n", codeOwners.toString());
     }
-
 
 }
