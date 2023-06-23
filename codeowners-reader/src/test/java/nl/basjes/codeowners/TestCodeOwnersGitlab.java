@@ -21,7 +21,9 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static nl.basjes.codeowners.TestUtils.assertMandatoryOwners;
 import static nl.basjes.codeowners.TestUtils.assertOwners;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -284,5 +286,37 @@ class TestCodeOwnersGitlab {
         LOG.info("\n{}", codeOwnersString);
         assertOwners(codeOwners, "README.md", "@docs-team");
     }
+
+    @Test
+    void gitlabOptional() {
+        CodeOwners codeOwners = new CodeOwners(
+            "^[One][11] @docs-team\n" + // Optional + minimal --> Warning message
+            "docs/\n" +
+            "*.md\n" +
+            "\n" +
+            "[Two][22] @database-team\n" +
+            "model/db/\n" +
+            "config/db/database-setup.md @docs-team");
+
+        assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team");
+        assertMandatoryOwners(codeOwners, "docs/api/graphql/index.md");
+
+        assertOwners(codeOwners, "/something/README.md", "@docs-team");
+        assertMandatoryOwners(codeOwners, "/something/README.md");
+
+        assertOwners(codeOwners, "/model/db/README.md", "@docs-team", "@database-team");
+
+        assertEquals(
+            "# CODEOWNERS file:\n" +
+            "^[One][11] @docs-team\n" +
+            "docs/ \n" +
+            "*.md \n" +
+            "\n" +
+            "[Two][22] @database-team\n" +
+            "model/db/ \n" +
+            "config/db/database-setup.md @docs-team\n" +
+            "\n", codeOwners.toString());
+    }
+
 
 }

@@ -41,6 +41,21 @@ public class TestUtils {
         }
     }
 
+    public static void assertMandatoryOwners(CodeOwners codeOwners, String filename, String... expectedOwners) {
+        List<String> mandatoryApprovers = codeOwners.getMandatoryApprovers(filename);
+        try {
+            assertEquals(
+                Arrays.stream(expectedOwners).sorted().collect(Collectors.toList()),
+                mandatoryApprovers,
+                "Filename \"" + filename + "\" should have mandatory owners " + Arrays.toString(expectedOwners) + " but got " + mandatoryApprovers);
+        } catch (AssertionFailedError afe) {
+            codeOwners.setVerbose(true);
+            codeOwners.getAllApprovers(filename);
+            codeOwners.setVerbose(false);
+            throw afe;
+        }
+    }
+
     public static void assertOwners(String codeOwners, String filename, String... expectedOwners) {
         assertOwners(new CodeOwners(codeOwners), filename, expectedOwners);
     }

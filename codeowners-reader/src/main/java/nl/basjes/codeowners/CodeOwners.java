@@ -223,7 +223,7 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
     public String toString() {
         StringBuilder result = new StringBuilder();
         result.append("# CODEOWNERS file:\n");
-        if (sections.size() < 1) {
+        if (sections.isEmpty()) {
             return result.append("# No CODEOWNER rules were defined.\n").toString();
         }
 
@@ -401,9 +401,11 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
         @Override
         public String toString() {
-            return
-                "# Regex used for the next rule:   " + filePattern + '\n' +
-                fileExpression + " " + String.join(" ", approvers);
+            StringBuilder result = new StringBuilder();
+            if (verbose) {
+                result.append("# Regex used for the next rule:   ").append(filePattern).append('\n');
+            }
+            return result.append(fileExpression).append(" ").append(String.join(" ", approvers)).toString();
         }
     }
 }
