@@ -22,9 +22,14 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+
 import static nl.basjes.gitignore.TestUtils.assertIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNotIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNullMatch;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class TestGitIgnore {
 
@@ -317,6 +322,26 @@ class TestGitIgnore {
         assertNotIgnore(gitIgnore, "test.properties");
     }
 
+    // ------------------------------------------
 
+    @Test
+    void testIgnoreFromFile() throws IOException {
+        URL url = this.getClass()
+            .getClassLoader()
+            .getResource("gitignore_fileread");
 
+        assertNotNull(url);
+
+        GitIgnore gitIgnore = new GitIgnore(new File(url.getFile()));
+
+        gitIgnore.setVerbose(true);
+
+        assertIgnore(gitIgnore, "foo[01].txt");
+        assertNotIgnore(gitIgnore, "foo01.txt");
+        assertNotIgnore(gitIgnore, "foo0.txt");
+        assertNotIgnore(gitIgnore, "foo1.txt");
+        assertIgnore(gitIgnore, "src/test/test.properties");
+        assertIgnore(gitIgnore, "/src/test/test.properties");
+        assertNotIgnore(gitIgnore, "/src/test/bla.properties");
+    }
 }
