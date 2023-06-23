@@ -64,7 +64,8 @@
 
     <antlr.version>4.12.0</antlr.version>
     <junit5.version>5.9.3</junit5.version>
-    <log4j2.version>2.20.0</log4j2.version>
+    <slf4j.version>1.7.36</slf4j.version>
+    <commons-io.version>2.12.0</commons-io.version>
 
     <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
     <!-- See http://www.eclemma.org/jacoco/trunk/doc/prepare-agent-mojo.html-->
@@ -82,6 +83,31 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr4-runtime</artifactId>
+        <version>[${antlr.version}]</version> <!-- Pin is HARD to this specific version -->
+      </dependency>
+
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>${commons-io.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 
