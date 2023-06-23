@@ -186,18 +186,13 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
     @Override
     public Void visitSection(CodeOwnersParser.SectionContext ctx) {
-        String sectionName = ctx.section.getText();
-        Section section = sections.get(sectionName);
-        if (section == null) {
-            // New section.
-            section = new Section(sectionName);
-            section.optional = ctx.OPTIONAL() != null;
-            if (ctx.approvers != null) {
-                section.setMinimalNumberOfApprovers(Integer.parseInt(ctx.approvers.getText().trim()));
-            }
-            for (TerminalNode user : ctx.USERID()) {
-                section.addDefaultApprover(user.getText());
-            }
+        Section section = new Section(ctx.section.getText());
+        section.optional = ctx.OPTIONAL() != null;
+        if (ctx.approvers != null) {
+            section.setMinimalNumberOfApprovers(Integer.parseInt(ctx.approvers.getText().trim()));
+        }
+        for (TerminalNode user : ctx.USERID()) {
+            section.addDefaultApprover(user.getText());
         }
 
         // Only if the previous Section had ANY rules do we keep it.

@@ -299,10 +299,14 @@ class TestCodeOwnersGitlab {
             "config/db/database-setup.md @docs-team\n" +
             "\n" +
             "[Three]\n" +
-            "three/\n" +
+            "three1/ \n" +
             "\n" +
             "^[Four]\n" +
-            "four/\n"
+            "four/\n" +
+            "\n" +
+            "[Three]\n" +
+            "three2/\n" +
+            "\n"
         );
 
         assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team");
@@ -323,7 +327,8 @@ class TestCodeOwnersGitlab {
             "*.md \n" +
             "\n" +
             "[Three]\n" +
-            "three/ \n" +
+            "three1/ \n" +
+            "three2/ \n" +
             "\n" +
             "[Two][22] @database-team\n" +
             "model/db/ \n" +
