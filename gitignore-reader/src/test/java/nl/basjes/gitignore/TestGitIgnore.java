@@ -307,7 +307,15 @@ class TestGitIgnore {
 
     @Test
     void testIgnoreBaseDir() {
-        GitIgnore gitIgnore = new GitIgnore("src/test", "*.properties");
+        // To ensure all variants work as expected.
+        testIgnoreBaseDir("src/test");
+        testIgnoreBaseDir("/src/test");
+        testIgnoreBaseDir("src/test/");
+        testIgnoreBaseDir("/src/test/");
+    }
+
+    void testIgnoreBaseDir(String baseDir) {
+        GitIgnore gitIgnore = new GitIgnore(baseDir, "*.properties");
         gitIgnore.setVerbose(true);
         assertIgnore(gitIgnore, "src/test/test.properties");
         assertIgnore(gitIgnore, "/src/test/test.properties");
@@ -318,8 +326,15 @@ class TestGitIgnore {
         // Note: This actually contains the 'src/test' !!
         assertNotIgnore(gitIgnore, "src/test.properties");
 
+        // Note: This actually contains the 'src/test' !!
+        assertNotIgnore(gitIgnore, "foo/src/test/something.properties");
+
         assertNotIgnore(gitIgnore, "src/main/test.properties");
         assertNotIgnore(gitIgnore, "test.properties");
+
+        // To ensure more code coverage
+        gitIgnore.setVerbose(false);
+        assertNotIgnore(gitIgnore, "foo/src/test/something.properties");
     }
 
     // ------------------------------------------
