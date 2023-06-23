@@ -181,7 +181,10 @@ class TestCodeOwnersGitlab {
             "docs/ @docs-team1\n" +
             "\n" +
             "^[DoCuMeNtAtIoN] @default-user2\n" +
-            "README.md @docs-team2\n");
+            "README.md @docs-team2\n" +
+            "^[Documentation] @default-user1\n" + // Deliberate duplication!
+            "INSTALL.md @docs-team3\n"
+            );
 
         LOG.info("Merged codeowners:\n------------------\n{}\n------------------", codeOwners);
         assertOwners(codeOwners, "docs/api/graphql/index.md",   "@docs-team1");
@@ -189,6 +192,15 @@ class TestCodeOwnersGitlab {
         assertOwners(codeOwners, "README.md",                   "@docs-team2");
         assertOwners(codeOwners, "MatchWildCard.txt",           "@default-user1", "@default-user2");
         assertTrue(codeOwners.hasStructuralProblems());
+
+        assertEquals(
+            "# CODEOWNERS file:\n" +
+            "[Documentation] @default-user1 @default-user2\n" +
+            "* \n" +
+            "docs/ @docs-team1\n" +
+            "README.md @docs-team2\n" +
+            "INSTALL.md @docs-team3\n" +
+            "\n", codeOwners.toString());
     }
 
     // From https://docs.gitlab.com/ee/user/project/codeowners/reference.html#example-codeowners-file
