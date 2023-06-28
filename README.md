@@ -84,19 +84,22 @@ Not tested on Windows so probably will not work on that because of path separato
 ## GitIgnore edge case
 This [tutorial page](https://www.atlassian.com/git/tutorials/saving-changes/gitignore) documents this edge case that this library does not handle the same way a git does it.
 
-The edge case:
+The edge case which is NOT handled "correctly":
 
 **Pattern**
-> logs/
-> !logs/important.log
+
+    logs/
+    !logs/important.log
 
 **Matches**
-> logs/debug.log
-> logs/important.log
+
+    logs/debug.log
+    logs/important.log
 
 **Explanation**
-> Wait a minute! Shouldn't logs/important.log be negated in the example on the left
-> Nope! Due to a performance-related quirk in Git, you can not negate a file that is ignored due to a pattern matching a directory
+
+    Wait a minute! Shouldn't logs/important.log be negated in the example on the left
+    Nope! Due to a performance-related quirk in Git, you can not negate a file that is ignored due to a pattern matching a directory
 
 
 # License
