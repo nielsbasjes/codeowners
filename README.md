@@ -77,7 +77,12 @@ In one of my projects it looks like this:
     </plugin>
 
 # Known limitations/bugs
-This [tutorial page](https://www.atlassian.com/git/tutorials/saving-changes/gitignore) documents this edge case that this library does not (yet) handle correctly.
+## Linux/Unix/Mac
+
+Not tested on Windows so probably will not work on that because of path separators.
+
+## GitIgnore edge case
+This [tutorial page](https://www.atlassian.com/git/tutorials/saving-changes/gitignore) documents this edge case that this library does not handle the same way a git does it.
 
 The edge case:
 
