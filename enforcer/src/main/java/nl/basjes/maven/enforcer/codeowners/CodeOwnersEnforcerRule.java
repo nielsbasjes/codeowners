@@ -54,7 +54,8 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
     private boolean verbose = false;
 
     private boolean showApprovers = false;
-    private String unlikelyFilename = "NewlyCreated_NiElSbAsJeSwRoTeThIs.qwerty";
+
+    private String unlikelyFilename = "NewlyCreated_NiElSbAsJeSwRoTeThIs";
 
     @Inject
     private MavenProject project;
