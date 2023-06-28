@@ -168,7 +168,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
 
             if (fileExpression.contains("/") && !fileExpression.endsWith("/")) {
                 // Patterns specifying a file in a particular directory are relative to the repository root.
-                fileRegex = fileRegex.replaceAll("^", "/");
+                fileRegex = "/" + fileRegex;
             } else {
                 // If a path does not start with a /, the path is treated as if it starts with a globstar. README.md is treated the same way as /**/README.md
                 fileRegex = fileRegex.replaceAll("^([^/*.])", "/**/$1");

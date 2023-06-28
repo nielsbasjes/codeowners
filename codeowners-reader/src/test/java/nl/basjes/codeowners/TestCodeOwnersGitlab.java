@@ -52,13 +52,18 @@ class TestCodeOwnersGitlab {
                 "internal/README.md @user4\n" +
                 "\n" +
                 "[README other owners]\n" +
-                "README.md @user3"
+                "README.md @user3 \n" +
+                "\n" +
+                "[README default] @user5\n" +
+                "*.md\n" +
+                "SomethingElse.md @user3"
         );
 
+        codeOwners.setVerbose(true);
         // The Code Owners for the README.md in the root directory are @user1, @user2, and @user3.
-        assertOwners(codeOwners, "README.md",           "@user1", "@user2", "@user3");
+        assertOwners(codeOwners, "README.md",           "@user1", "@user2", "@user3", "@user5");
         // The Code Owners for internal/README.md are @user4 and @user3.
-        assertOwners(codeOwners, "internal/README.md",  "@user3", "@user4");
+        assertOwners(codeOwners, "internal/README.md",  "@user3", "@user4", "@user5");
     }
 
     @Test
@@ -138,7 +143,7 @@ class TestCodeOwnersGitlab {
     @Test
     void gitlabMergeSectionsProblems() {
         CodeOwners codeOwners = new CodeOwners(
-            "[Documentation] @default-user1\n" +
+            "[  Documentation  ] @default-user1\n" +
             "*\n" +
             "docs/ @docs-team1\n" +
             "README.md @docs-team1\n" +
