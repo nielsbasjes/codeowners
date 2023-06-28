@@ -365,6 +365,11 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
                 // The Globstar "foo/**/bar" must also match "foo/bar"
                 .replace("/**","(/.*)?")
 
+
+                // The wildcard "foo/*/bar" must match exactly 1 subdir "foo/something/bar"
+                // and not "foo/bar", "foo//bar" or "foo/something/something/bar"
+                .replace("/*/","/[^/]+/")
+
                 .replace("**",".*") // Convert to the Regex wildcards
 
                 .replaceAll("^\\*", ".*") // Match anything at the start

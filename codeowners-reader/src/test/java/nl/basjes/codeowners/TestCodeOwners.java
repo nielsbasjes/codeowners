@@ -74,6 +74,41 @@ class TestCodeOwners {
     }
 
     @Test
+    void testNoSubDirectoriesCase() {
+        // # The `docs/*` pattern will match files like
+        // # `docs/getting-started.md` but not further nested files like
+        // # `docs/build-app/troubleshooting.md`.
+        CodeOwners codeOwners = new CodeOwners(
+            "/dir1/* @user1\n" +
+            "/dir2/*/* @user2\n" +
+            "/dir3/**/* @user3\n"
+        );
+        codeOwners.setVerbose(true);
+        LOG.info("CODEOWNERS:\n{}", codeOwners);
+        // NO Subdirs
+        assertOwners(codeOwners, "/dir1/bar.txt", "@user1");
+        assertOwners(codeOwners, "/dir1//bar.txt");
+        assertOwners(codeOwners, "/dir1/foo/bar.txt");
+        assertOwners(codeOwners, "/dir1/foo/foo/bar.txt");
+        assertOwners(codeOwners, "/dir1/foo/foo/foo/bar.txt");
+
+        // Exactly 1 Subdir
+        assertOwners(codeOwners, "/dir2/bar.txt");
+        assertOwners(codeOwners, "/dir2//bar.txt");
+        assertOwners(codeOwners, "/dir2/foo/bar.txt", "@user2");
+        assertOwners(codeOwners, "/dir2/foo/foo/bar.txt");
+        assertOwners(codeOwners, "/dir2/foo/foo/foo/bar.txt");
+
+        // Any Subdirs
+        assertOwners(codeOwners, "/dir3/bar.txt", "@user3");
+        assertOwners(codeOwners, "/dir3//bar.txt", "@user3");
+        assertOwners(codeOwners, "/dir3/foo/bar.txt", "@user3");
+        assertOwners(codeOwners, "/dir3/foo/foo/bar.txt", "@user3");
+        assertOwners(codeOwners, "/dir3/foo/foo/foo/bar.txt", "@user3");
+    }
+
+
+    @Test
     void testCodeOwnersToStringRoundTrip() throws IOException {
         URL url = this.getClass()
             .getClassLoader()
