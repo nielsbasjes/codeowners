@@ -74,14 +74,15 @@ class TestCodeOwners {
     }
 
     @Test
-    void testNoSubDirectoriesCase() {
+    void testSubDirectoriesCase() {
         // # The `docs/*` pattern will match files like
         // # `docs/getting-started.md` but not further nested files like
         // # `docs/build-app/troubleshooting.md`.
         CodeOwners codeOwners = new CodeOwners(
             "/dir1/* @user1\n" +
             "/dir2/*/* @user2\n" +
-            "/dir3/**/* @user3\n"
+            "/dir3/*/*/* @user3\n" +
+            "/dir4/**/* @user4\n"
         );
         codeOwners.setVerbose(true);
         LOG.info("CODEOWNERS:\n{}", codeOwners);
@@ -99,12 +100,22 @@ class TestCodeOwners {
         assertOwners(codeOwners, "/dir2/foo/foo/bar.txt");
         assertOwners(codeOwners, "/dir2/foo/foo/foo/bar.txt");
 
-        // Any Subdirs
-        assertOwners(codeOwners, "/dir3/bar.txt", "@user3");
-        assertOwners(codeOwners, "/dir3//bar.txt", "@user3");
-        assertOwners(codeOwners, "/dir3/foo/bar.txt", "@user3");
+        // Exactly 2 Subdirs
+        assertOwners(codeOwners, "/dir3/bar.txt");
+        assertOwners(codeOwners, "/dir3//bar.txt");
+        assertOwners(codeOwners, "/dir3/foo/bar.txt");
         assertOwners(codeOwners, "/dir3/foo/foo/bar.txt", "@user3");
-        assertOwners(codeOwners, "/dir3/foo/foo/foo/bar.txt", "@user3");
+        assertOwners(codeOwners, "/dir3///bar.txt");
+        assertOwners(codeOwners, "/dir3/a//bar.txt");
+        assertOwners(codeOwners, "/dir3//b/bar.txt");
+        assertOwners(codeOwners, "/dir3/foo/foo/foo/bar.txt");
+
+        // Any Subdirs
+        assertOwners(codeOwners, "/dir4/bar.txt", "@user4");
+        assertOwners(codeOwners, "/dir4//bar.txt", "@user4");
+        assertOwners(codeOwners, "/dir4/foo/bar.txt", "@user4");
+        assertOwners(codeOwners, "/dir4/foo/foo/bar.txt", "@user4");
+        assertOwners(codeOwners, "/dir4/foo/foo/foo/bar.txt", "@user4");
     }
 
 

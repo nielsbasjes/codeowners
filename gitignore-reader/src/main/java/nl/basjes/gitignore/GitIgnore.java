@@ -38,6 +38,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
 
+    // NOT Tested on Windows
+    private static final String UNIX_PATH_SEPARATOR = "/";
+
     private static final Logger LOG = LoggerFactory.getLogger(GitIgnore.class);
 
     private final String baseDir;
@@ -84,8 +87,8 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
             LOG.info("Checking: {}", filename);
         }
         String matchFileName = filename;
-        if (!filename.startsWith("/")) {
-            matchFileName = "/" + filename;
+        if (!filename.startsWith(UNIX_PATH_SEPARATOR)) {
+            matchFileName = UNIX_PATH_SEPARATOR + filename;
         }
 
         if (verbose) {
@@ -162,8 +165,6 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
                 .replaceAll("^!", "") // Strip the negation at the start of the line (if any)
 
                 .replace("[!", "[^") // Fix the 'not' range or 'not' set
-
-                .replace("\\ ", " ") // The escaped spaces must become spaces again.
                 ;
 
             if (fileExpression.contains("/") && !fileExpression.endsWith("/")) {
@@ -175,26 +176,35 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
             }
 
             fileRegex = fileRegex
+                .replace("\\ ", " ") // The escaped spaces must become spaces again.
+
                 // "/foo" --> End can be a filename (so we pin to the end) or a directory name (so we expect another / )
                 .replaceAll("([^/*])$", "$1(/|\\$)")
 
                 .replace(".", "\\.") // Avoid bad wildcards
+                .replace("\\.*", "\\..*")//  matching  /.* onto /.foo/bar.xml
                 .replace("?", ".")   // Single character match
 
                 // The Globstar "foo/**/bar" must also match "foo/bar"
                 .replace("/**","(/.*)?")
 
-                // The wildcard "foo/*day/bar" must match "foo/tuesday/bar"
-                .replaceAll("/\\*([^*])","/.*$1")
+                // The wildcard "foo/*/bar" must match exactly 1 subdir "foo/something/bar"
+                // and not "foo/bar", "foo//bar" or "foo/something/something/bar"
+                .replace("/*/","/[^/]+/")
+                .replace("/*/","/[^/]+/")
 
                 .replace("**",".*") // Convert to the Regex wildcards
 
-                .replaceAll("/\\*$","/[^/]+\\$") // A trailing '/*' means NO further subdirs should be matched
                 .replaceAll("^\\*", ".*") // Match anything at the start
+
+                .replaceAll("^/", "^/") // If starts with / then pin to the start.
+
+                .replaceAll("/\\*([^/]*)$","/[^/]*$1\\$") // A trailing '/*something' means NO further subdirs should be matched
 
                 .replace("/*","/.*") // "/foo/*\.js"  --> "/foo/.*\.js"
 
-                .replaceAll("^/", "^/") // If starts with / then pin to the start.
+                .replaceAll("([^.\\]])\\*", "$1.*") // Match anything at the start
+
                 .replaceAll("/+","/") // Remove duplication
                 ;
 

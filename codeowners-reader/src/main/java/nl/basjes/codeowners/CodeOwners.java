@@ -44,6 +44,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
+    // NOT Tested on Windows
+    private static final String UNIX_PATH_SEPARATOR = "/";
+
     private static final Logger LOG = LoggerFactory.getLogger(CodeOwners.class);
 
     private boolean verbose = false;
@@ -136,28 +139,21 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
     }
 
     public List<String> getMandatoryApprovers(String filename) {
-        String matchFileName = filename;
-        if (!filename.startsWith("/")) {
-            matchFileName = "/" + filename;
-        }
-
-        List<String> approvers = new ArrayList<>();
-        for (Section section: sections.values()) {
-            if (!section.isOptional()) {
-                approvers.addAll(section.getApprovers(matchFileName));
-            }
-        }
-        return approvers.stream().sorted().distinct().collect(Collectors.toList());
+        return getAllApprovers(filename, true);
     }
 
     public List<String> getAllApprovers(String filename) {
+        return getAllApprovers(filename, false);
+    }
+
+    private List<String> getAllApprovers(String filename, boolean onlyMandatory) {
         if (verbose) {
             LOG.info("# vvvvvvvvvvvvvvvvvvvvvvvvvvv");
             LOG.info("Checking: {}", filename);
         }
         String matchFileName = filename;
-        if (!filename.startsWith("/")) {
-            matchFileName = "/" + filename;
+        if (!filename.startsWith(UNIX_PATH_SEPARATOR)) {
+            matchFileName = UNIX_PATH_SEPARATOR + filename;
         }
 
         if (verbose) {
@@ -166,13 +162,18 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
         List<String> approvers = new ArrayList<>();
         for (Section section: sections.values()) {
-            List<String> sectionApprovers = section.getApprovers(matchFileName);
-            approvers.addAll(sectionApprovers);
+            if (!onlyMandatory || !section.isOptional()) {
+                approvers.addAll(section.getApprovers(matchFileName));
+            }
         }
         List<String> endResultApprovers = approvers.stream().sorted().distinct().collect(Collectors.toList());
         if (verbose) {
             LOG.info("# ---------------------------");
-            LOG.info("# Approvers (all sections combined): {}", endResultApprovers);
+            if (onlyMandatory) {
+                LOG.info("# Mandatory Approvers (all sections combined): {}", endResultApprovers);
+            } else {
+                LOG.info("# All Approvers (all sections combined): {}", endResultApprovers);
+            }
             LOG.info("# ^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             LOG.info("");
         }
@@ -361,13 +362,14 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
                 .replace(".", "\\.") // Avoid bad wildcards
                 .replace("\\.*", "\\..*")//  matching  /.* onto /.foo/bar.xml
+                .replace("?", ".")   // Single character match
 
                 // The Globstar "foo/**/bar" must also match "foo/bar"
                 .replace("/**","(/.*)?")
 
-
                 // The wildcard "foo/*/bar" must match exactly 1 subdir "foo/something/bar"
                 // and not "foo/bar", "foo//bar" or "foo/something/something/bar"
+                .replace("/*/","/[^/]+/")
                 .replace("/*/","/[^/]+/")
 
                 .replace("**",".*") // Convert to the Regex wildcards
@@ -382,6 +384,7 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
                 .replaceAll("([^.\\]])\\*", "$1.*") // Match anything at the start
 
+                .replaceAll("/+","/") // Remove duplication
                 ;
 
 //            LOG.info("{}     -->     {}", fileExpression, fileRegex);

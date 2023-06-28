@@ -280,6 +280,48 @@ class TestGitIgnore {
         assertNotIgnore(gitIgnore, "logs/latest/debug.log");
     }
 
+    @Test
+    void testSubDirectoriesCase() {
+        GitIgnore gitIgnore = new GitIgnore(
+            "/dir1/*\n" +
+            "/dir2/*/*\n" +
+            "/dir3/*/*/*\n" +
+            "/dir4/**/*\n"
+        );
+        gitIgnore.setVerbose(true);
+        LOG.info("GitIgnore:\n{}", gitIgnore);
+        // NO Subdirs
+        assertIgnore(gitIgnore, "/dir1/bar.txt");
+        assertNotIgnore(gitIgnore, "/dir1//bar.txt");
+        assertNotIgnore(gitIgnore, "/dir1/foo/bar.txt");
+        assertNotIgnore(gitIgnore, "/dir1/foo/foo/bar.txt");
+        assertNotIgnore(gitIgnore, "/dir1/foo/foo/foo/bar.txt");
+
+        // Exactly 1 Subdir
+        assertNotIgnore(gitIgnore, "/dir2/bar.txt");
+        assertNotIgnore(gitIgnore, "/dir2//bar.txt");
+        assertIgnore(gitIgnore, "/dir2/foo/bar.txt");
+        assertNotIgnore(gitIgnore, "/dir2/foo/foo/bar.txt");
+        assertNotIgnore(gitIgnore, "/dir2/foo/foo/foo/bar.txt");
+
+        // Exactly 2 Subdirs
+        assertNotIgnore(gitIgnore, "/dir3/bar.txt");
+        assertNotIgnore(gitIgnore, "/dir3//bar.txt");
+        assertNotIgnore(gitIgnore, "/dir3/foo/bar.txt");
+        assertIgnore(gitIgnore,  "/dir3/foo/foo/bar.txt");
+        assertNotIgnore(gitIgnore, "/dir3///bar.txt");
+        assertNotIgnore(gitIgnore, "/dir3/a//bar.txt");
+        assertNotIgnore(gitIgnore, "/dir3//b/bar.txt");
+        assertNotIgnore(gitIgnore, "/dir3/foo/foo/foo/bar.txt");
+
+        // Any Subdirs
+        assertIgnore(gitIgnore, "/dir4/bar.txt");
+        assertIgnore(gitIgnore, "/dir4//bar.txt");
+        assertIgnore(gitIgnore, "/dir4/foo/bar.txt");
+        assertIgnore(gitIgnore, "/dir4/foo/foo/bar.txt");
+        assertIgnore(gitIgnore, "/dir4/foo/foo/foo/bar.txt");
+    }
+
     // ------------------------------------------
 
     @Test
