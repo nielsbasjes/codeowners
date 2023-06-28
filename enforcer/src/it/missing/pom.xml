@@ -19,7 +19,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>nl.basjes.codeowners.test</groupId>
-  <artifactId>all-files-covered</artifactId>
+  <artifactId>all-files-missing</artifactId>
   <version>0.0.1-SNAPSHOT</version>
 
   <properties>
@@ -43,12 +43,17 @@
             <codeOwners>
               <codeOwnersFile>.config/CODEOWNERS</codeOwnersFile>
               <allFilesMustHaveCodeOwner>true</allFilesMustHaveCodeOwner>
+              <showApprovers>true</showApprovers>
+              <verbose>true</verbose>
             </codeOwners>
           </rules>
         </configuration>
         <executions>
           <execution>
-          <phase>compile</phase>
+            <phase>compile</phase>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>

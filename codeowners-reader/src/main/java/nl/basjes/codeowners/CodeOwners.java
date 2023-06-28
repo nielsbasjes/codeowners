@@ -166,16 +166,13 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
         List<String> approvers = new ArrayList<>();
         for (Section section: sections.values()) {
-            if (verbose) {
-                LOG.info("# ---------------------------");
-                LOG.info("# Section: {}", section.getName());
-            }
-            approvers.addAll(section.getApprovers(matchFileName));
+            List<String> sectionApprovers = section.getApprovers(matchFileName);
+            approvers.addAll(sectionApprovers);
         }
         List<String> endResultApprovers = approvers.stream().sorted().distinct().collect(Collectors.toList());
         if (verbose) {
             LOG.info("# ---------------------------");
-            LOG.info("# Approvers: {}", endResultApprovers);
+            LOG.info("# Approvers (all sections combined): {}", endResultApprovers);
             LOG.info("# ^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             LOG.info("");
         }
@@ -186,7 +183,7 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
     @Override
     public Void visitSection(CodeOwnersParser.SectionContext ctx) {
-        Section section = new Section(ctx.section.getText());
+        Section section = new Section(ctx.section.getText().trim());
         section.optional = ctx.OPTIONAL() != null;
         if (ctx.approvers != null) {
             section.setMinimalNumberOfApprovers(Integer.parseInt(ctx.approvers.getText().trim()));
@@ -239,6 +236,7 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
     }
 
     public static class Section {
+        private boolean verbose = false;
         private boolean optional = false;
         private final String name;
         private int minimalNumberOfApprovers = 0;
@@ -261,6 +259,7 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
         }
 
         public void setVerbose(boolean verbose) {
+            this.verbose = verbose;
             approvalRules.forEach(rule->rule.setVerbose(verbose));
         }
 
@@ -291,6 +290,10 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
         }
 
         public List<String> getApprovers(String filename) {
+            if (verbose) {
+                LOG.info("# ---------------------------");
+                LOG.info("# Section [{}]", getName());
+            }
             List<String> approvers = new ArrayList<>();
             for (ApprovalRule approvalRule : approvalRules) {
                 List<String> ruleApprovers = approvalRule.getApprovers(filename);
@@ -299,11 +302,18 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
                     // Gitlab: When a file or directory matches multiple entries in the CODEOWNERS file, the users from last pattern matching the file or directory are used.
                     approvers.clear();
                     if (ruleApprovers.isEmpty()) {
+                        if (verbose) {
+                            LOG.info("-- MATCH WITHOUT APPROVERS --> Using Default approvers {}", defaultApprovers);
+                        }
                         approvers.addAll(defaultApprovers);
                     } else {
                         approvers.addAll(ruleApprovers);
                     }
                 }
+            }
+            if (verbose) {
+                LOG.info("# Section [{}] approvers: {}", getName(), approvers);
+                LOG.info("# ---------------------------");
             }
             return approvers;
         }
