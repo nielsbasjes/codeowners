@@ -50,7 +50,7 @@ public class TestUtils {
                 "Filename \"" + filename + "\" should have mandatory owners " + Arrays.toString(expectedOwners) + " but got " + mandatoryApprovers);
         } catch (AssertionFailedError afe) {
             codeOwners.setVerbose(true);
-            codeOwners.getAllApprovers(filename);
+            codeOwners.getMandatoryApprovers(filename);
             codeOwners.setVerbose(false);
             throw afe;
         }

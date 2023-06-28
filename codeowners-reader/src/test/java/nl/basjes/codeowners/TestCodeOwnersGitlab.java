@@ -326,14 +326,17 @@ class TestCodeOwnersGitlab {
             "\n"
         );
 
+        codeOwners.setVerbose(false);
         assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team");
         assertMandatoryOwners(codeOwners, "docs/api/graphql/index.md");
 
+        codeOwners.setVerbose(true);
         assertOwners(codeOwners, "/something/README.md", "@docs-team");
         assertMandatoryOwners(codeOwners, "/something/README.md");
 
         assertOwners(codeOwners, "/model/db/README.md", "@docs-team", "@database-team");
 
+        codeOwners.setVerbose(false);
         assertEquals(
             "# CODEOWNERS file:\n" +
             "^[Four]\n" +
