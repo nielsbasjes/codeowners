@@ -35,7 +35,7 @@
     <!-- Needed to make the build reproducible https://reproducible-builds.org/ -->
     <project.build.outputTimestamp>2023-06-28T16:08:38Z</project.build.outputTimestamp>
 
-    <maven.version>3.9.2</maven.version>
+    <maven.version>3.9.4</maven.version>
     <maven.minimal.version>3.9.2</maven.minimal.version>
     <enforcer-api.version>3.3.0</enforcer-api.version>
 
