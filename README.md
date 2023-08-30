@@ -45,12 +45,12 @@ In one of my projects it looks like this:
     <plugin>
       <groupId>org.apache.maven.plugins</groupId>
       <artifactId>maven-enforcer-plugin</artifactId>
-      <version>3.3.0</version>
+      <version>3.4.0</version>
       <dependencies>
         <dependency>
           <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
           <artifactId>codeowners-enforcer-rules</artifactId>
-          <version>0.3.0</version>
+          <version>0.3.1</version>
         </dependency>
       </dependencies>
       <executions>
