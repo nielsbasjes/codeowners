@@ -43,7 +43,7 @@
     <maven.compiler.target>8</maven.compiler.target>
     <maven.compiler.release>8</maven.compiler.release>
 
-    <maven-artifact-plugin.version>3.4.1</maven-artifact-plugin.version>
+    <maven-artifact-plugin.version>3.5.0</maven-artifact-plugin.version>
     <maven-clean-plugin.version>3.3.1</maven-clean-plugin.version>
     <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
     <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
