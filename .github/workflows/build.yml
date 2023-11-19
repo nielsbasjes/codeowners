@@ -33,7 +33,11 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+        - os: ubuntu-latest
+          mvn: "./mvnw"
+        - os: windows-latest
+          mvn: ".\\mvnw.cmd"
 
     steps:
     - name: 'Checkout sourcecode'
@@ -55,7 +59,7 @@ jobs:
           17
 
     - name: 'Build'
-      run: mvnw clean install -PuseLocalReproduceRepo
+      run: ${{ matrix.mvn }} clean install -PuseLocalReproduceRepo
 
     - name: 'Codecov'
       uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
@@ -64,4 +68,4 @@ jobs:
 
     - name: 'Ensure build is reproducible'
       run: |
-        mvnw clean verify -PskipQuality -PuseLocalReproduceRepo -PartifactCompare
+        ${{ matrix.mvn }} clean verify -PskipQuality -PuseLocalReproduceRepo -PartifactCompare
