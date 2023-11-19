@@ -43,7 +43,7 @@
     },
     {
       "description": "Disable broken maven-artifact-plugin version",
-      "matchPackageNames": ["org.apache.maven.plugins:maven-artifact-plugin"],
+      "matchDepNames": ["org.apache.maven.plugins:maven-artifact-plugin"],
       "allowedVersions": "!/^3\\.5\\.0$/"
     },
     {
