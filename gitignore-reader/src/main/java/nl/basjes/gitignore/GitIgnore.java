@@ -38,8 +38,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
 
-    // NOT Tested on Windows
-    private static final String UNIX_PATH_SEPARATOR = "/";
+    // This is the separator dictated in the gitignore documentation
+    private static final String GITIGNORE_PATH_SEPARATOR = "/";
 
     private static final Logger LOG = LoggerFactory.getLogger(GitIgnore.class);
 
@@ -62,11 +62,12 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
     }
 
     public GitIgnore(String baseDir, String gitIgnoreContent) {
+        String cleanBaseDir = baseDir.replace("\\", GITIGNORE_PATH_SEPARATOR);
         this.baseDir =
             (
-                (baseDir.startsWith("/")?"":"/") +
-                baseDir +
-                (baseDir.endsWith("/")?"":"/")
+                (cleanBaseDir.startsWith("/")?"":"/") +
+                    cleanBaseDir +
+                (cleanBaseDir.endsWith("/")?"":"/")
             ).replace("//", "/");
         CodePointCharStream input = CharStreams.fromString(gitIgnoreContent);
         GitIgnoreLexer lexer = new GitIgnoreLexer(input);
@@ -86,9 +87,9 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
             LOG.info("# vvvvvvvvvvvvvvvvvvvvvvvvvvv");
             LOG.info("Checking: {}", filename);
         }
-        String matchFileName = filename;
-        if (!filename.startsWith(UNIX_PATH_SEPARATOR)) {
-            matchFileName = UNIX_PATH_SEPARATOR + filename;
+        String matchFileName = filename.replace("\\", GITIGNORE_PATH_SEPARATOR);
+        if (!matchFileName.startsWith(GITIGNORE_PATH_SEPARATOR)) {
+            matchFileName = GITIGNORE_PATH_SEPARATOR + matchFileName;
         }
 
         if (verbose) {

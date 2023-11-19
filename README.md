@@ -76,11 +76,7 @@ In one of my projects it looks like this:
       </executions>
     </plugin>
 
-# Known limitations/bugs
-## Linux/Unix/Mac
-
-Not tested on Windows so probably will not work on that because of path separators.
-
+# Important
 ## GitIgnore edge case
 This [tutorial page](https://www.atlassian.com/git/tutorials/saving-changes/gitignore) documents this edge case that this library also follows.
 

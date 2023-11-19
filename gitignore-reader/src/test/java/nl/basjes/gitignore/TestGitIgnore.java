@@ -362,7 +362,6 @@ class TestGitIgnore {
 
         assertNotIgnore(gitIgnore, "/debug.log");
         assertNotIgnore(gitIgnore, "/build/logs/debug.log");
-
     }
 
     // ------------------------------------------

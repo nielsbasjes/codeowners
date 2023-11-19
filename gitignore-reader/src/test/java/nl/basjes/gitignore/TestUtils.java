@@ -26,6 +26,12 @@ public class TestUtils {
         assertSame(Boolean.TRUE,
             gitIgnore.isIgnoredFile(filename),
             "Filename \"" + filename + "\" should match but did not.");
+
+        // Same but now with a windows path separator
+        String wFilename = windowsFileName(filename);
+        assertSame(Boolean.TRUE,
+            gitIgnore.isIgnoredFile(wFilename),
+            "Filename \"" + wFilename + "\" should match but did not.");
     }
 
     public static void assertIgnore(String baseDir, String gitIgnore, String filename) {
@@ -37,6 +43,13 @@ public class TestUtils {
         assertTrue(
             isIgnoredFile == null || isIgnoredFile == Boolean.FALSE,
             "Filename \""+filename+"\" should NOT match but did.");
+
+        // Same but now with a windows path separator
+        String wFilename = windowsFileName(filename);
+        Boolean wIsIgnoredFile = gitIgnore.isIgnoredFile(wFilename);
+        assertTrue(
+            wIsIgnoredFile == null || wIsIgnoredFile == Boolean.FALSE,
+            "Filename \""+wFilename+"\" should NOT match but did.");
     }
 
     public static void assertNotIgnore(String baseDir, String gitIgnore, String filename) {
@@ -47,10 +60,20 @@ public class TestUtils {
         assertNull(
             gitIgnore.isIgnoredFile(filename),
             "Filename \""+filename+"\" should NOT match but did.");
+
+        // Same but now with a windows path separator
+        String wFilename = windowsFileName(filename);
+        assertNull(
+            gitIgnore.isIgnoredFile(wFilename),
+            "Filename \""+wFilename+"\" should NOT match but did.");
     }
 
     public static void assertNullMatch(String baseDir, String gitIgnore, String filename) {
         assertNullMatch(new GitIgnore(baseDir, gitIgnore), filename);
+    }
+
+    public static String windowsFileName(String filename) {
+        return filename.replace("/", "\\");
     }
 
 }
