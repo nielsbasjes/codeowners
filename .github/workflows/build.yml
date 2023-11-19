@@ -37,7 +37,7 @@ jobs:
         - os: ubuntu-latest
           mvn: "./mvnw"
         - os: windows-latest
-          mvn: ".\mvnw.cmd"
+          mvn: ".\\mvnw.cmd"
 
     steps:
     - name: 'Checkout sourcecode'
