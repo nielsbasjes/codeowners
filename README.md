@@ -82,9 +82,9 @@ In one of my projects it looks like this:
 Not tested on Windows so probably will not work on that because of path separators.
 
 ## GitIgnore edge case
-This [tutorial page](https://www.atlassian.com/git/tutorials/saving-changes/gitignore) documents this edge case that this library does not handle the same way a git does it.
+This [tutorial page](https://www.atlassian.com/git/tutorials/saving-changes/gitignore) documents this edge case that this library also follows.
 
-The edge case which is NOT handled "correctly":
+I see this as unexpected behaviour yet this is really what git really does !
 
 **Pattern**
 

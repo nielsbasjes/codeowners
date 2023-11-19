@@ -109,6 +109,24 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
                     continue;
                 }
                 mustBeIgnored = ruleVerdict;
+
+                // Handling the "bug" in git that results in unexpected ignores
+                if (ruleVerdict && ignoreRule.isDirectoryMatch()) {
+                    // From: https://www.atlassian.com/git/tutorials/saving-changes/gitignore
+                    // These rules
+                    //    logs/
+                    //    !logs/important.log
+                    // ignore these files
+                    //    logs/debug.log
+                    //    logs/important.log
+                    // Documentation:
+                    //    Wait a minute! Shouldn't logs/important.logbe negated in the example on the left
+                    //    Nope! Due to a performance-related quirk in Git, you can not negate a file that
+                    //    is ignored due to a pattern matching a directory
+
+                    // So if there was a directory match rule that ignores this file then that one always wins.
+                    break;
+                }
             }
         }
 
@@ -152,12 +170,14 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
     public static class IgnoreRule {
         private final boolean negate;
         private final String fileExpression;
+        private final boolean directoryMatch;
         private final Pattern filePattern;
         private boolean verbose = false;
 
         public IgnoreRule(boolean negate, String fileExpression) {
             this.negate = negate;
             this.fileExpression = fileExpression;
+            this.directoryMatch = !negate && fileExpression.endsWith("/");
 
             String fileRegex = fileExpression
                 .trim() // Clear leading and trailing spaces
@@ -235,6 +255,15 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
                 }
                 return Boolean.TRUE;
             }
+        }
+
+        /**
+         * There is a strange edgecase in git where a rule that matches an entire directory
+         * disables ignore rules in that same directory.
+         * @return Is this rule matching an entire directory tree?
+         */
+        public boolean isDirectoryMatch() {
+            return directoryMatch;
         }
 
         public void setVerbose(boolean verbose) {
