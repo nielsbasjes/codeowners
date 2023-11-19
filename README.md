@@ -14,7 +14,7 @@ In several systems (like Github and Gitlab) you can have a CODEOWNERS file which
 Reality: The syntax of these files can be tricky, and it is quite easy to write a config that has the effect that not all files are covered.
 
 # What is this
-1) A Java library to read a CODEOWNER file.
+1) A Java library to read a CODEOWNERS file.
 2) A Java library to read a .gitignore file.
 3) An extra rule for the Maven Enforcer plugin to check the CODEOWNERS against the actual project files. (See Usage below)
 
