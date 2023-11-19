@@ -334,6 +334,13 @@ class TestGitIgnore {
 
         assertNotIgnore(gitIgnore, "debug.log");
         assertNotIgnore(gitIgnore, "build/logs/debug.log");
+
+        // (You can prepend a slash if you like, but it doesn't do anything special.)
+        assertIgnore(gitIgnore, "/logs/debug.log");
+
+        assertNotIgnore(gitIgnore, "/debug.log");
+        assertNotIgnore(gitIgnore, "/build/logs/debug.log");
+
     }
 
     // ------------------------------------------
