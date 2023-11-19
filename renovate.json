@@ -42,6 +42,11 @@
       "allowedVersions": "/^[0-9]{1,3}\\.[0-9]{1,3}(?:\\.[0-9]{1,3})?$/"
     },
     {
+      "description": "Disable broken maven-artifact-plugin version",
+      "matchPackageNames": ["org.apache.maven.plugins:maven-artifact-plugin"],
+      "allowedVersions": "!/3.5.0/"
+    },
+    {
       "matchPackagePrefixes": [
         "org.apache.logging",
         "org.slf4j"
