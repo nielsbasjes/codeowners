@@ -27,6 +27,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestUtils {
     public static void assertOwners(CodeOwners codeOwners, String filename, String... expectedOwners) {
+        assertOwnersInternal(codeOwners, filename, expectedOwners);
+        assertOwnersInternal(codeOwners, windowsFileName(filename), expectedOwners);
+    }
+
+    private static void assertOwnersInternal(CodeOwners codeOwners, String filename, String... expectedOwners) {
         List<String> allApprovers = codeOwners.getAllApprovers(filename);
         try {
             assertEquals(
@@ -42,6 +47,11 @@ public class TestUtils {
     }
 
     public static void assertMandatoryOwners(CodeOwners codeOwners, String filename, String... expectedOwners) {
+        assertMandatoryOwnersInternal(codeOwners, filename, expectedOwners);
+        assertMandatoryOwnersInternal(codeOwners, windowsFileName(filename), expectedOwners);
+    }
+
+    private static void assertMandatoryOwnersInternal(CodeOwners codeOwners, String filename, String... expectedOwners) {
         List<String> mandatoryApprovers = codeOwners.getMandatoryApprovers(filename);
         try {
             assertEquals(
@@ -59,4 +69,9 @@ public class TestUtils {
     public static void assertOwners(String codeOwners, String filename, String... expectedOwners) {
         assertOwners(new CodeOwners(codeOwners), filename, expectedOwners);
     }
+
+    public static String windowsFileName(String filename) {
+        return filename.replace("/", "\\");
+    }
+
 }

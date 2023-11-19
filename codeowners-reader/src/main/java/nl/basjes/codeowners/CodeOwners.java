@@ -45,7 +45,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
     // NOT Tested on Windows
-    private static final String UNIX_PATH_SEPARATOR = "/";
+    private static final String CODEOWNERS_PATH_SEPARATOR = "/";
 
     private static final Logger LOG = LoggerFactory.getLogger(CodeOwners.class);
 
@@ -151,9 +151,10 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
             LOG.info("# vvvvvvvvvvvvvvvvvvvvvvvvvvv");
             LOG.info("Checking: {}", filename);
         }
-        String matchFileName = filename;
-        if (!filename.startsWith(UNIX_PATH_SEPARATOR)) {
-            matchFileName = UNIX_PATH_SEPARATOR + filename;
+
+        String matchFileName = filename.replace("\\", CODEOWNERS_PATH_SEPARATOR);
+        if (!matchFileName.startsWith(CODEOWNERS_PATH_SEPARATOR)) {
+            matchFileName = CODEOWNERS_PATH_SEPARATOR + matchFileName;
         }
 
         if (verbose) {
