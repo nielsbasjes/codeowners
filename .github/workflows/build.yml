@@ -29,7 +29,11 @@ permissions: read-all
 jobs:
   build:
     name: 'Build and test'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
 
     steps:
     - name: 'Checkout sourcecode'
@@ -51,7 +55,7 @@ jobs:
           17
 
     - name: 'Build'
-      run: ./mvnw clean install -PuseLocalReproduceRepo
+      run: mvnw clean install -PuseLocalReproduceRepo
 
     - name: 'Codecov'
       uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
@@ -60,4 +64,4 @@ jobs:
 
     - name: 'Ensure build is reproducible'
       run: |
-        ./mvnw clean verify -PskipQuality -PuseLocalReproduceRepo -PartifactCompare
+        mvnw clean verify -PskipQuality -PuseLocalReproduceRepo -PartifactCompare
