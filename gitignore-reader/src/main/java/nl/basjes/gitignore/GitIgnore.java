@@ -121,7 +121,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
                     //    logs/debug.log
                     //    logs/important.log
                     // Documentation:
-                    //    Wait a minute! Shouldn't logs/important.logbe negated in the example on the left
+                    //    Wait a minute! Shouldn't logs/important.log be negated in the example on the left
                     //    Nope! Due to a performance-related quirk in Git, you can not negate a file that
                     //    is ignored due to a pattern matching a directory
 
