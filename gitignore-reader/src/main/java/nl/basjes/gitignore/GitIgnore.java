@@ -199,11 +199,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
                                 baseDir.trim() +
                                (baseDir.endsWith("/")   ? "" : "/");
 
-                if (this.baseDir.startsWith("/")) {
-                    baseDirRegex = "^/" + REGEX_QUESTIONMARK + "\\Q" + this.baseDir.substring(1) + "\\E";
-                } else {
-                    baseDirRegex = "^\\Q" + this.baseDir + "\\E";
-                }
+                baseDirRegex = "^/" + REGEX_QUESTIONMARK + "\\Q" + this.baseDir.substring(1) + "\\E";
             }
 
             this.negate = negate;
