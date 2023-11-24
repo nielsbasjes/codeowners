@@ -17,7 +17,7 @@
 
 package nl.basjes.gitignore;
 
-import org.junit.jupiter.api.Disabled;
+import nl.basjes.gitignore.GitIgnore.IgnoreRule;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,11 +25,14 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 
 import static nl.basjes.gitignore.TestUtils.assertIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNotIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNullMatch;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class TestGitIgnore {
 
@@ -430,4 +433,100 @@ class TestGitIgnore {
         assertIgnore(gitIgnore, "/src/test/test.properties");
         assertNotIgnore(gitIgnore, "/src/test/bla.properties");
     }
+
+    // ------------------------------------------
+
+    @Test
+    void testGeneratedRegexesBasedir() {
+        // Patterns defined after a negating pattern will re-ignore any previously negated files.
+        GitIgnore gitIgnore = new GitIgnore(
+            "*.log\n" +
+            "!important/*.log\n" +
+            "trace.* ");
+        assertIgnore(gitIgnore, "debug.log");
+        assertIgnore(gitIgnore, "trace.txt");
+        assertIgnore(gitIgnore, "important/trace.log");
+        assertNotIgnore(gitIgnore, "important/debug.log");
+
+        // Verify the created ignore rules.
+        assertEquals(3, gitIgnore.getIgnoreRules().size());
+        for (IgnoreRule ignoreRule : gitIgnore.getIgnoreRules()) {
+            switch (ignoreRule.getIgnoreExpression()) {
+                case "*.log":
+                    assertEquals("^/?.*\\.log(/|$)", ignoreRule.getIgnorePattern().pattern());
+                    break;
+                case "!important/*.log":
+                    assertEquals("^/?important/.*\\.log(/|$)", ignoreRule.getIgnorePattern().pattern());
+                    break;
+                case "trace.*":
+                    assertEquals("^/?.*/trace\\..*", ignoreRule.getIgnorePattern().pattern());
+                    break;
+                default:
+                    fail("Unexpected expression:" + ignoreRule.getIgnoreExpression());
+            }
+        }
+    }
+
+    @Test
+    void testSubdirs() {
+        assertIgnore(       "",         "/*.log", "/test.log");
+        assertIgnore(       "",         "/*.log", "/docs/test.log");
+        assertIgnore(       "",         "/*.log", "/src/test.log");
+        assertIgnore(       "",         "/*.log", "/src/main/test.log");
+        assertIgnore(       "",         "/*.log", "/src/test/test.log");
+
+        assertNotIgnore(    "src",      "/*.log", "/test.log");
+        assertNotIgnore(    "src",      "/*.log", "/docs/test.log");
+        assertIgnore(       "src",      "/*.log", "/src/test.log");
+        assertIgnore(       "src",      "/*.log", "/src/main/test.log");
+        assertIgnore(       "src",      "/*.log", "/src/test/test.log");
+
+        assertNotIgnore(    "src/main", "/*.log", "/test.log");
+        assertNotIgnore(    "src/main", "/*.log", "/docs/test.log");
+        assertNotIgnore(    "src/main", "/*.log", "/src/test.log");
+        assertIgnore(       "src/main", "/*.log", "/src/main/test.log");
+        assertNotIgnore(    "src/main", "/*.log", "/src/test/test.log");
+    }
+
+
+    private void verifyBaseDir(GitIgnore gitIgnore, String baseDir) {
+        assertEquals(baseDir, gitIgnore.getBaseDir(), "Wrong basedir in GitIgnore");
+        for (IgnoreRule ignoreRule : gitIgnore.getIgnoreRules()) {
+            assertEquals(baseDir, ignoreRule.getIgnoreBasedir(), "Wrong basedir in rule");
+        }
+    }
+
+    @Test
+    void testBaseDir() {
+        verifyBaseDir(new GitIgnore("",             "*.md"), "/");
+        verifyBaseDir(new GitIgnore("/",            "*.md"), "/");
+
+        verifyBaseDir(new GitIgnore("foo",          "*.md"), "/foo/");
+        verifyBaseDir(new GitIgnore("/foo",         "*.md"), "/foo/");
+        verifyBaseDir(new GitIgnore("foo/",         "*.md"), "/foo/");
+        verifyBaseDir(new GitIgnore("/foo/",        "*.md"), "/foo/");
+
+        verifyBaseDir(new GitIgnore("foo/bar",      "*.md"), "/foo/bar/");
+        verifyBaseDir(new GitIgnore("/foo/bar",     "*.md"), "/foo/bar/");
+        verifyBaseDir(new GitIgnore("foo/bar/",     "*.md"), "/foo/bar/");
+        verifyBaseDir(new GitIgnore("/foo/bar/",    "*.md"), "/foo/bar/");
+    }
+
+    private void verifyGeneratedRegex(String baseDir, String gitIgnoreContent, String expectedRegex) {
+        GitIgnore gitIgnore = new GitIgnore(baseDir, gitIgnoreContent);
+        List<IgnoreRule> ignoreRules = gitIgnore.getIgnoreRules();
+        assertEquals(1, ignoreRules.size());
+        IgnoreRule ignoreRule = ignoreRules.get(0);
+        assertEquals(expectedRegex, ignoreRule.getIgnorePattern().pattern(), "Incorrect regex generated");
+    }
+
+    @Test
+    void testGeneratedRegexesSubdir() {
+        verifyGeneratedRegex("",          "*.log", "^/?.*\\.log(/|$)");
+        verifyGeneratedRegex("src/",      "*.log", "^/?\\Qsrc/\\E.*\\.log(/|$)");
+        verifyGeneratedRegex("src/main/", "*.log", "^/?\\Qsrc/main/\\E.*\\.log(/|$)");
+    }
+
+    // ------------------------------------------
+
 }

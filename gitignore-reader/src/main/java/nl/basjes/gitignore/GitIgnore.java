@@ -148,7 +148,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
     @Override
     public Void visitIgnoreRule(GitIgnoreParser.IgnoreRuleContext ctx) {
         String filePattern = ctx.fileExpression.getText();
-        ignoreRules.add(new IgnoreRule(ctx.not != null, filePattern));
+        ignoreRules.add(new IgnoreRule(baseDir, ctx.not != null, filePattern));
         return null;
     }
 
@@ -168,14 +168,44 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
         return result.toString();
     }
 
+    public String getBaseDir() {
+        return baseDir;
+    }
+
+    public List<IgnoreRule> getIgnoreRules() {
+        return new ArrayList<>(ignoreRules);
+    }
+
     public static class IgnoreRule {
+        private final String baseDir;
         private final boolean negate;
         private final String fileExpression;
         private final boolean directoryMatch;
         private final Pattern filePattern;
         private boolean verbose = false;
 
-        public IgnoreRule(boolean negate, String fileExpression) {
+        // Because of all the search and replace we put in this special token which must be a question mark in the end.
+        private static final String REGEX_QUESTIONMARK = "🖖";
+
+        public IgnoreRule(String baseDir, boolean negate, String fileExpression) {
+
+            String baseDirRegex;
+            if (baseDir == null || "/".equals(baseDir) || baseDir.trim().isEmpty()) {
+                this.baseDir = "/";
+                baseDirRegex = "^/" + REGEX_QUESTIONMARK; // The leading slash is optional
+            } else {
+                // Enforce the base dir starts and ends with a '/'
+                this.baseDir = (baseDir.startsWith("/") ? "" : "/") +
+                                baseDir.trim() +
+                               (baseDir.endsWith("/")   ? "" : "/");
+
+                if (this.baseDir.startsWith("/")) {
+                    baseDirRegex = "^/" + REGEX_QUESTIONMARK + "\\Q" + this.baseDir.substring(1) + "\\E";
+                } else {
+                    baseDirRegex = "^\\Q" + this.baseDir + "\\E";
+                }
+            }
+
             this.negate = negate;
             this.fileExpression = fileExpression;
             this.directoryMatch = !negate && fileExpression.endsWith("/");
@@ -190,10 +220,13 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
 
             if (fileExpression.contains("/") && !fileExpression.endsWith("/")) {
                 // Patterns specifying a file in a particular directory are relative to the repository root.
-                fileRegex = "/" + fileRegex;
+                if (fileRegex.startsWith("/")) {
+                    fileRegex = fileRegex.substring(1);
+                }
+                fileRegex = baseDirRegex + fileRegex;
             } else {
                 // If a path does not start with a /, the path is treated as if it starts with a globstar. README.md is treated the same way as /**/README.md
-                fileRegex = fileRegex.replaceAll("^([^/*.])", "/**/$1");
+                fileRegex = baseDirRegex + fileRegex.replaceAll("^([^/*.])", "**/$1");
             }
 
             fileRegex = fileRegex
@@ -227,6 +260,9 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
                 .replaceAll("([^.\\]])\\*", "$1.*") // Match anything at the start
 
                 .replaceAll("/+","/") // Remove duplication
+
+                // Set the regex optional needed by the first rules.
+                .replace(REGEX_QUESTIONMARK, "?")
                 ;
 
 //            LOG.info("{}     -->     {}", fileExpression, fileRegex);
@@ -265,6 +301,27 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
          */
         public boolean isDirectoryMatch() {
             return directoryMatch;
+        }
+
+        /**
+         * @return The directory in which this gitIgnore was located
+         */
+        public String getIgnoreBasedir() {
+            return baseDir;
+        }
+
+        /**
+         * @return The ignore expression as it was present in the .gitignore file
+         */
+        public String getIgnoreExpression() {
+            return (negate ? "!" : "") + fileExpression;
+        }
+
+        /**
+         * @return The basedir and ignore expression combined into a regular expression.
+         */
+        public Pattern getIgnorePattern() {
+            return filePattern;
         }
 
         public void setVerbose(boolean verbose) {
