@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
+import static java.lang.Boolean.TRUE;
 import static nl.basjes.gitignore.TestUtils.assertIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNotIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNullMatch;
@@ -459,7 +460,7 @@ class TestGitIgnore {
                     assertEquals("^/?important/.*\\.log(/|$)", ignoreRule.getIgnorePattern().pattern());
                     break;
                 case "trace.*":
-                    assertEquals("^/?.*/trace\\..*", ignoreRule.getIgnorePattern().pattern());
+                    assertEquals("^/?(.*/)?trace\\..*", ignoreRule.getIgnorePattern().pattern());
                     break;
                 default:
                     fail("Unexpected expression:" + ignoreRule.getIgnoreExpression());
@@ -489,27 +490,28 @@ class TestGitIgnore {
     }
 
 
-    private void verifyBaseDir(GitIgnore gitIgnore, String baseDir) {
+    private void verifyBaseDir(GitIgnore gitIgnore, String baseDir, String matchingFilename) {
         assertEquals(baseDir, gitIgnore.getBaseDir(), "Wrong basedir in GitIgnore");
         for (IgnoreRule ignoreRule : gitIgnore.getIgnoreRules()) {
             assertEquals(baseDir, ignoreRule.getIgnoreBasedir(), "Wrong basedir in rule");
         }
+        assertEquals(TRUE, gitIgnore.isIgnoredFile(matchingFilename), "The filename " + matchingFilename + " should have matched("+gitIgnore+").");
     }
 
     @Test
     void testBaseDir() {
-        verifyBaseDir(new GitIgnore("",             "*.md"), "/");
-        verifyBaseDir(new GitIgnore("/",            "*.md"), "/");
+        verifyBaseDir(new GitIgnore("",             "test.md"), "/",         "test.md");
+        verifyBaseDir(new GitIgnore("/",            "test.md"), "/",         "test.md");
 
-        verifyBaseDir(new GitIgnore("foo",          "*.md"), "/foo/");
-        verifyBaseDir(new GitIgnore("/foo",         "*.md"), "/foo/");
-        verifyBaseDir(new GitIgnore("foo/",         "*.md"), "/foo/");
-        verifyBaseDir(new GitIgnore("/foo/",        "*.md"), "/foo/");
+        verifyBaseDir(new GitIgnore("foo",          "test.md"), "/foo/",     "foo/test.md");
+        verifyBaseDir(new GitIgnore("/foo",         "test.md"), "/foo/",     "foo/test.md");
+        verifyBaseDir(new GitIgnore("foo/",         "test.md"), "/foo/",     "foo/test.md");
+        verifyBaseDir(new GitIgnore("/foo/",        "test.md"), "/foo/",     "foo/test.md");
 
-        verifyBaseDir(new GitIgnore("foo/bar",      "*.md"), "/foo/bar/");
-        verifyBaseDir(new GitIgnore("/foo/bar",     "*.md"), "/foo/bar/");
-        verifyBaseDir(new GitIgnore("foo/bar/",     "*.md"), "/foo/bar/");
-        verifyBaseDir(new GitIgnore("/foo/bar/",    "*.md"), "/foo/bar/");
+        verifyBaseDir(new GitIgnore("foo/bar",      "test.md"), "/foo/bar/", "foo/bar/test.md");
+        verifyBaseDir(new GitIgnore("/foo/bar",     "test.md"), "/foo/bar/", "foo/bar/test.md");
+        verifyBaseDir(new GitIgnore("foo/bar/",     "test.md"), "/foo/bar/", "foo/bar/test.md");
+        verifyBaseDir(new GitIgnore("/foo/bar/",    "test.md"), "/foo/bar/", "foo/bar/test.md");
     }
 
     private void verifyGeneratedRegex(String baseDir, String gitIgnoreContent, String expectedRegex) {

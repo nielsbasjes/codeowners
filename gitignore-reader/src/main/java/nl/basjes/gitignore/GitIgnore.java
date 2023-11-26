@@ -184,22 +184,19 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
         private final Pattern filePattern;
         private boolean verbose = false;
 
-        // Because of all the search and replace we put in this special token which must be a question mark in the end.
-        private static final String REGEX_QUESTIONMARK = "🖖";
-
         public IgnoreRule(String baseDir, boolean negate, String fileExpression) {
 
             String baseDirRegex;
             if (baseDir == null || "/".equals(baseDir) || baseDir.trim().isEmpty()) {
                 this.baseDir = "/";
-                baseDirRegex = "^/" + REGEX_QUESTIONMARK; // The leading slash is optional
+                baseDirRegex = "^/?"; // The leading slash is optional
             } else {
                 // Enforce the base dir starts and ends with a '/'
                 this.baseDir = (baseDir.startsWith("/") ? "" : "/") +
                                 baseDir.trim() +
                                (baseDir.endsWith("/")   ? "" : "/");
 
-                baseDirRegex = "^/" + REGEX_QUESTIONMARK + "\\Q" + this.baseDir.substring(1) + "\\E";
+                baseDirRegex = "^/?\\Q" + this.baseDir.substring(1) + "\\E";
             }
 
             this.negate = negate;
@@ -219,10 +216,9 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
                 if (fileRegex.startsWith("/")) {
                     fileRegex = fileRegex.substring(1);
                 }
-                fileRegex = baseDirRegex + fileRegex;
             } else {
                 // If a path does not start with a /, the path is treated as if it starts with a globstar. README.md is treated the same way as /**/README.md
-                fileRegex = baseDirRegex + fileRegex.replaceAll("^([^/*.])", "**/$1");
+                fileRegex = fileRegex.replaceAll("^([^/*.])", "**/$1");
             }
 
             fileRegex = fileRegex
@@ -235,6 +231,8 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
                 .replace("\\.*", "\\..*")//  matching  /.* onto /.foo/bar.xml
                 .replace("?", ".")   // Single character match
 
+                // The Globstar "/**/bar" must also match "bar"
+                .replaceAll("^\\*\\*/","(.*/)?")
                 // The Globstar "foo/**/bar" must also match "foo/bar"
                 .replace("/**","(/.*)?")
 
@@ -257,12 +255,11 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
 
                 .replaceAll("/+","/") // Remove duplication
 
-                // Set the regex optional needed by the first rules.
-                .replace(REGEX_QUESTIONMARK, "?")
+                .replace("/\\E/", "/\\E")
                 ;
 
 //            LOG.info("{}     -->     {}", fileExpression, fileRegex);
-            filePattern = Pattern.compile(fileRegex);
+            filePattern = Pattern.compile(baseDirRegex + fileRegex);
         }
 
         /**
