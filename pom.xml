@@ -502,6 +502,8 @@
             <exclude>**/.run/**</exclude>
             <exclude>**/*.patch</exclude>
             <exclude>**/*.diff</exclude>
+            <!-- Test files that should not be 'polluted' -->
+            <exclude>gitignore-reader/src/test/resources/testtree/</exclude>
             <!-- Files that cannot be 'polluted' -->
             <exclude>.github/**</exclude>
             <exclude>**/*.json</exclude>

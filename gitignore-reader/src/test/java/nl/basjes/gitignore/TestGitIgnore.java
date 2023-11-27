@@ -318,7 +318,7 @@ class TestGitIgnore {
         LOG.info("GitIgnore:\n{}", gitIgnore);
         // NO Subdirs
         assertIgnore(gitIgnore, "/dir1/bar.txt");
-        assertNotIgnore(gitIgnore, "/dir1//bar.txt");
+        assertIgnore(gitIgnore, "/dir1//bar.txt");  // Duplicate / are simplified
         assertNotIgnore(gitIgnore, "/dir1/foo/bar.txt");
         assertNotIgnore(gitIgnore, "/dir1/foo/foo/bar.txt");
         assertNotIgnore(gitIgnore, "/dir1/foo/foo/foo/bar.txt");
@@ -335,6 +335,7 @@ class TestGitIgnore {
         assertNotIgnore(gitIgnore, "/dir3//bar.txt");
         assertNotIgnore(gitIgnore, "/dir3/foo/bar.txt");
         assertIgnore(gitIgnore,  "/dir3/foo/foo/bar.txt");
+        assertIgnore(gitIgnore,  "/dir3///foo///foo////bar.txt"); // Duplicate / are simplified
         assertNotIgnore(gitIgnore, "/dir3///bar.txt");
         assertNotIgnore(gitIgnore, "/dir3/a//bar.txt");
         assertNotIgnore(gitIgnore, "/dir3//b/bar.txt");
@@ -491,7 +492,7 @@ class TestGitIgnore {
 
 
     private void verifyBaseDir(GitIgnore gitIgnore, String baseDir, String matchingFilename) {
-        assertEquals(baseDir, gitIgnore.getBaseDir(), "Wrong basedir in GitIgnore");
+        assertEquals(baseDir, gitIgnore.getProjectRelativeBaseDir(), "Wrong basedir in GitIgnore");
         for (IgnoreRule ignoreRule : gitIgnore.getIgnoreRules()) {
             assertEquals(baseDir, ignoreRule.getIgnoreBasedir(), "Wrong basedir in rule");
         }
@@ -524,9 +525,9 @@ class TestGitIgnore {
 
     @Test
     void testGeneratedRegexesSubdir() {
-        verifyGeneratedRegex("",          "*.log", "^/?.*\\.log(/|$)");
+        verifyGeneratedRegex("",          "*.txt", "^/?.*\\.txt(/|$)");
         verifyGeneratedRegex("src/",      "*.log", "^/?\\Qsrc/\\E.*\\.log(/|$)");
-        verifyGeneratedRegex("src/main/", "*.log", "^/?\\Qsrc/main/\\E.*\\.log(/|$)");
+        verifyGeneratedRegex("src/main/", "*.md",  "^/?\\Qsrc/main/\\E.*\\.md(/|$)");
     }
 
     // ------------------------------------------

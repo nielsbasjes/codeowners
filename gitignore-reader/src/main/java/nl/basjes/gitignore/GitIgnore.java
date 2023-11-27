@@ -34,16 +34,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static java.lang.Boolean.TRUE;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
 
+/**
+ * A class that holds a single .gitignore file
+ */
 public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
 
-    // This is the separator dictated in the gitignore documentation
+    // This is the separator dictated in the gitignore documentation (same as Linux/Unix)
     private static final String GITIGNORE_PATH_SEPARATOR = "/";
 
     private static final Logger LOG = LoggerFactory.getLogger(GitIgnore.class);
 
-    private final String baseDir;
+    private final String projectRelativeBaseDir;
 
     private final List<IgnoreRule> ignoreRules = new ArrayList<>();
     private boolean verbose = false;
@@ -53,22 +58,16 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
         this("", file);
     }
 
-    public GitIgnore(String baseDir, File file) throws IOException {
-        this(baseDir, FileUtils.readFileToString(file, UTF_8));
+    public GitIgnore(String projectRelativeBaseDir, File file) throws IOException {
+        this(projectRelativeBaseDir, FileUtils.readFileToString(file, UTF_8));
     }
 
     public GitIgnore(String gitIgnoreContent) {
         this("", gitIgnoreContent);
     }
 
-    public GitIgnore(String baseDir, String gitIgnoreContent) {
-        String cleanBaseDir = baseDir.replace("\\", GITIGNORE_PATH_SEPARATOR);
-        this.baseDir =
-            (
-                (cleanBaseDir.startsWith("/")?"":"/") +
-                    cleanBaseDir +
-                (cleanBaseDir.endsWith("/")?"":"/")
-            ).replace("//", "/");
+    public GitIgnore(String projectRelativeBaseDir, String gitIgnoreContent) {
+        this.projectRelativeBaseDir = standardizeFilename(projectRelativeBaseDir + GITIGNORE_PATH_SEPARATOR);
         CodePointCharStream input = CharStreams.fromString(gitIgnoreContent);
         GitIgnoreLexer lexer = new GitIgnoreLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -87,10 +86,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
             LOG.info("# vvvvvvvvvvvvvvvvvvvvvvvvvvv");
             LOG.info("Checking: {}", filename);
         }
-        String matchFileName = filename.replace("\\", GITIGNORE_PATH_SEPARATOR);
-        if (!matchFileName.startsWith(GITIGNORE_PATH_SEPARATOR)) {
-            matchFileName = GITIGNORE_PATH_SEPARATOR + matchFileName;
-        }
+        String matchFileName = standardizeFilename(filename);
 
         if (verbose) {
             LOG.info("Matching: {}", matchFileName);
@@ -99,9 +95,9 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
         // If a file is NOT matched at all then there is no verdict.
         Boolean mustBeIgnored = null;
 
-        if (!matchFileName.startsWith(baseDir)) {
+        if (!matchFileName.startsWith(projectRelativeBaseDir)) {
             if (verbose) {
-                LOG.info("# Not in my baseDir: {}", baseDir);
+                LOG.info("# Not in my baseDir: {}", projectRelativeBaseDir);
             }
         } else {
             for (IgnoreRule ignoreRule : ignoreRules) {
@@ -135,7 +131,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
             if (mustBeIgnored == null) {
                 LOG.info("Conclusion: Not matched: Not ignored");
             } else {
-                if (Boolean.TRUE.equals(mustBeIgnored)) {
+                if (TRUE.equals(mustBeIgnored)) {
                     LOG.info("Conclusion: Must be ignored");
                 } else {
                     LOG.info("Conclusion: Must NOT be ignored");
@@ -145,10 +141,39 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
         return mustBeIgnored;
     }
 
+    /**
+     * Converts filename to unix convention and ensures it starts with a /
+     * @param filename The filename to clean
+     * @return A standardized form.
+     */
+    private String standardizeFilename(String filename) {
+        return (GITIGNORE_PATH_SEPARATOR + separatorsToUnix(filename)).replaceAll("/+", "/");
+    }
+
+    /**
+     * Checks if the file matches the stored expressions.
+     * This is NOT suitable for combining multiple sets of rules!
+     * @param filename The filename to be checked
+     * @return true: must be ignored, false: it must be not be ignored
+     */
+    public boolean ignoreFile(String filename) {
+        return TRUE.equals(isIgnoredFile(filename));
+    }
+
+    /**
+     * Checks if the file matches the stored expressions.
+     * This is NOT suitable for combining multiple sets of rules!
+     * @param filename The filename to be checked
+     * @return true: must be kept, false: it must be ignored
+     */
+    public boolean keepFile(String filename) {
+        return !ignoreFile(filename);
+    }
+
     @Override
     public Void visitIgnoreRule(GitIgnoreParser.IgnoreRuleContext ctx) {
         String filePattern = ctx.fileExpression.getText();
-        ignoreRules.add(new IgnoreRule(baseDir, ctx.not != null, filePattern));
+        ignoreRules.add(new IgnoreRule(projectRelativeBaseDir, ctx.not != null, filePattern));
         return null;
     }
 
@@ -168,35 +193,34 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
         return result.toString();
     }
 
-    public String getBaseDir() {
-        return baseDir;
+    public String getProjectRelativeBaseDir() {
+        return projectRelativeBaseDir;
     }
 
-    public List<IgnoreRule> getIgnoreRules() {
+    // Only for testing purposes
+    List<IgnoreRule> getIgnoreRules() {
         return new ArrayList<>(ignoreRules);
     }
 
-    public static class IgnoreRule {
-        private final String baseDir;
+    // Internal, package private for testing purposes
+    static class IgnoreRule {
+        private final String projectRelativeBaseDir;
         private final boolean negate;
         private final String fileExpression;
         private final boolean directoryMatch;
         private final Pattern filePattern;
         private boolean verbose = false;
 
-        public IgnoreRule(String baseDir, boolean negate, String fileExpression) {
+        public IgnoreRule(String projectRelativeBaseDir, boolean negate, String fileExpression) {
 
             String baseDirRegex;
-            if (baseDir == null || "/".equals(baseDir) || baseDir.trim().isEmpty()) {
-                this.baseDir = "/";
+            if (projectRelativeBaseDir == null || "/".equals(projectRelativeBaseDir) || projectRelativeBaseDir.trim().isEmpty()) {
+                this.projectRelativeBaseDir = "/";
                 baseDirRegex = "^/?"; // The leading slash is optional
             } else {
-                // Enforce the base dir starts and ends with a '/'
-                this.baseDir = (baseDir.startsWith("/") ? "" : "/") +
-                                baseDir.trim() +
-                               (baseDir.endsWith("/")   ? "" : "/");
-
-                baseDirRegex = "^/?\\Q" + this.baseDir.substring(1) + "\\E";
+                // Enforce the base dir starts and ends with a single '/'
+                this.projectRelativeBaseDir = ("/" + projectRelativeBaseDir.trim() + "/").replaceAll("/+", "/");
+                baseDirRegex = "^/?\\Q" + this.projectRelativeBaseDir.substring(1) + "\\E";
             }
 
             this.negate = negate;
@@ -283,7 +307,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
                 if (verbose) {
                     LOG.info("MATCH IGNORE |{}| ~ |{}| --> |{}|", fileExpression, filePattern, filename);
                 }
-                return Boolean.TRUE;
+                return TRUE;
             }
         }
 
@@ -300,7 +324,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
          * @return The directory in which this gitIgnore was located
          */
         public String getIgnoreBasedir() {
-            return baseDir;
+            return projectRelativeBaseDir;
         }
 
         /**
@@ -323,7 +347,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
 
         @Override
         public String toString() {
-            return (negate?"!":"")+ fileExpression + "          # Used Regex: " + filePattern;
+            return String.format("%-20s     # Used Regex: %s", (negate?"!":"")+ fileExpression, filePattern);
         }
     }
 
