@@ -19,6 +19,7 @@ package nl.basjes.maven.enforcer.codeowners;
 
 import nl.basjes.codeowners.CodeOwners;
 import nl.basjes.gitignore.GitIgnore;
+import nl.basjes.gitignore.GitIgnoreFileSet;
 import org.apache.maven.enforcer.rule.api.AbstractEnforcerRule;
 import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
 import org.apache.maven.project.MavenProject;
@@ -60,12 +61,6 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
     @Inject
     private MavenProject project;
 
-//    @Inject
-//    private MavenSession session;
-//
-//    @Inject
-//    private RuntimeInformation runtimeInformation;
-
     public void execute() throws EnforcerRuleException {
         List<String> allFilesInProject;
         List<String> allDirectoriesInProject;
@@ -96,7 +91,7 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         }
 
         // Get the files that are ignored by the SCM
-        List<GitIgnore> gitIgnores = new ArrayList<>();
+        GitIgnoreFileSet gitIgnores = new GitIgnoreFileSet(new File(baseDir), false);
 
         // Start with the internal files that are used by common SCMs.
         gitIgnores.add(new GitIgnore(
@@ -105,8 +100,7 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             ".svn/\n"
         ));
 
-        getLog().info("Using gitignore: Built in base rules.");
-        getLog().debug(gitIgnores.get(0).toString());
+        getLog().info("Using gitignore: Built in base rules: " + gitIgnores);
 
         List<Object> commonCodeOwnersFiles = Arrays.asList(
             "/CODEOWNERS",
@@ -160,18 +154,18 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             // Run this listing without the verbose set to keep the output usable
             printApprovers(allFilesInProject
                 .stream()
-                .filter(filename -> keepFile(gitIgnores, filename))
+                .filter(gitIgnores::keepFile)
                 .collect(Collectors.toList()),
                 codeOwners);
         }
 
         // Set everything to the requested verbosity
         codeOwners.setVerbose(verbose);
-        gitIgnores.forEach(gi->gi.setVerbose(verbose));
+        gitIgnores.setVerbose(verbose);
 
         List<String> allNonIgnoredFilesInProject = allFilesInProject
                 .stream()
-                .filter(filename -> keepFile(gitIgnores, filename))
+                .filter(gitIgnores::keepFile)
                 .collect(Collectors.toList());
 
         if (allFilesMustHaveCodeOwner || allExisingFilesMustHaveCodeOwner) {
@@ -182,22 +176,11 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             List<String> newFileForEveryDirectory = allDirectoriesInProject
                 .stream()
                 .map(directoryName -> (directoryName + "/" + unlikelyFilename).replace("//", "/"))
-                .filter(filename -> keepFile(gitIgnores, filename))
+                .filter(gitIgnores::keepFile)
                 .collect(Collectors.toList());
 
             allNonIgnoredFilesHaveApprovers(newFileForEveryDirectory, codeOwners);
         }
-    }
-
-    boolean keepFile(List<GitIgnore> gitIgnoreList, String filename) {
-        Boolean ignore=null;
-        for (GitIgnore gitIgnore : gitIgnoreList) {
-            Boolean ignoreResult = gitIgnore.isIgnoredFile(filename);
-            if (ignoreResult != null) {
-                ignore = ignoreResult;
-            }
-        }
-        return (ignore == null || ignore == Boolean.FALSE);
     }
 
     void allNonIgnoredFilesHaveApprovers(List<String> filenames, CodeOwners codeOwners) throws EnforcerRuleException {

@@ -17,6 +17,7 @@
 
 package nl.basjes.gitignore;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,11 +27,19 @@ public class TestUtils {
         assertSame(Boolean.TRUE,
             gitIgnore.isIgnoredFile(filename),
             "Filename \"" + filename + "\" should match but did not.");
+        assertTrue(gitIgnore.ignoreFile(filename),
+            "Filename \"" + filename + "\" should match but did not.");
+        assertFalse(gitIgnore.keepFile(filename),
+            "Filename \"" + filename + "\" should match but did not.");
 
         // Same but now with a windows path separator
         String wFilename = windowsFileName(filename);
         assertSame(Boolean.TRUE,
             gitIgnore.isIgnoredFile(wFilename),
+            "Filename \"" + wFilename + "\" should match but did not.");
+        assertTrue(gitIgnore.ignoreFile(wFilename),
+            "Filename \"" + wFilename + "\" should match but did not.");
+        assertFalse(gitIgnore.keepFile(wFilename),
             "Filename \"" + wFilename + "\" should match but did not.");
     }
 
@@ -43,12 +52,20 @@ public class TestUtils {
         assertTrue(
             isIgnoredFile == null || isIgnoredFile == Boolean.FALSE,
             "Filename \""+filename+"\" should NOT match but did.");
+        assertFalse(gitIgnore.ignoreFile(filename),
+            "Filename \""+filename+"\" should NOT match but did.");
+        assertTrue(gitIgnore.keepFile(filename),
+            "Filename \""+filename+"\" should NOT match but did.");
 
         // Same but now with a windows path separator
         String wFilename = windowsFileName(filename);
         Boolean wIsIgnoredFile = gitIgnore.isIgnoredFile(wFilename);
         assertTrue(
             wIsIgnoredFile == null || wIsIgnoredFile == Boolean.FALSE,
+            "Filename \""+wFilename+"\" should NOT match but did.");
+        assertFalse(gitIgnore.ignoreFile(wFilename),
+            "Filename \""+wFilename+"\" should NOT match but did.");
+        assertTrue(gitIgnore.keepFile(wFilename),
             "Filename \""+wFilename+"\" should NOT match but did.");
     }
 
