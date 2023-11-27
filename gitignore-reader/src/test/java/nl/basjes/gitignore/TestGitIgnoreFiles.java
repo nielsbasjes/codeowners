@@ -201,4 +201,17 @@ class TestGitIgnoreFiles {
         assertFalse(gitIgnoreFileSet.ignoreFile("\\dir2\\foo.md"));
     }
 
+    @Test
+    void testErrorHandlingNosuchDirectory() {
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(new File("/no-such-file-really"));
+        assertTrue(gitIgnoreFileSet.isEmpty());
+    }
+
+    @Test
+    void testErrorHandlingNosuchFile() {
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(new File("src/test/resources/"), false);
+        gitIgnoreFileSet.addGitIgnoreFile(new File("/no-such-file-really"));
+        assertTrue(gitIgnoreFileSet.isEmpty());
+    }
+
 }

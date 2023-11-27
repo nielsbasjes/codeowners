@@ -92,7 +92,7 @@ public class GitIgnoreFileSet implements FileFilter {
                 .forEach(gitIgnoreFile -> addGitIgnoreFile(gitIgnoreFile.toFile()));
         }
         catch (IOException e) {
-            LOG.error("Unable to find .gitignore files in {} due to {}", projectBaseDir, e.getMessage());
+            LOG.error("Unable to find .gitignore files in {} due to {}", projectBaseDir, e.toString());
         }
     }
 
