@@ -146,8 +146,12 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
      * @param filename The filename to clean
      * @return A standardized form.
      */
-    private String standardizeFilename(String filename) {
-        return (GITIGNORE_PATH_SEPARATOR + separatorsToUnix(filename)).replaceAll("/+", "/");
+    static String standardizeFilename(String filename) {
+        String unixifiedName = separatorsToUnix(filename);
+        if (!unixifiedName.matches("^[a-zA-Z]:/.*")) {
+            unixifiedName = GITIGNORE_PATH_SEPARATOR + unixifiedName;
+        }
+        return unixifiedName.replaceAll("/+", "/");
     }
 
     /**

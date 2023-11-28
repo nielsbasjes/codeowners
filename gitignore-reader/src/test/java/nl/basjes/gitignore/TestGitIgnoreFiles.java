@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static nl.basjes.gitignore.GitIgnore.standardizeFilename;
 import static org.apache.commons.io.FilenameUtils.separatorsToWindows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -52,14 +53,13 @@ class TestGitIgnoreFiles {
         "/README.md",
         "/root.md").sorted().collect(Collectors.toList());
 
-    static final String testTreeName = "src/test/resources/testtree";
-    static final File testTree = new File(testTreeName);
+    static final File testTree = new File("src/test/resources/testtree");
 
     private void checkIgnoredList(List<String> ignore) {
         List<String> ignored = ignore
             .stream()
-            .map(filename -> filename.replace("\\", "/")) // Needed for testing on Windows.
-            .map(filename -> filename.replace(testTreeName, ""))
+            .map(filename -> standardizeFilename(new File(filename).getAbsolutePath())) // Needed for testing on Windows.
+            .map(filename -> filename.replaceAll("^\\Q"+ standardizeFilename(testTree.getAbsolutePath()) + "\\E", ""))
             .sorted()
             .collect(Collectors.toList());
         assertEquals(expectedIgnoredFiles, ignored);
@@ -128,8 +128,8 @@ class TestGitIgnoreFiles {
         files
             .stream()
             .map(File::getPath)
-            .map(f -> f.replace("\\", "/")) // Needed for testing on Windows.
-            .map(f -> f.replace(testTreeName, ""))
+            .map(GitIgnore::standardizeFilename) // Needed for testing on Windows.
+            .map(f -> f.replace(testTree.getPath(), ""))
             .forEach(file -> assertFalse(expectedIgnoredFiles.contains(file)));
     }
 
@@ -185,13 +185,42 @@ class TestGitIgnoreFiles {
 
     @Test
     void testWindowsPaths() {
-        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(new File(separatorsToWindows(testTreeName)), false);
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(new File(separatorsToWindows(testTree.getPath())), false);
         gitIgnoreFileSet.add(new GitIgnore(separatorsToWindows("/"),      "*.txt"));
         gitIgnoreFileSet.add(new GitIgnore(separatorsToWindows("/dir1/"), "*.md"));
         gitIgnoreFileSet.add(new GitIgnore(separatorsToWindows("/dir2/"), "!foo.txt"));
 
         assertFalse(gitIgnoreFileSet.isEmpty());
 
+        assertTrue(gitIgnoreFileSet.ignoreFile("\\foo.txt"));
+        assertTrue(gitIgnoreFileSet.ignoreFile("\\dir1\\foo.txt"));
+        assertFalse(gitIgnoreFileSet.ignoreFile("\\dir2\\foo.txt"));
+
+        assertFalse(gitIgnoreFileSet.ignoreFile("\\foo.md"));
+        assertTrue(gitIgnoreFileSet.ignoreFile("\\dir1\\foo.md"));
+        assertFalse(gitIgnoreFileSet.ignoreFile("\\dir2\\foo.md"));
+    }
+
+    @Test
+    void testWindowsPathsWithDriveLetter() {
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(new File("A:\\MyProject\\src\\test\\resources\\"), false);
+        gitIgnoreFileSet.add(new GitIgnore("\\",       "*.txt"));
+        gitIgnoreFileSet.add(new GitIgnore("\\dir1\\", "*.md"));
+        gitIgnoreFileSet.add(new GitIgnore("\\dir2\\", "!foo.txt"));
+        gitIgnoreFileSet.setVerbose(true);
+
+        assertFalse(gitIgnoreFileSet.isEmpty());
+
+        // Correctly handle absolute paths
+        assertTrue(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\foo.txt"));
+        assertTrue(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\dir1\\foo.txt"));
+        assertFalse(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\dir2\\foo.txt"));
+
+        assertFalse(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\foo.md"));
+        assertTrue(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\dir1\\foo.md"));
+        assertFalse(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\dir2\\foo.md"));
+
+        // Correctly handle project relative paths
         assertTrue(gitIgnoreFileSet.ignoreFile("\\foo.txt"));
         assertTrue(gitIgnoreFileSet.ignoreFile("\\dir1\\foo.txt"));
         assertFalse(gitIgnoreFileSet.ignoreFile("\\dir2\\foo.txt"));

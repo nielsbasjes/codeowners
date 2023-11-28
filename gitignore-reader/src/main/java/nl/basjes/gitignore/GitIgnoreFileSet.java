@@ -30,6 +30,7 @@ import java.util.TreeMap;
 import java.util.stream.Stream;
 
 import static java.lang.Boolean.TRUE;
+import static nl.basjes.gitignore.GitIgnore.standardizeFilename;
 import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
 
 /**
@@ -141,11 +142,11 @@ public class GitIgnoreFileSet implements FileFilter {
     }
 
     private String getProjectRelative(String fileName) {
-        return separatorsToUnix(fileName)
-            .replaceAll("^\\Q" + projectBaseDir + "\\E", "/")
+        return standardizeFilename(fileName)
+            .replaceAll("^\\Q" + standardizeFilename(projectBaseDir.getPath()) + "\\E", "/")
+            .replaceAll("^\\Q" + standardizeFilename(projectBaseDir.getAbsolutePath()) + "\\E", "/")
             .replace("//", "/");
     }
-
     @Override
     public boolean accept(File pathname) {
         return keepFile(pathname.getName());
