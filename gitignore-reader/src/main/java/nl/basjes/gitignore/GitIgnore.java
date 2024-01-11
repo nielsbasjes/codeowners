@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import static java.lang.Boolean.TRUE;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -286,8 +287,21 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
                 .replace("/\\E/", "/\\E")
                 ;
 
-//            LOG.info("{}     -->     {}", fileExpression, fileRegex);
-            filePattern = Pattern.compile(baseDirRegex + fileRegex);
+            String finalRegex = baseDirRegex + fileRegex;
+            try {
+                filePattern = Pattern.compile(finalRegex);
+                if (verbose) {
+                    LOG.info("IgnoreRule for expression {}   -->   Regex {}", this.fileExpression, fileRegex);
+                }
+            } catch (PatternSyntaxException pse) {
+                String errorMsg = "You either have an invalid gitignore rule (which you should fix) " +
+                    "or you have found an edge case that should be fixed. " +
+                    "In the latter case please file a bug report to https://github.com/nielsbasjes/codeowners/issues " +
+                    "indicating that the expression >>>" + (negate?"!":"") + this.fileExpression + "<<< " +
+                    "was converted to regex >>>" + finalRegex + "<<< " +
+                    "which triggered the error: " + pse.getMessage();
+                throw new PatternSyntaxException(errorMsg, finalRegex, pse.getIndex());
+            }
         }
 
         /**
