@@ -516,6 +516,7 @@
             <exclude>*.sh</exclude>
             <exclude>**/_*/**</exclude>
             <exclude>**/*_/**</exclude>
+            <exclude>**/gitignore-reader/src/test/resources/**</exclude>
           </excludes>
         </configuration>
       </plugin>

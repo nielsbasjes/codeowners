@@ -21,16 +21,25 @@ import nl.basjes.gitignore.parser.GitIgnoreBaseVisitor;
 import nl.basjes.gitignore.parser.GitIgnoreLexer;
 import nl.basjes.gitignore.parser.GitIgnoreParser;
 import nl.basjes.gitignore.parser.GitIgnoreParser.GitignoreContext;
+import org.antlr.v4.runtime.ANTLRErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.atn.ATNConfigSet;
+import org.antlr.v4.runtime.dfa.DFA;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -42,7 +51,7 @@ import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
 /**
  * A class that holds a single .gitignore file
  */
-public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
+public class GitIgnore extends GitIgnoreBaseVisitor<Void> implements ANTLRErrorListener {
 
     // This is the separator dictated in the gitignore documentation (same as Linux/Unix)
     private static final String GITIGNORE_PATH_SEPARATOR = "/";
@@ -67,14 +76,44 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
         this("", gitIgnoreContent);
     }
 
+    public GitIgnore(String gitIgnoreContent, boolean verbose) {
+        this("", gitIgnoreContent, verbose);
+    }
+
     public GitIgnore(String projectRelativeBaseDir, String gitIgnoreContent) {
+        this(projectRelativeBaseDir, gitIgnoreContent, false);
+    }
+
+    public GitIgnore(String projectRelativeBaseDir, String gitIgnoreContent, boolean verbose) {
+        this.verbose = verbose;
         this.projectRelativeBaseDir = standardizeFilename(projectRelativeBaseDir + GITIGNORE_PATH_SEPARATOR);
-        CodePointCharStream input = CharStreams.fromString(gitIgnoreContent);
-        GitIgnoreLexer lexer = new GitIgnoreLexer(input);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        GitIgnoreParser parser = new GitIgnoreParser(tokens);
-        GitignoreContext gitignore = parser.gitignore();
-        visit(gitignore);
+
+        // In Antlr it is really hard to determine if a '#' character is the first on the line and thus a comment.
+        // There are rules with the # in it as a character to match on.
+        BufferedReader reader = new BufferedReader(new StringReader(gitIgnoreContent));
+        String line;
+        try {
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
+                if (line.startsWith("#")) {
+                    continue;
+                }
+                CodePointCharStream input = CharStreams.fromString(line);
+                GitIgnoreLexer lexer = new GitIgnoreLexer(input);
+                lexer.addErrorListener(this);
+                CommonTokenStream tokens = new CommonTokenStream(lexer);
+                GitIgnoreParser parser = new GitIgnoreParser(tokens);
+                parser.addErrorListener(this);
+                GitignoreContext gitignore = parser.gitignore();
+                visit(gitignore);
+            }
+        } catch (IOException io) {
+            LOG.error("Got an IOException while reading the gitignore file");
+        }
+
     }
 
     /**
@@ -178,7 +217,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
     @Override
     public Void visitIgnoreRule(GitIgnoreParser.IgnoreRuleContext ctx) {
         String filePattern = ctx.fileExpression.getText();
-        ignoreRules.add(new IgnoreRule(projectRelativeBaseDir, ctx.not != null, filePattern));
+        ignoreRules.add(new IgnoreRule(projectRelativeBaseDir, ctx.not != null, filePattern, verbose));
         return null;
     }
 
@@ -207,6 +246,26 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
         return new ArrayList<>(ignoreRules);
     }
 
+    @Override
+    public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+        LOG.error("Syntax error on line {} at {}: {}", line, charPositionInLine, msg);
+    }
+
+    @Override
+    public void reportAmbiguity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, boolean exact, BitSet ambigAlts, ATNConfigSet configs) {
+        // Ignore
+    }
+
+    @Override
+    public void reportAttemptingFullContext(Parser recognizer, DFA dfa, int startIndex, int stopIndex, BitSet conflictingAlts, ATNConfigSet configs) {
+        // Ignore
+    }
+
+    @Override
+    public void reportContextSensitivity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, int prediction, ATNConfigSet configs) {
+        // Ignore
+    }
+
     // Internal, package private for testing purposes
     static class IgnoreRule {
         private final String projectRelativeBaseDir;
@@ -216,8 +275,8 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
         private final Pattern filePattern;
         private boolean verbose = false;
 
-        public IgnoreRule(String projectRelativeBaseDir, boolean negate, String fileExpression) {
-
+        public IgnoreRule(String projectRelativeBaseDir, boolean negate, final String fileExpression, boolean verbose) {
+            this.verbose = verbose;
             String baseDirRegex;
             if (projectRelativeBaseDir == null || "/".equals(projectRelativeBaseDir) || projectRelativeBaseDir.trim().isEmpty()) {
                 this.projectRelativeBaseDir = "/";
@@ -240,19 +299,52 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> {
                 .replace("[!", "[^") // Fix the 'not' range or 'not' set
                 ;
 
+            // The character "?" matches any one character except "/".
+            fileRegex = fileRegex.replace("?", "[^/]");
+
             if (fileExpression.contains("/") && !fileExpression.endsWith("/")) {
                 // Patterns specifying a file in a particular directory are relative to the repository root.
                 if (fileRegex.startsWith("/")) {
                     fileRegex = fileRegex.substring(1);
                 }
             } else {
-                // If a path does not start with a /, the path is treated as if it starts with a globstar. README.md is treated the same way as /**/README.md
-                fileRegex = fileRegex.replaceAll("^([^/*.])", "**/$1");
+                // If there is a separator at the beginning or middle (or both) of the pattern,
+                // then the pattern is relative to the directory level of the particular .gitignore file itself.
+                // Otherwise, the pattern may also match at any level below the .gitignore level.
+                if (!Pattern.compile("./.").matcher(fileRegex).find()) {
+                    // If a path does not start with a /, the path is treated as if it starts with a globstar. README.md is treated the same way as /**/README.md
+                    fileRegex = fileRegex.replaceAll("^([^/*])", "**/$1");
+                }
             }
 
             fileRegex = fileRegex
                 .replace("\\ ", " ") // The escaped spaces must become spaces again.
 
+                // Some characters do NOT have a special meaning
+                .replace("$", "\\$")
+                .replace("(", "\\(")
+                .replace(")", "\\)");
+
+            // Convert cases like
+            //     coverage*[.json, .xml, .info]
+            // into
+            //     coverage*(.json|.xml|.info)
+            if (fileRegex.contains("[") && fileRegex.contains(",")) {
+                boolean changed = false;
+                while (true) {
+                    String newRegex = fileRegex.replaceAll("\\[([^]]+) *, *([^]]+)]", "[$1|$2]");
+                    if (newRegex.equals(fileRegex)) {
+                        break;
+                    }
+                    fileRegex = newRegex;
+                    changed = true;
+                }
+                if (changed) {
+                    fileRegex = fileRegex.replaceAll("\\[([^]]+\\|[^]]+)]", "($1)");
+                }
+            }
+
+            fileRegex = fileRegex
                 // "/foo" --> End can be a filename (so we pin to the end) or a directory name (so we expect another / )
                 .replaceAll("([^/*])$", "$1(/|\\$)")
 

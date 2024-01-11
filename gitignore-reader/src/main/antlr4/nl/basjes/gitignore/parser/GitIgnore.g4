@@ -23,9 +23,7 @@ gitignore
 
 configLine
     : not=NOT? fileExpression=FILEEXPRESSION #ignoreRule
-    | COMMENT? NEWLINE+ #comment
     ;
-
 
 fragment EOL
     : '\r'? '\n' | '\r'
@@ -35,18 +33,10 @@ NOT
     : '!'
     ;
 
-COMMENT
-    : '#' ~[\n\r]* EOL -> skip
-    ;
-
-SPACE
-    : (' '| '\u2002' | '\u0220' |'\t'|'+') -> skip
-    ;
-
-NEWLINE
-    : EOL+ ->skip
+fragment EXPRESSIONLETTERS
+    : [a-zA-Z0-9/*_.,\\[\]?()~@$#:;-]
     ;
 
 FILEEXPRESSION
-    : ('\\ '|'\\#'|[a-zA-Z0-9/*_.\\[\]?-])+('\\ '|'\\#'|[a-zA-Z0-9/*_.\\[\]?!-])+
+    : EXPRESSIONLETTERS (( EXPRESSIONLETTERS | [ !] )* (EXPRESSIONLETTERS | '!' ))?
     ;

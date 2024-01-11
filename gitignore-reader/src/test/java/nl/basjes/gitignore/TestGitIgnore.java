@@ -532,4 +532,41 @@ class TestGitIgnore {
 
     // ------------------------------------------
 
+    @Test
+    void testGitDocumentation() {
+        // From the git documentation:
+
+        // If there is a separator at the beginning or middle (or both) of the pattern,
+        // then the pattern is relative to the directory level of the particular .gitignore file itself.
+        // Otherwise, the pattern may also match at any level below the .gitignore level.
+        GitIgnore gitIgnore;
+        // a pattern doc/frotz/ matches doc/frotz directory, but not a/doc/frotz directory;
+        gitIgnore = new GitIgnore("doc/frotz/");
+        assertIgnore(gitIgnore,    "doc/frotz/");
+        assertIgnore(gitIgnore,    "doc/frotz/file.txt");
+        assertNotIgnore(gitIgnore, "a/doc/frotz/");
+        assertNotIgnore(gitIgnore, "a/doc/frotz/file.txt");
+
+        // however frotz/ matches frotz and a/frotz that is a directory (all paths are relative from the .gitignore file).
+        gitIgnore = new GitIgnore("frotz/");
+        assertIgnore(gitIgnore,    "frotz/");
+        assertIgnore(gitIgnore,    "frotz/file.txt");
+        assertIgnore(gitIgnore,    "a/frotz/");
+        assertIgnore(gitIgnore,    "a/frotz/file.txt");
+
+        // Beginning
+        gitIgnore = new GitIgnore("/frotz");
+        assertIgnore(gitIgnore,    "frotz/");
+        assertIgnore(gitIgnore,    "frotz/file.txt");
+        assertNotIgnore(gitIgnore, "a/frotz/");
+        assertNotIgnore(gitIgnore, "a/frotz/file.txt");
+
+        // Both
+        gitIgnore = new GitIgnore("/doc/frotz/");
+        assertIgnore(gitIgnore,    "doc/frotz/");
+        assertIgnore(gitIgnore,    "doc/frotz/file.txt");
+        assertNotIgnore(gitIgnore, "a/doc/frotz/");
+        assertNotIgnore(gitIgnore, "a/doc/frotz/file.txt");
+    }
+
 }
