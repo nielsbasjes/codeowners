@@ -33,13 +33,6 @@
   <url>https://github.com/nielsbasjes/codeowners</url>
 
   <dependencies>
-
-    <!-- Direct dependencies -->
-    <dependency>
-      <groupId>org.antlr</groupId>
-      <artifactId>antlr4-runtime</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
@@ -89,23 +82,6 @@
       </plugin>
 
       <plugin>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr4-maven-plugin</artifactId>
-        <version>${antlr.version}</version>
-        <executions>
-          <execution>
-            <id>antlr</id>
-            <goals>
-              <goal>antlr4</goal>
-            </goals>
-            <configuration>
-              <visitor>true</visitor>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${maven-surefire-plugin.version}</version>
@@ -125,50 +101,6 @@
               <goal>main-index</goal>
             </goals>
           </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.5.1</version>
-        <configuration>
-          <minimizeJar>true</minimizeJar>
-          <createDependencyReducedPom>true</createDependencyReducedPom>
-          <useDependencyReducedPomInJar>true</useDependencyReducedPomInJar>
-          <filters>
-            <filter>
-              <artifact>org.antlr:antlr4-runtime</artifact>
-              <excludes>
-                <exclude>META-INF/services/**</exclude>
-                <exclude>META-INF/MANIFEST.MF</exclude>
-              </excludes>
-            </filter>
-          </filters>
-          <relocations>
-            <relocation>
-              <pattern>org.antlr</pattern>
-              <shadedPattern>nl.basjes.codeowners.shaded.org.antlr</shadedPattern>
-            </relocation>
-          </relocations>
-        </configuration>
-
-        <executions>
-          <execution>
-            <id>inject-problematic-dependencies</id>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <artifactSet>
-                <includes>
-                  <include>org.antlr:antlr4-runtime</include>
-                </includes>
-              </artifactSet>
-            </configuration>
-          </execution>
-
         </executions>
       </plugin>
 

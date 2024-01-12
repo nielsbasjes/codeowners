@@ -17,19 +17,6 @@
 
 package nl.basjes.gitignore;
 
-import nl.basjes.gitignore.parser.GitIgnoreBaseVisitor;
-import nl.basjes.gitignore.parser.GitIgnoreLexer;
-import nl.basjes.gitignore.parser.GitIgnoreParser;
-import nl.basjes.gitignore.parser.GitIgnoreParser.GitignoreContext;
-import org.antlr.v4.runtime.ANTLRErrorListener;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.RecognitionException;
-import org.antlr.v4.runtime.Recognizer;
-import org.antlr.v4.runtime.atn.ATNConfigSet;
-import org.antlr.v4.runtime.dfa.DFA;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -51,7 +37,7 @@ import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
 /**
  * A class that holds a single .gitignore file
  */
-public class GitIgnore extends GitIgnoreBaseVisitor<Void> implements ANTLRErrorListener {
+public class GitIgnore {
 
     // This is the separator dictated in the gitignore documentation (same as Linux/Unix)
     private static final String GITIGNORE_PATH_SEPARATOR = "/";
@@ -88,8 +74,6 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> implements ANTLRErrorL
         this.verbose = verbose;
         this.projectRelativeBaseDir = standardizeFilename(projectRelativeBaseDir + GITIGNORE_PATH_SEPARATOR);
 
-        // In Antlr it is really hard to determine if a '#' character is the first on the line and thus a comment.
-        // There are rules with the # in it as a character to match on.
         BufferedReader reader = new BufferedReader(new StringReader(gitIgnoreContent));
         String line;
         try {
@@ -101,14 +85,11 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> implements ANTLRErrorL
                 if (line.startsWith("#")) {
                     continue;
                 }
-                CodePointCharStream input = CharStreams.fromString(line);
-                GitIgnoreLexer lexer = new GitIgnoreLexer(input);
-                lexer.addErrorListener(this);
-                CommonTokenStream tokens = new CommonTokenStream(lexer);
-                GitIgnoreParser parser = new GitIgnoreParser(tokens);
-                parser.addErrorListener(this);
-                GitignoreContext gitignore = parser.gitignore();
-                visit(gitignore);
+                if (line.startsWith("!")) {
+                    ignoreRules.add(new IgnoreRule(this.projectRelativeBaseDir, true, line.substring(1), verbose));
+                } else {
+                    ignoreRules.add(new IgnoreRule(this.projectRelativeBaseDir, false, line, verbose));
+                }
             }
         } catch (IOException io) {
             LOG.error("Got an IOException while reading the gitignore file");
@@ -214,13 +195,6 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> implements ANTLRErrorL
         return !ignoreFile(filename);
     }
 
-    @Override
-    public Void visitIgnoreRule(GitIgnoreParser.IgnoreRuleContext ctx) {
-        String filePattern = ctx.fileExpression.getText();
-        ignoreRules.add(new IgnoreRule(projectRelativeBaseDir, ctx.not != null, filePattern, verbose));
-        return null;
-    }
-
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
         ignoreRules.forEach(rule->rule.setVerbose(verbose));
@@ -246,26 +220,6 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> implements ANTLRErrorL
         return new ArrayList<>(ignoreRules);
     }
 
-    @Override
-    public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-        LOG.error("Syntax error on line {} at {}: {}", line, charPositionInLine, msg);
-    }
-
-    @Override
-    public void reportAmbiguity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, boolean exact, BitSet ambigAlts, ATNConfigSet configs) {
-        // Ignore
-    }
-
-    @Override
-    public void reportAttemptingFullContext(Parser recognizer, DFA dfa, int startIndex, int stopIndex, BitSet conflictingAlts, ATNConfigSet configs) {
-        // Ignore
-    }
-
-    @Override
-    public void reportContextSensitivity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, int prediction, ATNConfigSet configs) {
-        // Ignore
-    }
-
     // Internal, package private for testing purposes
     static class IgnoreRule {
         private final String projectRelativeBaseDir;
@@ -273,7 +227,7 @@ public class GitIgnore extends GitIgnoreBaseVisitor<Void> implements ANTLRErrorL
         private final String fileExpression;
         private final boolean directoryMatch;
         private final Pattern filePattern;
-        private boolean verbose = false;
+        private boolean verbose;
 
         public IgnoreRule(String projectRelativeBaseDir, boolean negate, final String fileExpression, boolean verbose) {
             this.verbose = verbose;
