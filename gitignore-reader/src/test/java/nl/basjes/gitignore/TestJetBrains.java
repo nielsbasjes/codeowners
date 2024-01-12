@@ -36,6 +36,7 @@ class TestJetBrains {
         // https://plugins.jetbrains.com/plugin/7495--ignore
         try {
             GitIgnoreFileSet ignoreFileSet = new GitIgnoreFileSet(new File("src/test/resources/JetBrains"));
+            ignoreFileSet.addGitIgnoreFile(new File("src/test/resources/JetBrains/JetBrains.gitignore"));
         } catch (Exception e) {
             fail("Should not throw anything");
         }
