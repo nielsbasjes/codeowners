@@ -26,3 +26,4 @@ CODEOWNERS @nielsbasjes
 /pom.xml             @integrationtest
 /verify.groovy       @integrationtest
 /*                   @integrationtest
+/target/             @integrationtest

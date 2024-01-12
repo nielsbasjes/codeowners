@@ -26,3 +26,4 @@ CODEOWNERS @nielsbasjes
 /verify.groovy       @integrationtest
 build.log            @integrationtest
 /*                   @integrationtest
+/target/             @integrationtest
