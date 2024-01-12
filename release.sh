@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  StringTemplate Maven Plugin
+#  CodeOwners Tools
 #  Copyright (C) 2023-2024 Niels Basjes
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
@@ -133,8 +133,8 @@ fi
 # Check if build for this tag is reproducible
 git checkout "$(git describe --abbrev=0)"
 # ----------------------------------------------------------------------------------------------------
-info "Publishing for reproduction check to Local reproduceTest Repo"
-mvn clean deploy -PpackageForRelease -PuseLocalReproduceRepo -PskipQuality
+info "Publishing for reproduction check to Local repo"
+mvn clean install -PpackageForRelease -PskipQuality
 reproCheckPublishStatus=$?
 if [ ${reproCheckPublishStatus} -ne 0 ];
 then
@@ -147,7 +147,7 @@ fi
 
 # ----------------------------------------------------------------------------------------------------
 info "Checking build reproducibility ... "
-mvn clean verify -PpackageForRelease -PuseLocalReproduceRepo -PskipQuality -PartifactCompare -Dreproduce.repo=localReproduceRepo
+mvn clean verify -PpackageForRelease -PskipQuality -PartifactCompare
 reproducibleStatus=$?
 git switch -
 if [ ${reproducibleStatus} -ne 0 ];

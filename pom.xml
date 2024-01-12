@@ -137,26 +137,6 @@
     </profile>
 
     <profile>
-      <id>useLocalReproduceRepo</id>
-      <properties>
-        <!--suppress UnresolvedMavenProperty -->
-        <altReleaseDeploymentRepository>localReproduceRepo::file://${maven.multiModuleProjectDirectory}/__tmp_deploy/
-        </altReleaseDeploymentRepository>
-        <!--suppress UnresolvedMavenProperty -->
-        <altSnapshotDeploymentRepository>localReproduceRepo::file://${maven.multiModuleProjectDirectory}/__tmp_deploy/
-        </altSnapshotDeploymentRepository>
-      </properties>
-      <repositories>
-        <repository>
-          <id>localReproduceRepo</id>
-          <!--suppress UnresolvedMavenProperty -->
-          <url>file://${maven.multiModuleProjectDirectory}/__tmp_deploy/</url>
-        </repository>
-      </repositories>
-    </profile>
-
-
-    <profile>
       <id>artifactCompare</id>
       <build>
         <defaultGoal>clean verify</defaultGoal>

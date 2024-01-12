@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  StringTemplate Maven Plugin
+#  CodeOwners Tools
 #  Copyright (C) 2023-2024 Niels Basjes
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
