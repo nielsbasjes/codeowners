@@ -80,7 +80,7 @@ In one of my projects it looks like this:
 ## GitIgnore edge case
 This [tutorial page](https://www.atlassian.com/git/tutorials/saving-changes/gitignore) documents this edge case that this library also follows.
 
-I see this as unexpected behaviour yet this is really what git really does !
+I see this as unexpected behaviour yet this is really what git does !
 
 **Pattern**
 
