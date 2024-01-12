@@ -1,13 +1,13 @@
 This gitignore file is simply all rules available in the JetBrains ignore plugin for generating a .gitignore file.
 
 Plugin homepage https://plugins.jetbrains.com/plugin/7495--ignore
-
 This specific file was generated using this plugin (on 2024-01-10 using version 4.5.2) with the remove duplicates enabled.
 
-Note that the generated file contains comment blocks (using /** ... */) that are INVALID for a gitignore file.
-These have been manually commented (the correct way).
+Many of these files originate from https://github.com/github/gitignore and https://github.com/toptal/gitignore .
 
+Note that the generated file contains INVALID comment blocks (using /** ... */ and a '#' not on char 1).
 
+These problem cases have been manually fixed and were pushed upstream using https://github.com/github/gitignore/pull/4394 and https://github.com/toptal/gitignore/pull/562
 
 [//]: # ( CodeOwners Tools                                                         )
 [//]: # ( Copyright &#40;C&#41; 2023 Niels Basjes                                  )
