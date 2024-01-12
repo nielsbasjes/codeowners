@@ -3978,7 +3978,7 @@ fastlane/test_output
 # Click-Once directory
 
 # Publish Web Output
-# TODO: Comment the next line if you want to checkin your web deploy settings
+# TO DO: Comment the next line if you want to checkin your web deploy settings
 # but database connection strings (with potential passwords) will be unencrypted
 
 # Microsoft Azure Web App publish settings. Comment the next line if you want to
@@ -4670,10 +4670,10 @@ www-test/
 #
 # Recommended template: Node.gitignore
 
-# TODO: where does this rule come from?
+# TO DO: where does this rule come from?
 docs/_book
 
-# TODO: where does this rule come from?
+# TO DO: where does this rule come from?
 test/
 
 ### Sass template
@@ -8166,7 +8166,7 @@ acs-*.bib
 # endnotes
 *.ent
 
-# fixme
+# fix me
 *.lox
 
 # feynmf/feynmp
@@ -8231,7 +8231,7 @@ acs-*.bib
 
 # knitr
 *-concordance.tex
-# TODO Uncomment the next line if you use knitr and want to ignore its generated tikz files
+# TO DO Uncomment the next line if you use knitr and want to ignore its generated tikz files
 # *.tikz
 *-tikzDictionary
 
@@ -8314,14 +8314,14 @@ pythontex-files-*/
 # titletoc
 *.ptc
 
-# todonotes
+# to donotes
 *.tdo
 
 # vhistory
 *.hst
 *.ver
 
-# easy-todo
+# easy-to do
 *.lod
 
 # xcolor
@@ -11418,7 +11418,7 @@ pickle-email-*.html
 !/log/.keep
 !/tmp/.keep
 
-# TODO Comment out this rule if you are OK with secrets being uploaded to the repo
+# TO DO Comment out this rule if you are OK with secrets being uploaded to the repo
 config/initializers/secret_token.rb
 config/master.key
 
@@ -11426,7 +11426,7 @@ config/master.key
 # config/secrets.yml
 
 # dotenv, dotenv-rails
-# TODO Comment out these rules if environment variables can be committed
+# TO DO Comment out these rules if environment variables can be committed
 
 ## Environment normalization:
 /.bundle
@@ -12239,7 +12239,7 @@ project/plugins/project/
 
 # endnotes
 
-# fixme
+# fix me
 
 # feynmf/feynmp
 
@@ -12261,7 +12261,7 @@ project/plugins/project/
 # hyperref
 
 # knitr
-# TODO Uncomment the next line if you use knitr and want to ignore its generated tikz files
+# TO DO Uncomment the next line if you use knitr and want to ignore its generated tikz files
 # *.tikz
 
 # listings
@@ -12304,11 +12304,11 @@ project/plugins/project/
 
 # titletoc
 
-# todonotes
+# to donotes
 
 # vhistory
 
-# easy-todo
+# easy-to do
 
 # xcolor
 
