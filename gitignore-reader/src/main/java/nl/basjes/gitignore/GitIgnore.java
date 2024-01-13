@@ -92,7 +92,7 @@ public class GitIgnore {
                 }
             }
         } catch (IOException io) {
-            LOG.error("Got an IOException while reading the gitignore file");
+            LOG.error("Got an IOException while reading the gitignore file", io);
         }
 
     }
