@@ -74,6 +74,10 @@ public class GitIgnore {
         this.verbose = verbose;
         this.projectRelativeBaseDir = standardizeFilename(projectRelativeBaseDir + GITIGNORE_PATH_SEPARATOR);
 
+        if (gitIgnoreContent == null) {
+            return; // Nothing to read
+        }
+
         BufferedReader reader = new BufferedReader(new StringReader(gitIgnoreContent));
         String line;
         try {
@@ -92,7 +96,7 @@ public class GitIgnore {
                 }
             }
         } catch (IOException io) {
-            LOG.error("Got an IOException while reading the gitignore file content: {}", io.getMessage());
+            LOG.error("Got an IOException while reading the gitignore file content: {}", io);
         }
 
     }
