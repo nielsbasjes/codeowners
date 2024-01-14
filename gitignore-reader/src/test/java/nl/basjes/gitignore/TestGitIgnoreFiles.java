@@ -42,7 +42,7 @@ class TestGitIgnoreFiles {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestGitIgnoreFiles.class);
 
-    List<String> expectedIgnoredFiles = Stream.of(
+    final List<String> expectedIgnoredFiles = Stream.of(
         "/dir1/dir1.log",
         "/dir1/dir1.txt",
         "/dir1/file1.log",

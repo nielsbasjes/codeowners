@@ -47,7 +47,7 @@ public class GitIgnore {
     private final String projectRelativeBaseDir;
 
     private final List<IgnoreRule> ignoreRules = new ArrayList<>();
-    private boolean verbose = false;
+    private boolean verbose;
 
     // Load the gitignore from a file
     public GitIgnore(File file) throws IOException {
@@ -96,7 +96,7 @@ public class GitIgnore {
                 }
             }
         } catch (IOException io) {
-            LOG.error("Got an IOException while reading the gitignore file content: {}", io);
+            LOG.error("Got an IOException while reading the gitignore file content: {}", io.toString());
         }
 
     }

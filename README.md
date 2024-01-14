@@ -9,7 +9,7 @@
 [![If this project has business value for you then don't hesitate to support me with a small donation.](https://img.shields.io/badge/Donations-via%20Paypal-red.svg)](https://www.paypal.me/nielsbasjes)
 
 # CodeOwners
-In several systems (like Github and Gitlab) you can have a CODEOWNERS file which is used to ensure all changes are approved by the right people.
+In several systems (like GitHub and Gitlab) you can have a CODEOWNERS file which is used to ensure all changes are approved by the right people.
 
 Reality: The syntax of these files can be tricky, and it is quite easy to write a config that has the effect that not all files are covered.
 

@@ -31,7 +31,6 @@ import java.util.stream.Stream;
 
 import static java.lang.Boolean.TRUE;
 import static nl.basjes.gitignore.GitIgnore.standardizeFilename;
-import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
 
 /**
  * A class that holds a set of .gitignore files and also handles the interactions between them.
