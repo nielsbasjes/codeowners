@@ -60,9 +60,9 @@ class TestCodeOwnersGitlab {
         );
 
         codeOwners.setVerbose(true);
-        // The Code Owners for the README.md in the root directory are @user1, @user2, and @user3.
+        // The Code Owners for the README.md in the root directory are @user1, @user2, and @user3 + @user5 because of the extra rule for all *.md files.
         assertOwners(codeOwners, "README.md",           "@user1", "@user2", "@user3", "@user5");
-        // The Code Owners for internal/README.md are @user4 and @user3.
+        // The Code Owners for internal/README.md are @user4 and @user3 + @user5 because of the extra rule for all *.md files.
         assertOwners(codeOwners, "internal/README.md",  "@user3", "@user4", "@user5");
     }
 
