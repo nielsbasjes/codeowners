@@ -15,7 +15,7 @@ Reality: The syntax of these files can be tricky, and it is quite easy to write 
 
 # What is this
 1) A Java library to read a CODEOWNERS file.
-2) A Java library to read a .gitignore file.
+2) A Java library to read a/all .gitignore file(s) in directory.
 3) An extra rule for the Maven Enforcer plugin to check the CODEOWNERS against the actual project files. (See Usage below)
 
 The intended goal is to make the build fail if the codeowners file does not cover all files and directories in the project.
@@ -26,9 +26,9 @@ The intended goal is to make the build fail if the codeowners file does not cove
 - **baseDir**
   - In case you run the plugin from a child module.
 - **codeOwnersFile**
-  - The name of the codeowners file incase you are not using a common standard.
+  - The name of the codeowners file when you are not using a common standard.
 - **allExisingFilesMustHaveCodeOwner**
-  - Check that all existing files have a mandatory codeowner.
+  - Check that all existing files have at least one mandatory codeowner.
   - Gitlab also supports "Optional" code owners but that is useless to check for.
 - **allNewlyCreatedFilesMustHaveCodeOwner**
   - Check that if a new file is created in any of the directories in the project that it would automatically have a mandatory code owner.
