@@ -34,9 +34,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -52,15 +52,25 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
     private boolean verbose = false;
 
     // Map name of Section to Sections
-    private final Map<String, Section> sections = new TreeMap<>();
+    private final Map<String, Section> sections = new LinkedHashMap<>();
 
     // Load the code owners from a file
+
+    /**
+     * Construct the CodeOwners from a file
+     * @param file The file from which the rules must be read. Will NPE if file is null.
+     * @throws IOException In case of problems.
+     */
     public CodeOwners(File file) throws IOException {
         this(FileUtils.readFileToString(file, UTF_8));
     }
 
     private static final String IMPLICIT_SECTION_NAME = "Implicit Default Section";
 
+    /**
+     * Construct the CodeOwners with the provided rules string
+     * @param codeownersContent The rules must be read. Will NPE if the content is null.
+     */
     public CodeOwners(String codeownersContent) {
         currentSection = new Section(IMPLICIT_SECTION_NAME);
 
@@ -133,15 +143,28 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
         }
     }
 
+    /**
+     * @param verbose True enables logging, False disables logging
+     */
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
         sections.values().forEach(section->section.setVerbose(verbose));
     }
 
+    /**
+     * Get all mandatory approvers for a specific filename.
+     * @param filename The filename for which the mandatory approvers are requested.
+     * @return The list of mandatory approver usernames for this filename in the order (as good as possible) as they appear in the code owner rules.
+     */
     public List<String> getMandatoryApprovers(String filename) {
         return getAllApprovers(filename, true);
     }
 
+    /**
+     * Get all approvers for a specific filename.
+     * @param filename The filename for which the approvers are requested.
+     * @return The list of approver usernames for this filename in the order (as good as possible) as they appear in the code owner rules.
+     */
     public List<String> getAllApprovers(String filename) {
         return getAllApprovers(filename, false);
     }
@@ -167,7 +190,7 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
                 approvers.addAll(section.getApprovers(matchFileName));
             }
         }
-        List<String> endResultApprovers = approvers.stream().sorted().distinct().collect(Collectors.toList());
+        List<String> endResultApprovers = approvers.stream().distinct().collect(Collectors.toList());
         if (verbose) {
             LOG.info("# ---------------------------");
             if (onlyMandatory) {
@@ -183,6 +206,11 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
     private Section currentSection;
 
+    /**
+     * Internal parser method, do not use
+     * @param ctx the parse tree
+     * @return Nothing
+     */
     @Override
     public Void visitSection(CodeOwnersParser.SectionContext ctx) {
         Section section = new Section(ctx.section.getText().trim());
@@ -200,13 +228,17 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
         return null;
     }
 
+    /**
+     * Internal parser method, do not use
+     * @param ctx the parse tree
+     * @return Nothing
+     */
     @Override
     public Void visitApprovalRule(ApprovalRuleContext ctx) {
         String filePattern = ctx.fileExpression.getText();
         List<String> approvers = ctx.USERID().stream()
                 .map(ParseTree::getText)
                 .map(String::trim)
-                .sorted()
                 .distinct()
                 .collect(Collectors.toList());
         currentSection.addApprovalRule(new ApprovalRule(filePattern, approvers));
@@ -388,7 +420,6 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
                 .replaceAll("/+","/") // Remove duplication
                 ;
 
-//            LOG.info("{}     -->     {}", fileExpression, fileRegex);
             filePattern = Pattern.compile(fileRegex);
         }
 

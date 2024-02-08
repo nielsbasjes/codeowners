@@ -339,20 +339,20 @@ class TestCodeOwnersGitlab {
         codeOwners.setVerbose(false);
         assertEquals(
             "# CODEOWNERS file:\n" +
-            "^[Four]\n" +
-            "four/ \n" +
-            "\n" +
             "^[One][11] @docs-team\n" +
             "docs/ \n" +
             "*.md \n" +
+            "\n" +
+            "[Two][22] @database-team\n" +
+            "model/db/ \n" +
+            "config/db/database-setup.md @docs-team\n" +
             "\n" +
             "[Three]\n" +
             "three1/ \n" +
             "three2/ \n" +
             "\n" +
-            "[Two][22] @database-team\n" +
-            "model/db/ \n" +
-            "config/db/database-setup.md @docs-team\n" +
+            "^[Four]\n" +
+            "four/ \n" +
             "\n", codeOwners.toString());
     }
 

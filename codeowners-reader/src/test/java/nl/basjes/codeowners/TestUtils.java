@@ -21,23 +21,32 @@ import org.opentest4j.AssertionFailedError;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestUtils {
     public static void assertOwners(CodeOwners codeOwners, String filename, String... expectedOwners) {
-        assertOwnersInternal(codeOwners, filename, expectedOwners);
-        assertOwnersInternal(codeOwners, windowsFileName(filename), expectedOwners);
+        assertOwnersInternal(codeOwners, filename,                  true, expectedOwners);
+        assertOwnersInternal(codeOwners, windowsFileName(filename), true, expectedOwners);
     }
 
-    private static void assertOwnersInternal(CodeOwners codeOwners, String filename, String... expectedOwners) {
-        List<String> allApprovers = codeOwners.getAllApprovers(filename);
+    public static void assertOwnersCheckOrdering(CodeOwners codeOwners, String filename, String... expectedOwners) {
+        assertOwnersInternal(codeOwners, filename,                  false, expectedOwners);
+        assertOwnersInternal(codeOwners, windowsFileName(filename), false, expectedOwners);
+    }
+
+    private static void assertOwnersInternal(CodeOwners codeOwners, String filename, boolean anyOrderIsValid, String... expectedApproversParam) {
+        List<String> expectedApprovers = Arrays.asList(expectedApproversParam);
+        List<String> actualApprovers = codeOwners.getAllApprovers(filename);
+        if (anyOrderIsValid) {
+            expectedApprovers.sort(String::compareTo);
+            actualApprovers.sort(String::compareTo);
+        }
         try {
             assertEquals(
-                Arrays.stream(expectedOwners).sorted().collect(Collectors.toList()),
-                allApprovers,
-                "Filename \"" + filename + "\" should have owners " + Arrays.toString(expectedOwners) + " but got " + allApprovers);
+                expectedApprovers,
+                actualApprovers,
+                "Filename \"" + filename + "\" should have approvers " + expectedApprovers + " but got " + actualApprovers);
         } catch (AssertionFailedError afe) {
             codeOwners.setVerbose(true);
             codeOwners.getAllApprovers(filename);
@@ -47,17 +56,27 @@ public class TestUtils {
     }
 
     public static void assertMandatoryOwners(CodeOwners codeOwners, String filename, String... expectedOwners) {
-        assertMandatoryOwnersInternal(codeOwners, filename, expectedOwners);
-        assertMandatoryOwnersInternal(codeOwners, windowsFileName(filename), expectedOwners);
+        assertMandatoryOwnersInternal(codeOwners, filename,                  true, expectedOwners);
+        assertMandatoryOwnersInternal(codeOwners, windowsFileName(filename), true, expectedOwners);
+    }
+    public static void assertMandatoryOwnersCheckOrdering(CodeOwners codeOwners, String filename, String... expectedOwners) {
+        assertMandatoryOwnersInternal(codeOwners, filename,                  false, expectedOwners);
+        assertMandatoryOwnersInternal(codeOwners, windowsFileName(filename), false, expectedOwners);
     }
 
-    private static void assertMandatoryOwnersInternal(CodeOwners codeOwners, String filename, String... expectedOwners) {
-        List<String> mandatoryApprovers = codeOwners.getMandatoryApprovers(filename);
+
+    private static void assertMandatoryOwnersInternal(CodeOwners codeOwners, String filename, boolean anyOrderIsValid, String... expectedApproversParam) {
+        List<String> expectedApprovers = Arrays.asList(expectedApproversParam);
+        List<String> actualApprovers = codeOwners.getMandatoryApprovers(filename);
+        if (anyOrderIsValid) {
+            expectedApprovers.sort(String::compareTo);
+            actualApprovers.sort(String::compareTo);
+        }
         try {
             assertEquals(
-                Arrays.stream(expectedOwners).sorted().collect(Collectors.toList()),
-                mandatoryApprovers,
-                "Filename \"" + filename + "\" should have mandatory owners " + Arrays.toString(expectedOwners) + " but got " + mandatoryApprovers);
+                expectedApprovers,
+                actualApprovers,
+                "Filename \"" + filename + "\" should have mandatory approvers " + expectedApprovers + " but got " + actualApprovers);
         } catch (AssertionFailedError afe) {
             codeOwners.setVerbose(true);
             codeOwners.getMandatoryApprovers(filename);
