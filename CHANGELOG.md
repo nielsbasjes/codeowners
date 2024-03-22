@@ -1,10 +1,12 @@
 
 This is intended as an overview of the major changes
 
-Next Release
+v1.5.0
 ===
 - Handle filenames better (project relative vs full path)
 - A ? and * may not match a / (directory separator)
+- A \\? and \\* must match the exact character.
+
 
 License
 =======
