@@ -20,7 +20,7 @@
   <parent>
     <groupId>nl.basjes.codeowners</groupId>
     <artifactId>codeowners-parent</artifactId>
-    <version>1.4.1-SNAPSHOT</version>
+    <version>1.5.0</version>
   </parent>
 
   <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
@@ -198,7 +198,7 @@
     <url>https://github.com/nielsbasjes/codeowners</url>
     <connection>scm:git:https://github.com/nielsbasjes/codeowners.git</connection>
     <developerConnection>scm:git:file:///${project.basedir}</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v1.5.0</tag>
   </scm>
 
 </project>
