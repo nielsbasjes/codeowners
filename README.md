@@ -20,7 +20,7 @@ Reality: The syntax of these files can be tricky, and it is quite easy to write 
 
 The intended goal is to make the build fail if the codeowners file does not cover all files and directories in the project.
 
-# Usage
+# CodeOwners Enforcer rule
 ## Configuration parameters
 
 - **baseDir**
@@ -76,7 +76,62 @@ In one of my projects it looks like this:
       </executions>
     </plugin>
 
-# Important
+# GitIgnore library
+
+## Basic use
+Simply create an instance of the GitIgnoreFileSet and pass the root directory of the project as a parameter
+```java
+GitIgnoreFileSet ignoreFileSet = new GitIgnoreFileSet(new File("/home/niels/workspace/project"));
+```
+Then you can for each file in the project check if it is ignored or not
+```java
+if (ignoreFileSet.ignoreFile("/home/niels/workspace/project/something/something/README.md")) {
+    ...
+}
+```
+
+## Full path or just or a project relative filename
+The directory name with which you initialize the `GitIgnoreFileSet` is considered to be the directory name of the project root.
+By default, if you ask for a file if it is ignored or not, this library assumes you are specifying all files within the SAME base directory structure.
+
+So loading the gitignore files from `workspace/project` then a file in the root of the project must (by default) be specified as `workspace/project/pom.xml` and a file deeper in the project as for example `workspace/project/src/main/java/nl/basjes/Something.java`
+
+Something like this:
+```java
+GitIgnoreFileSet ignoreFileSet = new GitIgnoreFileSet(new File("workspace/project"));
+
+if (ignoreFileSet.ignoreFile("workspace/project/pom.xml")) {
+    ...
+}
+```
+So comming from the default situation the `ignoreFileSet.assumeQueriesIncludeProjectBaseDir()` does nothing.
+
+
+You can **optionally specify** that the files you request are **relative to the project root**.
+
+So loading the gitignore files from `workspace/project` then a file in the root of the project must be specified as `/pom.xml` and a file deeper in the project as for example `/src/main/java/nl/basjes/Something.java`
+
+Something like this:
+```java
+GitIgnoreFileSet ignoreFileSet = new GitIgnoreFileSet(new File("workspace/project"));
+
+if (ignoreFileSet.ignoreFile("/pom.xml", true)) {
+    ...
+}
+```
+
+Or you can set it as the default assumption.
+
+```java
+GitIgnoreFileSet ignoreFileSet = new GitIgnoreFileSet(new File("workspace/project"));
+ignoreFileSet.assumeQueriesAreProjectRelative();
+
+if (ignoreFileSet.ignoreFile("/pom.xml")) {
+    ...
+}
+```
+
+
 ## GitIgnore edge case
 This [tutorial page](https://www.atlassian.com/git/tutorials/saving-changes/gitignore) documents this edge case that this library also follows.
 

@@ -91,7 +91,7 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         }
 
         // Get the files that are ignored by the SCM
-        GitIgnoreFileSet gitIgnores = new GitIgnoreFileSet(new File(baseDir), false);
+        GitIgnoreFileSet gitIgnores = new GitIgnoreFileSet(new File(baseDir), false).assumeQueriesAreProjectRelative();
 
         // Start with the internal files that are used by common SCMs.
         gitIgnores.add(new GitIgnore(

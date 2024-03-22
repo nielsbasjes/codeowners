@@ -67,8 +67,9 @@ class TestGitIgnoreFiles {
 
     @Test
     void testIsIgnoredFile() throws IOException {
-        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree);
-//        gitIgnoreFileSet.setVerbose(true);
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree)
+//            .setVerbose(true)
+            .setAssumeProjectRelativeQueries(true);
 
         assertFalse(gitIgnoreFileSet.isEmpty(), "Unable to load any .gitignore files");
 
@@ -97,8 +98,10 @@ class TestGitIgnoreFiles {
 
     @Test
     void testIgnoreFile() throws IOException {
-        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree);
-        gitIgnoreFileSet.setVerbose(true);
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree)
+            .setVerbose(true)
+            .setAssumeProjectRelativeQueries(true);
+
         assertFalse(gitIgnoreFileSet.isEmpty(), "Unable to load any .gitignore files");
 
         try (Stream<Path> projectFiles = Files.find(testTree.toPath(), 128, (filePath, fileAttr) -> fileAttr.isRegularFile())) {
@@ -172,7 +175,7 @@ class TestGitIgnoreFiles {
 
     @Test
     void testFileFilter() throws IOException {
-        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree);
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree).assumeQueriesAreProjectRelative();
 
         try (Stream<Path> projectFiles = Files.find(testTree.toPath(), 128, (filePath, fileAttr) -> fileAttr.isRegularFile() && gitIgnoreFileSet.ignoreFile(filePath.toString()))) {
             List<String> ignored = projectFiles
@@ -185,7 +188,11 @@ class TestGitIgnoreFiles {
 
     @Test
     void testWindowsPaths() {
-        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(new File(separatorsToWindows(testTree.getPath())), false);
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(new File(separatorsToWindows(testTree.getPath())), false).assumeQueriesAreProjectRelative();
+
+        assertFalse(gitIgnoreFileSet.isAssumeQueriesIncludeProjectBaseDir());
+        assertTrue(gitIgnoreFileSet.isAssumeQueriesAreProjectRelative());
+
         gitIgnoreFileSet.add(new GitIgnore(separatorsToWindows("/"),      "*.txt"));
         gitIgnoreFileSet.add(new GitIgnore(separatorsToWindows("/dir1/"), "*.md"));
         gitIgnoreFileSet.add(new GitIgnore(separatorsToWindows("/dir2/"), "!foo.txt"));
@@ -203,7 +210,11 @@ class TestGitIgnoreFiles {
 
     @Test
     void testWindowsPathsWithDriveLetter() {
-        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(new File("A:\\MyProject\\src\\test\\resources\\"), false);
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(new File("A:\\MyProject\\src\\test\\resources\\"), false).assumeQueriesIncludeProjectBaseDir();
+
+        assertTrue(gitIgnoreFileSet.isAssumeQueriesIncludeProjectBaseDir());
+        assertFalse(gitIgnoreFileSet.isAssumeQueriesAreProjectRelative());
+
         gitIgnoreFileSet.add(new GitIgnore("\\",       "*.txt"));
         gitIgnoreFileSet.add(new GitIgnore("\\dir1\\", "*.md"));
         gitIgnoreFileSet.add(new GitIgnore("\\dir2\\", "!foo.txt"));
@@ -211,7 +222,8 @@ class TestGitIgnoreFiles {
 
         assertFalse(gitIgnoreFileSet.isEmpty());
 
-        // Correctly handle absolute paths
+        // Correctly handle absolute paths (assume)
+        gitIgnoreFileSet.assumeQueriesIncludeProjectBaseDir();
         assertTrue(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\foo.txt"));
         assertTrue(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\dir1\\foo.txt"));
         assertFalse(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\dir2\\foo.txt"));
@@ -220,7 +232,18 @@ class TestGitIgnoreFiles {
         assertTrue(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\dir1\\foo.md"));
         assertFalse(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\dir2\\foo.md"));
 
-        // Correctly handle project relative paths
+        // Correctly handle absolute paths (explicit)
+        gitIgnoreFileSet.assumeQueriesAreProjectRelative();
+        assertTrue(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\foo.txt", false));
+        assertTrue(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\dir1\\foo.txt", false));
+        assertFalse(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\dir2\\foo.txt", false));
+
+        assertFalse(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\foo.md", false));
+        assertTrue(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\dir1\\foo.md", false));
+        assertFalse(gitIgnoreFileSet.ignoreFile("A:\\MyProject\\src\\test\\resources\\dir2\\foo.md", false));
+
+        // Correctly handle project relative paths (assume)
+        gitIgnoreFileSet.assumeQueriesAreProjectRelative();
         assertTrue(gitIgnoreFileSet.ignoreFile("\\foo.txt"));
         assertTrue(gitIgnoreFileSet.ignoreFile("\\dir1\\foo.txt"));
         assertFalse(gitIgnoreFileSet.ignoreFile("\\dir2\\foo.txt"));
@@ -228,6 +251,16 @@ class TestGitIgnoreFiles {
         assertFalse(gitIgnoreFileSet.ignoreFile("\\foo.md"));
         assertTrue(gitIgnoreFileSet.ignoreFile("\\dir1\\foo.md"));
         assertFalse(gitIgnoreFileSet.ignoreFile("\\dir2\\foo.md"));
+
+        // Correctly handle project relative paths (explicit)
+        gitIgnoreFileSet.assumeQueriesIncludeProjectBaseDir();
+        assertTrue(gitIgnoreFileSet.ignoreFile("\\foo.txt", true));
+        assertTrue(gitIgnoreFileSet.ignoreFile("\\dir1\\foo.txt", true));
+        assertFalse(gitIgnoreFileSet.ignoreFile("\\dir2\\foo.txt", true));
+
+        assertFalse(gitIgnoreFileSet.ignoreFile("\\foo.md", true));
+        assertTrue(gitIgnoreFileSet.ignoreFile("\\dir1\\foo.md", true));
+        assertFalse(gitIgnoreFileSet.ignoreFile("\\dir2\\foo.md", true));
     }
 
     @Test

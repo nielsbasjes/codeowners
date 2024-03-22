@@ -103,7 +103,7 @@ public class GitIgnore {
 
     /**
      * Checks if the file matches the stored expressions.
-     * @param filename The filename to be checked
+     * @param filename The filename to be checked (which is a project relative filename).
      * @return NULL: not matched, True: must be ignored, False: it must be UNignored
      */
     public Boolean isIgnoredFile(String filename) {
@@ -182,7 +182,7 @@ public class GitIgnore {
     /**
      * Checks if the file matches the stored expressions.
      * This is NOT suitable for combining multiple sets of rules!
-     * @param filename The filename to be checked
+     * @param filename The filename to be checked (which is a project relative filename).
      * @return true: must be ignored, false: it must be not be ignored
      */
     public boolean ignoreFile(String filename) {
@@ -192,7 +192,7 @@ public class GitIgnore {
     /**
      * Checks if the file matches the stored expressions.
      * This is NOT suitable for combining multiple sets of rules!
-     * @param filename The filename to be checked
+     * @param filename The filename to be checked (which is a project relative filename).
      * @return true: must be kept, false: it must be ignored
      */
     public boolean keepFile(String filename) {
@@ -207,7 +207,7 @@ public class GitIgnore {
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
-        result.append("# GitIgnore file:\n");
+        result.append("# GitIgnore content in ").append(projectRelativeBaseDir).append("\n");
 
         for (IgnoreRule ignoreRule : ignoreRules) {
             result.append(ignoreRule).append('\n');
