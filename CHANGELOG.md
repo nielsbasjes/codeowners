@@ -4,7 +4,7 @@ This is intended as an overview of the major changes
 Next Release
 ===
 - Handle filenames better (project relative vs full path)
-
+- A ? and * may not match a / (directory separator)
 
 License
 =======

@@ -307,8 +307,8 @@ public class GitIgnore {
                 .replaceAll("([^/*])$", "$1(/|\\$)")
 
                 .replace(".", "\\.") // Avoid bad wildcards
-                .replace("\\.*", "\\..*")//  matching  /.* onto /.foo/bar.xml
-                .replace("?", ".")   // Single character match
+                .replace("\\.*", "\\.[^/]*")//  matching  /.* onto /.foo/bar.xml
+                .replace("?", "[^/]")   // Single character match
 
                 // The Globstar "/**/bar" must also match "bar"
                 .replaceAll("^\\*\\*/","(.*/)?")
@@ -328,13 +328,13 @@ public class GitIgnore {
 
                 .replaceAll("/\\*([^/]*)$","/[^/]*$1\\$") // A trailing '/*something' means NO further subdirs should be matched
 
-                .replace("/*","/.*") // "/foo/*\.js"  --> "/foo/.*\.js"
+                .replace("/*","/[^/]*") // "/foo/*\.js"  --> "/foo/.*\.js"
 
-                .replaceAll("([^.\\]])\\*", "$1.*") // Match anything at the start
+                .replaceAll("([^.\\]])\\*", "$1[^/]*") // Match anything at the start
 
                 .replaceAll("/+","/") // Remove duplication
 
-                .replace("/\\E/", "/\\E")
+                .replace("/\\E/", "/\\E") // Remove '/' duplication around a literal marker
                 ;
 
             String finalRegex = baseDirRegex + fileRegex;

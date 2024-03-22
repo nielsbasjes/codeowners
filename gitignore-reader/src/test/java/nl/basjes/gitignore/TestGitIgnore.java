@@ -31,6 +31,7 @@ import static java.lang.Boolean.TRUE;
 import static nl.basjes.gitignore.TestUtils.assertIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNotIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNullMatch;
+import static nl.basjes.gitignore.TestUtils.verifyGeneratedRegex;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -458,10 +459,10 @@ class TestGitIgnore {
                     assertEquals("^/?.*\\.log(/|$)", ignoreRule.getIgnorePattern().pattern());
                     break;
                 case "!important/*.log":
-                    assertEquals("^/?important/.*\\.log(/|$)", ignoreRule.getIgnorePattern().pattern());
+                    assertEquals("^/?important/[^/]*\\.log(/|$)", ignoreRule.getIgnorePattern().pattern());
                     break;
                 case "trace.*":
-                    assertEquals("^/?(.*/)?trace\\..*", ignoreRule.getIgnorePattern().pattern());
+                    assertEquals("^/?(.*/)?trace\\.[^/]*", ignoreRule.getIgnorePattern().pattern());
                     break;
                 default:
                     fail("Unexpected expression:" + ignoreRule.getIgnoreExpression());
@@ -515,14 +516,6 @@ class TestGitIgnore {
         verifyBaseDir(new GitIgnore("/foo/bar/",    "test.md"), "/foo/bar/", "foo/bar/test.md");
     }
 
-    private void verifyGeneratedRegex(String baseDir, String gitIgnoreContent, String expectedRegex) {
-        GitIgnore gitIgnore = new GitIgnore(baseDir, gitIgnoreContent);
-        List<IgnoreRule> ignoreRules = gitIgnore.getIgnoreRules();
-        assertEquals(1, ignoreRules.size());
-        IgnoreRule ignoreRule = ignoreRules.get(0);
-        assertEquals(expectedRegex, ignoreRule.getIgnorePattern().pattern(), "Incorrect regex generated");
-    }
-
     @Test
     void testGeneratedRegexesSubdir() {
         verifyGeneratedRegex("",          "*.txt", "^/?.*\\.txt(/|$)");
@@ -567,6 +560,30 @@ class TestGitIgnore {
         assertIgnore(gitIgnore,    "doc/frotz/file.txt");
         assertNotIgnore(gitIgnore, "a/doc/frotz/");
         assertNotIgnore(gitIgnore, "a/doc/frotz/file.txt");
+    }
+
+    @Test
+    void testGitDocumentationSlashesAndStars() {
+        // From the git documentation:
+        GitIgnore gitIgnore;
+
+        // Put a backslash ("\") in front of the first "!" for patterns that
+        // begin with a literal "!", for example, "\!important!.txt".
+        gitIgnore = new GitIgnore("\\!important!.txt");
+        assertIgnore(gitIgnore,    "!important!.txt");
+
+        // An asterisk "*" matches anything except a slash.
+        gitIgnore = new GitIgnore("foo*bar");
+        assertIgnore(gitIgnore,    "foo_bar");
+        assertNotIgnore(gitIgnore, "foo/bar");
+        assertIgnore(gitIgnore,    "foo_____bar");
+        assertNotIgnore(gitIgnore, "foo__/__bar");
+
+        // The character "?" matches any one character except "/".
+        gitIgnore = new GitIgnore("foo?bar");
+        assertIgnore(gitIgnore,    "foo_bar");
+        assertIgnore(gitIgnore,    "foo.bar");
+        assertNotIgnore(gitIgnore, "foo/bar");
     }
 
 }

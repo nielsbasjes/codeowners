@@ -17,6 +17,9 @@
 
 package nl.basjes.gitignore;
 
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -105,6 +108,14 @@ public class TestUtils {
 
     public static String windowsFileName(String filename) {
         return filename.replace("/", "\\");
+    }
+
+    public static void verifyGeneratedRegex(String baseDir, String gitIgnoreContent, String expectedRegex) {
+        GitIgnore gitIgnore = new GitIgnore(baseDir, gitIgnoreContent);
+        List<GitIgnore.IgnoreRule> ignoreRules = gitIgnore.getIgnoreRules();
+        assertEquals(1, ignoreRules.size());
+        GitIgnore.IgnoreRule ignoreRule = ignoreRules.get(0);
+        assertEquals(expectedRegex, ignoreRule.getIgnorePattern().pattern(), "Incorrect regex generated");
     }
 
 }
