@@ -46,6 +46,8 @@ public class GitIgnoreFileSet implements FileFilter {
     // The "absolute" directory which is to be used as the project root for all the gitignore files.
     private final File projectBaseDir;
 
+    private boolean verbose = false;
+
     // Do we assume a query to be project relative if not explicitly stated?
     private boolean assumeProjectRelativeQueries = false;
 
@@ -74,6 +76,7 @@ public class GitIgnoreFileSet implements FileFilter {
      * @param verbose True: be verbose, False: be silent
      */
     public GitIgnoreFileSet setVerbose(boolean verbose) {
+        this.verbose = verbose;
         gitIgnores.values().forEach(gitIgnore -> gitIgnore.setVerbose(verbose));
         return this;
     }
@@ -109,6 +112,7 @@ public class GitIgnoreFileSet implements FileFilter {
 
     public void add(final GitIgnore gitIgnore) {
         gitIgnores.put(gitIgnore.getProjectRelativeBaseDir(), gitIgnore);
+        gitIgnore.setVerbose(verbose);
     }
 
     /**
