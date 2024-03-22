@@ -21,9 +21,12 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
+import static nl.basjes.gitignore.TestUtils.assertIgnore;
+import static nl.basjes.gitignore.TestUtils.assertNotIgnore;
+import static nl.basjes.gitignore.TestUtils.verifyGeneratedRegex;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class TestRelativeAndAbsoluteFilenames {
+class TestBugreports {
 
     @Test
     void testRat362() {
@@ -64,6 +67,52 @@ class TestRelativeAndAbsoluteFilenames {
         assertTrue(gitIgnoreFileSet.keepFile("/foo/foo/foo.md"));
     }
 
+    @Test
+    void testStarInIgnoreRule() {
+        // https://github.com/nielsbasjes/codeowners/issues/77
+        // foo\*txt should match foo*txt (and also not match foo.txt)
+        verifyGeneratedRegex("/", "foo\\*txt",  "^/?(.*/)?foo\\Q*\\Etxt(/|$)");
 
+        GitIgnore gitIgnore = new GitIgnore("/", "foo\\*txt");
+
+        assertIgnore( gitIgnore,
+            "/foo*txt",
+            "/foo*txt/foo.txt",
+            "/foo.txt/foo*txt");
+
+        assertNotIgnore( gitIgnore,
+            "/foo.txt",
+            "/footxt",
+            "/foootxt",
+            "/foo/txt",
+            "/foo_txt",
+            "/foo.txt/foo.txt",
+            "/footxt/footxt",
+            "/foootxt/foootxt",
+            "/foo_txt/foo_txt");
+    }
+
+
+    @Test
+    void testQuestionMarkInIgnoreRule() {
+        verifyGeneratedRegex("/", "foo\\?txt",  "^/?(.*/)?foo\\Q?\\Etxt(/|$)");
+
+        GitIgnore gitIgnore = new GitIgnore("/", "foo\\?txt");
+
+        assertIgnore( gitIgnore,
+            "/foo?txt",
+            "/foo?txt/foo.txt",
+            "/foo.txt/foo?txt");
+
+        assertNotIgnore( gitIgnore,
+            "/foo.txt",
+            "/footxt",
+            "/foo/txt",
+            "/foo_txt",
+            "/foo.txt/foo.txt",
+            "/footxt/footxt",
+            "/foootxt/foootxt",
+            "/foo_txt/foo_txt");
+    }
 
 }

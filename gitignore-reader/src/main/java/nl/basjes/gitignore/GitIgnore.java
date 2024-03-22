@@ -257,8 +257,13 @@ public class GitIgnore {
                 .replace("[!", "[^") // Fix the 'not' range or 'not' set
                 ;
 
-            // The character "?" matches any one character except "/".
-            fileRegex = fileRegex.replace("?", "[^/]");
+            final String LITERAL_STAR_MARKER = "||>s<||";
+            final String LITERAL_QUESTION_MARK = "||>q<||";
+
+            fileRegex = fileRegex
+                .replace("\\*", LITERAL_STAR_MARKER) // Move the escaped * to something special that does not have a * in it
+                .replace("\\?", LITERAL_QUESTION_MARK) // Move the escaped ? to something special that does not have a ? in it
+                .replace("?", "[^/]"); // The character "?" matches any one character except "/".
 
             if (fileExpression.contains("/") && !fileExpression.endsWith("/")) {
                 // Patterns specifying a file in a particular directory are relative to the repository root.
@@ -331,6 +336,9 @@ public class GitIgnore {
                 .replace("/*","/[^/]*") // "/foo/*\.js"  --> "/foo/.*\.js"
 
                 .replaceAll("([^.\\]])\\*", "$1[^/]*") // Match anything at the start
+
+                .replace(LITERAL_STAR_MARKER, "\\Q*\\E") // Move the 'something special' to the literal *
+                .replace(LITERAL_QUESTION_MARK, "\\Q?\\E") // Move the 'something special' to the literal ?
 
                 .replaceAll("/+","/") // Remove duplication
 

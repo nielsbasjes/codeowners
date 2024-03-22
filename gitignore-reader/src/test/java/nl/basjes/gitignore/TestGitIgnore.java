@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
 
 import static java.lang.Boolean.TRUE;
 import static nl.basjes.gitignore.TestUtils.assertIgnore;
