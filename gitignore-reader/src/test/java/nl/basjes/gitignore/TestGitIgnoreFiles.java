@@ -69,7 +69,7 @@ class TestGitIgnoreFiles {
     void testIsIgnoredFile() throws IOException {
         GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree)
 //            .setVerbose(true)
-            .setAssumeProjectRelativeQueries(true);
+            .assumeQueriesIncludeProjectBaseDir();
 
         assertFalse(gitIgnoreFileSet.isEmpty(), "Unable to load any .gitignore files");
 
@@ -100,7 +100,7 @@ class TestGitIgnoreFiles {
     void testIgnoreFile() throws IOException {
         GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree)
             .setVerbose(true)
-            .setAssumeProjectRelativeQueries(true);
+            .assumeQueriesIncludeProjectBaseDir();
 
         assertFalse(gitIgnoreFileSet.isEmpty(), "Unable to load any .gitignore files");
 
@@ -175,7 +175,7 @@ class TestGitIgnoreFiles {
 
     @Test
     void testFileFilter() throws IOException {
-        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree).assumeQueriesAreProjectRelative();
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree).assumeQueriesIncludeProjectBaseDir();
 
         try (Stream<Path> projectFiles = Files.find(testTree.toPath(), 128, (filePath, fileAttr) -> fileAttr.isRegularFile() && gitIgnoreFileSet.ignoreFile(filePath.toString()))) {
             List<String> ignored = projectFiles
@@ -272,7 +272,7 @@ class TestGitIgnoreFiles {
     @Test
     void testErrorHandlingNosuchFile() {
         GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(new File("src/test/resources/"), false);
-        gitIgnoreFileSet.addGitIgnoreFile(new File("/no-such-file-really"));
+        gitIgnoreFileSet.addGitIgnoreFile(new File("src/test/resources/no-such-file-really"));
         assertTrue(gitIgnoreFileSet.isEmpty());
     }
 

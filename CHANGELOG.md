@@ -1,6 +1,10 @@
 
 This is intended as an overview of the major changes
 
+v1.5.1
+===
+- Fix bug in new directory handling
+
 v1.5.0
 ===
 - Handle filenames better (project relative vs full path)

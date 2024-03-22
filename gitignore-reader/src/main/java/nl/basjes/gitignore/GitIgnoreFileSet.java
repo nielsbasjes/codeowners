@@ -121,7 +121,7 @@ public class GitIgnoreFileSet implements FileFilter {
      */
     public void addGitIgnoreFile(final File gitIgnoreFile) {
         try {
-            add(new GitIgnore(gitIgnoreFile.getParent(), gitIgnoreFile));
+            add(new GitIgnore(getProjectRelative(gitIgnoreFile.getParent()), gitIgnoreFile));
         } catch (IOException e) {
             LOG.error("Cannot read {} due to {}. Will skip this file.", gitIgnoreFile, e.getMessage());
         }
