@@ -69,7 +69,7 @@
     <slf4j.version>1.7.36</slf4j.version>
     <commons-io.version>2.16.0</commons-io.version>
 
-    <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
     <!-- See http://www.eclemma.org/jacoco/trunk/doc/prepare-agent-mojo.html-->
     <jacoco.surefireArgLine />
     <argLine>@{jacoco.surefireArgLine} -Xmx2048m</argLine>
