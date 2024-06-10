@@ -34,9 +34,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -44,7 +46,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
 
-    // NOT Tested on Windows
     private static final String CODEOWNERS_PATH_SEPARATOR = "/";
 
     private static final Logger LOG = LoggerFactory.getLogger(CodeOwners.class);
@@ -149,6 +150,15 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
         sections.values().forEach(section->section.setVerbose(verbose));
+    }
+
+    /**
+     * If the application needs to inspect the defined rules then this is the
+     * way to retrieve all defined sections AFTER they were cleaned and merged !
+     * @return The set of all sections in an undefined order !
+     */
+    public Set<Section> getAllDefinedSections() {
+        return new HashSet<>(sections.values());
     }
 
     /**
@@ -323,6 +333,10 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
             return minimalNumberOfApprovers;
         }
 
+        /**
+         * @param filename The filename for which the approvers are requested.
+         * @return The list of approver usernames for this filename in the order (as good as possible) as they appear in the code owner rules in this section.
+         */
         public List<String> getApprovers(String filename) {
             if (verbose) {
                 LOG.info("# ---------------------------");
@@ -423,10 +437,32 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
             filePattern = Pattern.compile(fileRegex);
         }
 
+        /**
+         * @return The provided file expression used to build this rule
+         */
         public String getFileExpression() {
             return fileExpression;
         }
 
+        /**
+         * @return The Pattern which was constructed from the provided fileExpression
+         */
+        public Pattern getFilePattern() {
+            return filePattern;
+        }
+
+        /**
+         * @return All approvers (in the same order as they are in the file) that will be returned IF
+         * the file pattern matches.
+         */
+        public List<String> getApprovers() {
+            return approvers;
+        }
+
+        /**
+         * @return The approvers (in the same order as they are in the file) if the provided file matches the
+         * configured fileExpression. If not it returns null.
+         */
         public List<String> getApprovers(String filename) {
             if (!filePattern.matcher(filename).find()) {
                 if (verbose) {
