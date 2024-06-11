@@ -20,7 +20,7 @@
   <parent>
     <groupId>nl.basjes.codeowners</groupId>
     <artifactId>codeowners-parent</artifactId>
-    <version>1.5.2-SNAPSHOT</version>
+    <version>1.6.0</version>
   </parent>
 
   <artifactId>codeowners-reader</artifactId>
@@ -199,7 +199,7 @@
     <url>https://github.com/nielsbasjes/codeowners</url>
     <connection>scm:git:https://github.com/nielsbasjes/codeowners.git</connection>
     <developerConnection>scm:git:file:///${project.basedir}</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v1.6.0</tag>
   </scm>
 
 </project>
