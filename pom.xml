@@ -39,9 +39,9 @@
     <maven.minimal.version>3.9.2</maven.minimal.version>
     <enforcer-api.version>3.5.0</enforcer-api.version>
 
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
-    <maven.compiler.release>8</maven.compiler.release>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.release>11</maven.compiler.release>
 
     <maven-artifact-plugin.version>3.5.1</maven-artifact-plugin.version>
     <maven-clean-plugin.version>3.4.0</maven-clean-plugin.version>
@@ -67,7 +67,6 @@
     <antlr.version>4.13.1</antlr.version>
     <junit5.version>5.10.3</junit5.version>
     <slf4j.version>1.7.36</slf4j.version>
-    <commons-io.version>2.16.1</commons-io.version>
 
     <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
     <!-- See http://www.eclemma.org/jacoco/trunk/doc/prepare-agent-mojo.html-->
@@ -90,12 +89,6 @@
         <groupId>org.antlr</groupId>
         <artifactId>antlr4-runtime</artifactId>
         <version>[${antlr.version}]</version> <!-- Pin is HARD to this specific version -->
-      </dependency>
-
-      <dependency>
-        <groupId>commons-io</groupId>
-        <artifactId>commons-io</artifactId>
-        <version>${commons-io.version}</version>
       </dependency>
 
       <dependency>
@@ -338,7 +331,7 @@
         <configuration>
           <toolchains>
             <jdk>
-              <version>17</version>
+              <version>21</version>
             </jdk>
           </toolchains>
         </configuration>
@@ -407,7 +400,7 @@
                 </banDuplicateClasses>
 
                 <enforceBytecodeVersion>
-                  <maxJdkVersion>8</maxJdkVersion>
+                  <maxJdkVersion>11</maxJdkVersion>
                   <ignoredScopes>
                     <ignoredScope>test</ignoredScope>
                   </ignoredScopes>

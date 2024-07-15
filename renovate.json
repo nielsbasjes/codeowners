@@ -103,18 +103,6 @@
     },
     {
       "matchPackagePrefixes": [
-        "commons-",
-        "org.apache.commons"
-      ],
-      "groupSlug": "commons",
-      "groupName": "Apache Commons",
-      "labels": [
-        "apache-commons"
-      ],
-      "allowedVersions": "/^[0-9]{1,3}\\.[0-9]{1,3}(?:\\.[0-9]{1,3})?(?:-M[0-9]{1,3})?$/"
-    },
-    {
-      "matchPackagePrefixes": [
         "org.springframework",
         "io.springfox",
         "org.springdoc"

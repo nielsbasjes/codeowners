@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static nl.basjes.gitignore.GitIgnore.standardizeFilename;
-import static org.apache.commons.io.FilenameUtils.separatorsToWindows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -184,6 +183,10 @@ class TestGitIgnoreFiles {
                 .collect(Collectors.toList());
             checkIgnoredList(ignored);
         }
+    }
+
+    String separatorsToWindows(String path) {
+        return path.replace("/", "\\");
     }
 
     @Test

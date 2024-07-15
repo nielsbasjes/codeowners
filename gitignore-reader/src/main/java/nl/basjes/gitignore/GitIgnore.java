@@ -17,7 +17,6 @@
 
 package nl.basjes.gitignore;
 
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,14 +24,13 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import static java.lang.Boolean.TRUE;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
 
 /**
  * A class that holds a single .gitignore file
@@ -55,7 +53,7 @@ public class GitIgnore {
     }
 
     public GitIgnore(String projectRelativeBaseDir, File file) throws IOException {
-        this(projectRelativeBaseDir, FileUtils.readFileToString(file, UTF_8));
+        this(projectRelativeBaseDir, Files.readString(file.toPath()));
     }
 
     public GitIgnore(String gitIgnoreContent) {
@@ -172,7 +170,7 @@ public class GitIgnore {
      * @return A standardized form.
      */
     static String standardizeFilename(String filename) {
-        String unixifiedName = separatorsToUnix(filename);
+        String unixifiedName = filename.replace("\\", "/");
         if (!unixifiedName.matches("^[a-zA-Z]:/.*")) {
             unixifiedName = GITIGNORE_PATH_SEPARATOR + unixifiedName;
         }
