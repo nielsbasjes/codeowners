@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static nl.basjes.gitignore.GitIgnore.standardizeFilename;
-import static org.apache.commons.io.FilenameUtils.separatorsToWindows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -41,6 +40,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TestGitIgnoreFiles {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestGitIgnoreFiles.class);
+
+    public static String separatorsToWindows(String path) {
+        return path.replace("/", "\\");
+    }
 
     final List<String> expectedIgnoredFiles = Stream.of(
         "/dir1/dir1.log",
