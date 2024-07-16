@@ -17,11 +17,11 @@
 
 package nl.basjes.codeowners;
 
-import nl.basjes.codeowners.parser.CodeOwnersBaseVisitor;
 import nl.basjes.codeowners.parser.CodeOwnersLexer;
 import nl.basjes.codeowners.parser.CodeOwnersParser;
 import nl.basjes.codeowners.parser.CodeOwnersParser.ApprovalRuleContext;
 import nl.basjes.codeowners.parser.CodeOwnersParser.CodeownersContext;
+import nl.basjes.codeowners.parser.CodeOwnersParserBaseVisitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
+public class CodeOwners extends CodeOwnersParserBaseVisitor<Void> {
 
     private static final String CODEOWNERS_PATH_SEPARATOR = "/";
 
