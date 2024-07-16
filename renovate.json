@@ -4,42 +4,11 @@
     ":semanticCommits",
     ":semanticCommitTypeAll(chore)"
   ],
-  "ignorePaths": [
-    "**/devtools/analysis/**",
-    "**/devtools/log2test/**",
-    "**/analyzer/src/it/**"
-  ],
   "packageRules": [
     {
       "description": "Disable special versions",
       "matchPackagePatterns": ["*"],
       "allowedVersions": "!/^(?i).*[-_\\.](Alpha|Beta|RC|M|EA|Snap|snapshot|jboss|atlassian)[-_\\.]?[0-9]?.*$/"
-    },
-    {
-      "description": "Disable major updates for slf4j 1.x (Needed for backwards compatibility testing)",
-      "matchPackagePrefixes": ["org.slf4j"],
-      "matchCurrentVersion": "[1.0.0,2.0.0)",
-      "matchUpdateTypes": ["major"],
-      "enabled": false
-    },
-    {
-      "description": "Disable major updates for kryo 4.x (Needed for backwards compatibility testing)",
-      "matchPackageNames": ["com.esotericsoftware:kryo"],
-      "matchCurrentVersion": "[4.0.0,5.0.0)",
-      "matchUpdateTypes": ["major"],
-      "enabled": false
-    },
-    {
-      "description": "Disable major updates for Elastic Search 7.x (Needed for backwards compatibility testing)",
-      "matchPackagePrefixes": ["org.elasticsearch"],
-      "matchCurrentVersion": "[7.0.0,8.0.0)",
-      "matchUpdateTypes": ["major"],
-      "enabled": false
-    },
-    {
-      "description": "Disable strange versions of graphql-java",
-      "matchPackageNames": ["com.graphql-java:graphql-java"],
-      "allowedVersions": "/^[0-9]{1,3}\\.[0-9]{1,3}(?:\\.[0-9]{1,3})?$/"
     },
     {
       "matchPackagePrefixes": [
@@ -95,45 +64,6 @@
       "description": "Disallow Cloudera/Hortonworks/Spring/... internal versions",
       "matchPackagePrefixes": ["org.apache."],
       "allowedVersions": "/^[0-9]{1,3}\\.[0-9]{1,3}(?:\\.[0-9]{1,3})?(?:-M[0-9]{1,3})?$/"
-    },
-    {
-      "description": "Disable broken maven-artifact-plugin version",
-      "matchDepNames": ["org.apache.maven.plugins:maven-artifact-plugin"],
-      "allowedVersions": "!/^3\\.5\\.0$/"
-    },
-    {
-      "matchPackagePrefixes": [
-        "commons-",
-        "org.apache.commons"
-      ],
-      "groupSlug": "commons",
-      "groupName": "Apache Commons",
-      "labels": [
-        "apache-commons"
-      ],
-      "allowedVersions": "/^[0-9]{1,3}\\.[0-9]{1,3}(?:\\.[0-9]{1,3})?(?:-M[0-9]{1,3})?$/"
-    },
-    {
-      "matchPackagePrefixes": [
-        "org.springframework",
-        "io.springfox",
-        "org.springdoc"
-      ],
-      "groupSlug": "spring",
-      "groupName": "Spring Framework",
-      "labels": [
-        "spring"
-      ]
-    },
-    {
-      "matchPackagePrefixes": [
-        "io.quarkus"
-      ],
-      "groupSlug": "quarkus",
-      "groupName": "Quarkus",
-      "labels": [
-        "quarkus"
-      ]
     },
     {
       "matchPackagePrefixes": [
