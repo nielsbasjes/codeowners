@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-grammar CodeOwners;
+parser grammar CodeOwnersParser;
 
 // Gitlab supports Sections (the ^ means approval is OPTIONAL)
 // ^[SectionName] [NumberOfApprovers] @users
