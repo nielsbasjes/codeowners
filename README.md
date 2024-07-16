@@ -152,6 +152,25 @@ I see this as unexpected behaviour yet this is really what git does !
     Wait a minute! Shouldn't logs/important.log be negated in the example on the left
     Nope! Due to a performance-related quirk in Git, you can not negate a file that is ignored due to a pattern matching a directory
 
+# Building
+If you want to build this yourself you must ensure you have both JDK 8 and JDK 17 and/or JDK 21 installed.
+The maven build must be run under Java 17 or newer (because of plugins) and will use toolchains to actually build the software using JDK 8.
+
+This means that you must also ensure you have a `~/.m2/toolchains.xml` containing at least this entry (where the path on your system is likely to be different, this path is on my Ubuntu 20.04 LTS system)
+```xml
+<?xml version="1.0" encoding="UTF8"?>
+<toolchains>
+  <toolchain>
+    <type>jdk</type>
+    <provides>
+      <version>8</version>
+    </provides>
+    <configuration>
+      <jdkHome>/usr/lib/jvm/java-8-openjdk-amd64</jdkHome>
+    </configuration>
+  </toolchain>
+</toolchains>
+```
 
 # License
 

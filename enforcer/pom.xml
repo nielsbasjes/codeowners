@@ -100,7 +100,7 @@
         <configuration>
           <toolchains>
             <jdk>
-              <version>17</version>
+              <version>8</version>
             </jdk>
           </toolchains>
         </configuration>
