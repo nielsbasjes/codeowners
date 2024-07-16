@@ -27,12 +27,12 @@ import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -63,7 +63,11 @@ public class CodeOwners extends CodeOwnersBaseVisitor<Void> {
      * @throws IOException In case of problems.
      */
     public CodeOwners(File file) throws IOException {
-        this(FileUtils.readFileToString(file, UTF_8));
+        this(readFileToString(file));
+    }
+
+    private static String readFileToString(File file) throws IOException {
+        return new String(Files.readAllBytes(file.toPath()), UTF_8);
     }
 
     private static final String IMPLICIT_SECTION_NAME = "Implicit Default Section";
