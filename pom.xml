@@ -66,7 +66,7 @@
 
     <antlr.version>4.13.2</antlr.version>
     <junit5.version>5.10.3</junit5.version>
-    <slf4j.version>2.0.14</slf4j.version>
+    <slf4j.version>2.0.15</slf4j.version>
 
     <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
     <!-- See http://www.eclemma.org/jacoco/trunk/doc/prepare-agent-mojo.html-->
