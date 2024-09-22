@@ -115,4 +115,20 @@ class TestBugreports {
             "/foo_txt/foo_txt");
     }
 
+    @Test
+    void extraRulesForExistingDirectory() {
+        // Old situation: If you specify a second set of rules for a directory one of them is lost.
+        // New situation: There are evaluated in the order they were added
+
+        GitIgnore gitIgnore1 = new GitIgnore(".git/");
+        GitIgnore gitIgnore2 = new GitIgnore(".svn/");
+
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(new File("/tmp/foo"), false);
+        gitIgnoreFileSet.add(gitIgnore1);
+        gitIgnoreFileSet.add(gitIgnore2);
+
+        assertTrue(gitIgnoreFileSet.isIgnoredFile("/tmp/foo/.git/foo"));
+        assertTrue(gitIgnoreFileSet.isIgnoredFile("/tmp/foo/.svn/bar"));
+    }
+
 }

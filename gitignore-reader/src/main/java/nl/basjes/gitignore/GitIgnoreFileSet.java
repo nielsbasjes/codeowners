@@ -25,6 +25,8 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
@@ -41,7 +43,7 @@ public class GitIgnoreFileSet implements FileFilter {
 
     // The TreeMap is used to sort the GitIgnore files by the name of the basedir they are relevant for.
     // This sorting is very important in the evaluation of the rules!
-    private final TreeMap<String, GitIgnore> gitIgnores = new TreeMap<>();
+    private final TreeMap<String, List<GitIgnore>> gitIgnores = new TreeMap<>();
 
     // The "absolute" directory which is to be used as the project root for all the gitignore files.
     private final File projectBaseDir;
@@ -77,7 +79,7 @@ public class GitIgnoreFileSet implements FileFilter {
      */
     public GitIgnoreFileSet setVerbose(boolean verbose) {
         this.verbose = verbose;
-        gitIgnores.values().forEach(gitIgnore -> gitIgnore.setVerbose(verbose));
+        gitIgnores.values().forEach(gitIgnoreList -> gitIgnoreList.forEach(gitIgnore -> gitIgnore.setVerbose(verbose)));
         return this;
     }
 
@@ -110,8 +112,18 @@ public class GitIgnoreFileSet implements FileFilter {
         return !assumeProjectRelativeQueries;
     }
 
-    public void add(final GitIgnore gitIgnore) {
-        gitIgnores.put(gitIgnore.getProjectRelativeBaseDir(), gitIgnore);
+
+    /**
+     * Add a new gitIgnore file to the set to be checked.
+     * The rules in the files depend on the ordering over files!
+     * If a second 'GitIgnore' is added for an existing directory then they will be sorted
+     * in the order they have been added to this GitIgnoreFileSet.
+     * @param gitIgnore The instance of the gitIgnore file.
+     */
+    public final void add(final GitIgnore gitIgnore) {
+        gitIgnores
+            .computeIfAbsent(gitIgnore.getProjectRelativeBaseDir(), k -> new ArrayList<>())
+            .add(gitIgnore);
         gitIgnore.setVerbose(verbose);
     }
 
@@ -119,7 +131,7 @@ public class GitIgnoreFileSet implements FileFilter {
      * Add a .gitignore file to the set.
      * @param gitIgnoreFile The handle of the file of a gitignore file to be added. This MUST be able to get the ABSOLUTE path within the project.
      */
-    public void addGitIgnoreFile(final File gitIgnoreFile) {
+    public final void addGitIgnoreFile(final File gitIgnoreFile) {
         try {
             add(new GitIgnore(getProjectRelative(gitIgnoreFile.getParent()), gitIgnoreFile));
         } catch (IOException e) {
@@ -130,7 +142,7 @@ public class GitIgnoreFileSet implements FileFilter {
     /**
      * Automatically find all .gitignore files starting in the projects root and add them all to the set.
      */
-    public void addAllGitIgnoreFiles() {
+    public final void addAllGitIgnoreFiles() {
         // Find all files in the project
         try(Stream<Path> projectFiles = Files.find(projectBaseDir.toPath(), 128, (filePath, fileAttr) -> fileAttr.isRegularFile())) {
             projectFiles
@@ -171,10 +183,12 @@ public class GitIgnoreFileSet implements FileFilter {
         String projectBaseFileName = isRelative ? filename : getProjectRelative(filename);
 
         // Iterate over all available GitIgnore files in the correct order!
-        for (GitIgnore gitIgnore : gitIgnores.values()) {
-            Boolean isIgnoredFile = gitIgnore.isIgnoredFile(projectBaseFileName);
-            if (isIgnoredFile != null) {
-                result = isIgnoredFile;
+        for (List<GitIgnore> gitIgnoreLists : gitIgnores.values()) {
+            for (GitIgnore gitIgnore : gitIgnoreLists) {
+                Boolean isIgnoredFile = gitIgnore.isIgnoredFile(projectBaseFileName);
+                if (isIgnoredFile != null) {
+                    result = isIgnoredFile;
+                }
             }
         }
         return result;
@@ -255,9 +269,12 @@ public class GitIgnoreFileSet implements FileFilter {
             .append(" ( Absolute: ").append(projectBaseDir.getAbsoluteFile()).append(" )\n")
             .append("=========================\n");
 
-        for (Map.Entry<String, GitIgnore> gitIgnoreEntry : gitIgnores.entrySet()) {
-            sb.append(gitIgnoreEntry.getValue())
-              .append("=========================\n");
+        for (Map.Entry<String, List<GitIgnore>> gitIgnoreListEntry : gitIgnores.entrySet()) {
+            for (GitIgnore gitIgnore: gitIgnoreListEntry.getValue()) {
+                sb
+                    .append(gitIgnore)
+                    .append("=========================\n");
+            }
         }
 
         return sb.toString();
