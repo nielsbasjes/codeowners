@@ -150,6 +150,14 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             }
         }
 
+        if (verbose) {
+            getLog().info("=================================\n");
+            getLog().info("All configured GitIgnore rules:\n" + gitIgnores);
+            getLog().info("=================================\n");
+            getLog().info("All configured CODEOWNER rules:\n" + codeOwners);
+            getLog().info("=================================\n");
+        }
+
         if (showApprovers) {
             // Run this listing without the verbose set to keep the output usable
             printApprovers(allFilesInProject
