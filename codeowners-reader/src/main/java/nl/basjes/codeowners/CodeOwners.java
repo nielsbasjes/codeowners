@@ -76,6 +76,7 @@ public class CodeOwners extends CodeOwnersParserBaseVisitor<Void> {
      * Construct the CodeOwners with the provided rules string
      * @param codeownersContent The rules must be read. Will NPE if the content is null.
      */
+    @SuppressWarnings("this-escape") // Because of generated code
     public CodeOwners(String codeownersContent) {
         currentSection = new Section(IMPLICIT_SECTION_NAME);
 
