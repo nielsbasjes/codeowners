@@ -97,6 +97,14 @@ else
 fi
 
 # ----------------------------------------------------------------------------------------------------
+# Forcing a manual gpg signing action to ensure the password is known
+(
+  cd /tmp
+  echo x > Yauaa-release-$$.txt
+  gpg --clearsign Yauaa-release-$$.txt
+  rm Yauaa-release-$$.txt Yauaa-release-$$.txt.asc
+)
+
 info "GPG workaround: Starting"
 runGpgSignerInBackGround(){
   while : ; do date ; echo "test" | gpg --clearsign ; sleep 10s ; done
