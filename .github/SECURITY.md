@@ -17,7 +17,7 @@ security@basjes.nl .
 
 ## Supported Versions
 
-Depending on the severity of a vulnerability the issue may be fixed in the current `major.minor` release of Yauaa, or
+Depending on the severity of a vulnerability the issue may be fixed in the current `major.minor` release, or
 for lower severity vulnerabilities or hardening in the following `major.minor` release.
 
 ## Automatic updates

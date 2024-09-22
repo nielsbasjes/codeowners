@@ -100,9 +100,9 @@ fi
 # Forcing a manual gpg signing action to ensure the password is known
 (
   cd /tmp
-  echo x > Yauaa-release-$$.txt
-  gpg --clearsign Yauaa-release-$$.txt
-  rm Yauaa-release-$$.txt Yauaa-release-$$.txt.asc
+  echo x > CodeOwners-release-$$.txt
+  gpg --clearsign CodeOwners-release-$$.txt
+  rm CodeOwners-release-$$.txt CodeOwners-release-$$.txt.asc
 )
 
 info "GPG workaround: Starting"
