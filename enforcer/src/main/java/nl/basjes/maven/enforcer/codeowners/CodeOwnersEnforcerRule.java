@@ -100,8 +100,6 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             ".svn/\n"
         ));
 
-        getLog().info("Using gitignore: Built in base rules: " + gitIgnores);
-
         List<Object> commonCodeOwnersFiles = Arrays.asList(
             "/CODEOWNERS",
             "/.github/CODEOWNERS",
