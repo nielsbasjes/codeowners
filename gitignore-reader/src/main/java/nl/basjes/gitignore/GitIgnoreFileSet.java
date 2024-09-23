@@ -64,8 +64,9 @@ public class GitIgnoreFileSet implements FileFilter {
 
     /**
      * @param projectBaseDir The base directory of the project. The root gitignore rules are relative to this directory.
-     * @param autoload Automatically find and load all gitignore files?
+     * @param autoload Automatically find and load all gitignore files.
      */
+    @SuppressWarnings("this-escape")
     public GitIgnoreFileSet(final File projectBaseDir, boolean autoload) {
         this.projectBaseDir = projectBaseDir;
         if (autoload) {
@@ -120,7 +121,7 @@ public class GitIgnoreFileSet implements FileFilter {
      * in the order they have been added to this GitIgnoreFileSet.
      * @param gitIgnore The instance of the gitIgnore file.
      */
-    public final void add(final GitIgnore gitIgnore) {
+    public void add(final GitIgnore gitIgnore) {
         gitIgnores
             .computeIfAbsent(gitIgnore.getProjectRelativeBaseDir(), k -> new ArrayList<>())
             .add(gitIgnore);
@@ -131,7 +132,7 @@ public class GitIgnoreFileSet implements FileFilter {
      * Add a .gitignore file to the set.
      * @param gitIgnoreFile The handle of the file of a gitignore file to be added. This MUST be able to get the ABSOLUTE path within the project.
      */
-    public final void addGitIgnoreFile(final File gitIgnoreFile) {
+    public void addGitIgnoreFile(final File gitIgnoreFile) {
         try {
             add(new GitIgnore(getProjectRelative(gitIgnoreFile.getParent()), gitIgnoreFile));
         } catch (IOException e) {
@@ -142,7 +143,6 @@ public class GitIgnoreFileSet implements FileFilter {
     /**
      * Automatically find all .gitignore files starting in the projects root and add them all to the set.
      */
-    public final void addAllGitIgnoreFiles() {
         // Find all files in the project
         try(Stream<Path> projectFiles = Files.find(projectBaseDir.toPath(), 128, (filePath, fileAttr) -> fileAttr.isRegularFile())) {
             projectFiles
@@ -150,6 +150,7 @@ public class GitIgnoreFileSet implements FileFilter {
                 .filter(filePath -> filePath.getFileName().toString().equals(".gitignore"))
                 // Then parse each of them and add the expressions.
                 .forEach(gitIgnoreFile -> addGitIgnoreFile(gitIgnoreFile.toFile()));
+    public void addAllGitIgnoreFiles() {
         }
         catch (IOException e) {
             LOG.error("Unable to find .gitignore files in {} due to {}", projectBaseDir, e.toString());
