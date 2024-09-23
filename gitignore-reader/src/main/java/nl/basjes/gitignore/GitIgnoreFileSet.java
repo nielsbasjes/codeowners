@@ -66,7 +66,7 @@ public class GitIgnoreFileSet implements FileFilter {
      * @param projectBaseDir The base directory of the project. The root gitignore rules are relative to this directory.
      * @param autoload Automatically find and load all gitignore files.
      */
-    @SuppressWarnings("this-escape")
+    @SuppressWarnings("this-escape") // The 'this-escape' only applies to the optional auto-loading after the construction
     public GitIgnoreFileSet(final File projectBaseDir, boolean autoload) {
         this.projectBaseDir = projectBaseDir;
         if (autoload) {
