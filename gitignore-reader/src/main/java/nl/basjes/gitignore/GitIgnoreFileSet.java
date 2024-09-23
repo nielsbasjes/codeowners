@@ -23,13 +23,13 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.stream.Stream;
 
 import static java.lang.Boolean.TRUE;
 import static nl.basjes.gitignore.GitIgnore.standardizeFilename;
@@ -143,17 +143,51 @@ public class GitIgnoreFileSet implements FileFilter {
     /**
      * Automatically find all .gitignore files starting in the projects root and add them all to the set.
      */
-        // Find all files in the project
-        try(Stream<Path> projectFiles = Files.find(projectBaseDir.toPath(), 128, (filePath, fileAttr) -> fileAttr.isRegularFile())) {
-            projectFiles
-                // Only the .gitignore files
-                .filter(filePath -> filePath.getFileName().toString().equals(".gitignore"))
-                // Then parse each of them and add the expressions.
-                .forEach(gitIgnoreFile -> addGitIgnoreFile(gitIgnoreFile.toFile()));
     public void addAllGitIgnoreFiles() {
+        addAllGitIgnoreFiles(projectBaseDir.toPath(), 128);
+    }
+
+    /**
+     * Recursively add the gitignore files found in directories.
+     * This first scans the directory, adds the provided gitignore (if any),
+     * and then only traverses into subdirectories that have not been ignored.
+     * @param current The current directory
+     * @param maxRecursionDepth A limiter to avoid going infinitely deep.
+     */
+    private void addAllGitIgnoreFiles(Path current, int maxRecursionDepth) {
+        List<Path> subDirs = new ArrayList<>();
+
+        if (ignoreFile(current.toFile().getPath())) {
+            return; // Is ignored
+        }
+
+        if (!Files.isDirectory(current)) {
+            return; // It must be a directory
+        }
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(current)) {
+            for (Path path : stream) {
+                if (Files.isRegularFile(path)) {
+                    if (".gitignore".equals(path.getFileName().toString())) {
+                        addGitIgnoreFile(path.toFile());
+                    }
+                    continue;
+                }
+                if (Files.isDirectory(path)) {
+                    subDirs.add(path);
+                }
+            }
         }
         catch (IOException e) {
             LOG.error("Unable to find .gitignore files in {} due to {}", projectBaseDir, e.toString());
+            return;
+        }
+
+        int nextMaxRecursionDepth = maxRecursionDepth-1;
+        if (nextMaxRecursionDepth > 0) {
+            for (Path subDir : subDirs) {
+                addAllGitIgnoreFiles(subDir, nextMaxRecursionDepth);
+            }
         }
     }
 

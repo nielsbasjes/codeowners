@@ -1,0 +1,3 @@
+*.txt
+!dir4.md
+file4.log
