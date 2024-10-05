@@ -1,6 +1,19 @@
 
 This is intended as an overview of the major changes
 
+v1.8.1
+===
+- Searching for the gitIgnore files returns the list of added files.
+- Fixed searching for the gitIgnore files still scans an ignored directory.
+
+v1.8.0
+===
+- Only search non-ignored directories for gitignore files.
+
+v1.7.0
+===
+- Support multiple GitIgnore for the same directory
+
 v1.5.1
 ===
 - Fix bug in new directory handling

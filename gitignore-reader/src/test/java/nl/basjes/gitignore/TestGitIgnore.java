@@ -235,6 +235,7 @@ class TestGitIgnore {
         // including all of its files and subdirectories – will be ignored
         GitIgnore gitIgnore = new GitIgnore("logs/");
 
+        assertIgnore(gitIgnore, "logs/");
         assertIgnore(gitIgnore, "logs/debug.log");
         assertIgnore(gitIgnore, "logs/latest/foo.bar");
         assertIgnore(gitIgnore, "build/logs/foo.bar");

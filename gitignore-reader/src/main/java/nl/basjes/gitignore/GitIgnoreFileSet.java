@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static java.lang.Boolean.TRUE;
+import static java.util.Collections.emptyList;
 import static nl.basjes.gitignore.GitIgnore.standardizeFilename;
 
 /**
@@ -47,6 +48,10 @@ public class GitIgnoreFileSet implements FileFilter {
 
     // The "absolute" directory which is to be used as the project root for all the gitignore files.
     private final File projectBaseDir;
+
+    public File getProjectBaseDir() {
+        return projectBaseDir;
+    }
 
     private boolean verbose = false;
 
@@ -142,9 +147,11 @@ public class GitIgnoreFileSet implements FileFilter {
 
     /**
      * Automatically find all .gitignore files starting in the projects root and add them all to the set.
+     *
+     * @return List of the loaded gitIgnore files.
      */
-    public void addAllGitIgnoreFiles() {
-        addAllGitIgnoreFiles(projectBaseDir.toPath(), 128);
+    public List<Path> addAllGitIgnoreFiles() {
+        return addAllGitIgnoreFiles(projectBaseDir.toPath(), 128);
     }
 
     /**
@@ -153,23 +160,36 @@ public class GitIgnoreFileSet implements FileFilter {
      * and then only traverses into subdirectories that have not been ignored.
      * @param current The current directory
      * @param maxRecursionDepth A limiter to avoid going infinitely deep.
+     * @return List of the loaded gitIgnore files.
      */
-    private void addAllGitIgnoreFiles(Path current, int maxRecursionDepth) {
+    private List<Path> addAllGitIgnoreFiles(Path current, int maxRecursionDepth) {
+        List<Path> loadedGitIgnoreFiles = new ArrayList<>();
         List<Path> subDirs = new ArrayList<>();
 
-        if (ignoreFile(current.toFile().getPath())) {
-            return; // Is ignored
+        if (!Files.isDirectory(current)) {
+            LOG.debug("Locate GI: Not DIR  {}", current);
+            return emptyList(); // It must be a directory
         }
 
-        if (!Files.isDirectory(current)) {
-            return; // It must be a directory
+        String dirPath = current.toFile().getPath();
+        if (!dirPath.endsWith(File.separator)) {
+            dirPath = dirPath + File.separatorChar;
         }
+
+        if (ignoreFile(dirPath)) {
+            LOG.debug("Locate GI: Ignored  {}", current);
+            return emptyList(); // Is ignored
+        }
+
+        LOG.debug("Locate GI: Scan     {}", current);
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(current)) {
             for (Path path : stream) {
                 if (Files.isRegularFile(path)) {
                     if (".gitignore".equals(path.getFileName().toString())) {
+                        LOG.debug("Locate GI: ADDING   {}", path);
                         addGitIgnoreFile(path.toFile());
+                        loadedGitIgnoreFiles.add(path);
                     }
                     continue;
                 }
@@ -180,15 +200,16 @@ public class GitIgnoreFileSet implements FileFilter {
         }
         catch (IOException e) {
             LOG.error("Unable to find .gitignore files in {} due to {}", projectBaseDir, e.toString());
-            return;
+            return emptyList();
         }
 
         int nextMaxRecursionDepth = maxRecursionDepth-1;
         if (nextMaxRecursionDepth > 0) {
             for (Path subDir : subDirs) {
-                addAllGitIgnoreFiles(subDir, nextMaxRecursionDepth);
+                loadedGitIgnoreFiles.addAll(addAllGitIgnoreFiles(subDir, nextMaxRecursionDepth));
             }
         }
+        return loadedGitIgnoreFiles;
     }
 
     public boolean isEmpty() {
