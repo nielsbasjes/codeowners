@@ -17,9 +17,17 @@
 .gitlab/             @projectteam
 src/                 @projectteam
 
+dir2/                @dir2project
+*.txt                @txt
+*.log                @log
+
 *.md @username
-CODEOWNERS @nielsbasjes
+docs/CODEOWNERS      @nielsbasjes
 .gitignore           @nielsbasjes
+
+docs/                @documentation
+dir1/                @dir1project
+dir3/                @dir3project
 
 # These files should not be part of the test ... but they have to be
 /invoker.properties  @integrationtest
