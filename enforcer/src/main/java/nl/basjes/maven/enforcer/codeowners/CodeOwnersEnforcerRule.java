@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static nl.basjes.gitignore.GitIgnore.standardizeFilename;
 import static nl.basjes.gitignore.Utils.findAllNonIgnored;
 
 @SuppressWarnings("unused") // Used by the enforcer-plugin that finds it via the @Named annotation
@@ -84,7 +85,7 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         // Load all available gitignore configs.
         List<Path> loadedFiles = gitIgnores.addAllGitIgnoreFiles();
         for (Path loadedFile : loadedFiles) {
-            getLog().info("Using GitIgnore : ${baseDir}/" + baseDirPath.relativize(loadedFile));
+            getLog().info("Using GitIgnore : " + pathToLoggingString(baseDirPath.relativize(loadedFile)));
         }
 
         List<String> commonCodeOwnersFiles = Arrays.asList(
@@ -111,7 +112,7 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             throw new EnforcerRuleException("This project does NOT have a CODEOWNERS file");
         }
 
-        getLog().info("Using CODEOWNERS: ${baseDir}/" + baseDirPath.relativize(codeOwnersFile.toPath()));
+        getLog().info("Using CODEOWNERS: " + pathToLoggingString(baseDirPath.relativize(codeOwnersFile.toPath())));
         try {
             codeOwners = new CodeOwners(codeOwnersFile);
         } catch (IOException e) {
@@ -180,7 +181,7 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             List<String> approvers = codeOwners.getMandatoryApprovers(filename);
             getLog().debug("- Approvers: " + approvers);
             if (approvers.isEmpty()) {
-                getLog().error("No approvers for ${baseDir}/" + filename);
+                getLog().error("No approvers for " + pathToLoggingString(filename));
                 filesWithoutApprover.add(filename);
                 pass = false;
             }
@@ -197,17 +198,25 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         getLog().info("--------------------------------");
         for (Path path : paths) {
             List<String> mandatoryApprovers = codeOwners.getMandatoryApprovers(path.toString());
-            if (path.toFile().isDirectory()) {
-                if (path.toString().isEmpty()) {
-                    getLog().info("Approvers for: ${baseDir}/ : " + mandatoryApprovers);
-                } else {
-                    getLog().info("Approvers for: ${baseDir}/" + path + "/ : " + mandatoryApprovers);
-                }
-            } else {
-                getLog().info("Approvers for: ${baseDir}/" + path + " : " + mandatoryApprovers);
-            }
+            getLog().info("Approvers for: " + pathToLoggingString(path) + " : " + mandatoryApprovers);
         }
         getLog().info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+    }
+
+    private String pathToLoggingString(String path) {
+        String filename = standardizeFilename(path);
+        if (filename.startsWith("/")) {
+            return "${baseDir}" + filename;
+        }
+        return filename;
+    }
+
+    private String pathToLoggingString(Path path) {
+        String filename = standardizeFilename(path.toString()) + (path.toFile().isDirectory()?"/":"");
+        if (filename.startsWith("/")) {
+            return "${baseDir}" + filename;
+        }
+        return filename;
     }
 
     /**
