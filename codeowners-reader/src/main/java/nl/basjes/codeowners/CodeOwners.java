@@ -21,6 +21,7 @@ import nl.basjes.codeowners.parser.CodeOwnersLexer;
 import nl.basjes.codeowners.parser.CodeOwnersParser;
 import nl.basjes.codeowners.parser.CodeOwnersParser.ApprovalRuleContext;
 import nl.basjes.codeowners.parser.CodeOwnersParser.CodeownersContext;
+import nl.basjes.codeowners.parser.CodeOwnersParser.SectionContext;
 import nl.basjes.codeowners.parser.CodeOwnersParserBaseVisitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
@@ -227,7 +228,7 @@ public class CodeOwners extends CodeOwnersParserBaseVisitor<Void> {
      * @return Nothing
      */
     @Override
-    public Void visitSection(CodeOwnersParser.SectionContext ctx) {
+    public Void visitSection(SectionContext ctx) {
         Section section = new Section(ctx.section.getText().trim());
         section.optional = ctx.OPTIONAL() != null;
         if (ctx.approvers != null) {
