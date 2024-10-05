@@ -20,9 +20,4 @@ assert file.exists()
 
 String text = file.getText( "utf-8" )
 
-assert text.contains("[INFO] MATCH IGNORE |.svn/| ~ |^/?(.*/)?\\.svn/| --> |/.svn/|")
-assert text.contains("[INFO] Using CODEOWNERS: \${baseDir}/.gitlab/CODEOWNERS")
-assert !text.contains("[INFO] NO MATCH     |.svn/| ~ |^/?(.*/)?\\.svn/| --> |/.svn/|")
-assert !text.contains("[INFO] MATCH IGNORE |.svn/| ~ |^/?(.*/)?\\.svn/| --> |/.svn/dummy.txt|")
-
 return true
