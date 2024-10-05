@@ -1,7 +1,7 @@
 
 This is intended as an overview of the major changes
 
-v1.8.1
+v1.9.0
 ===
 - Searching for the gitIgnore files returns the list of added files.
 - Fixed searching for the gitIgnore files still scans an ignored directory.
