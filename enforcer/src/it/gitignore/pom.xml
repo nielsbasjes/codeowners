@@ -41,7 +41,7 @@
         <configuration>
           <rules>
             <codeOwners>
-              <codeOwnersFile>.config/CODEOWNERS</codeOwnersFile>
+              <codeOwnersFile>.gitlab/CODEOWNERS</codeOwnersFile>
               <allFilesMustHaveCodeOwner>true</allFilesMustHaveCodeOwner>
               <showApprovers>true</showApprovers>
               <verbose>true</verbose>
