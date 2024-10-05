@@ -178,7 +178,7 @@ public class GitIgnore {
      * @param filename The filename to clean
      * @return A standardized form.
      */
-    static String standardizeFilename(String filename) {
+    public static String standardizeFilename(String filename) {
         String unixifiedName = separatorsToUnix(filename);
         if (!unixifiedName.matches("^[a-zA-Z]:/.*")) {
             unixifiedName = GITIGNORE_PATH_SEPARATOR + unixifiedName;
