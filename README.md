@@ -32,6 +32,7 @@ The intended goal is to make the build fail if the codeowners file does not cove
   - Gitlab also supports "Optional" code owners but that is useless to check for.
 - **allNewlyCreatedFilesMustHaveCodeOwner**
   - Check that if a new file is created in any of the directories in the project that it would automatically have a mandatory code owner.
+  - Note when a specific filename exception is used in the gitignore rules then this check is not perfect.
 - **allFilesMustHaveCodeOwner**
   - Do both allExisingFilesMustHaveCodeOwner and allNewlyCreatedFilesMustHaveCodeOwner
 - **verbose**
@@ -83,7 +84,7 @@ Simply create an instance of the GitIgnoreFileSet and pass the root directory of
 ```java
 GitIgnoreFileSet ignoreFileSet = new GitIgnoreFileSet(new File("/home/niels/workspace/project"));
 ```
-Then you can for each file in the project check if it is ignored or not
+You can then check for each file in the project if it is ignored or not
 ```java
 if (ignoreFileSet.ignoreFile("/home/niels/workspace/project/something/something/README.md")) {
     ...

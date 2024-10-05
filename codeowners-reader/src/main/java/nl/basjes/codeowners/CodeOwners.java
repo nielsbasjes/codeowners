@@ -169,7 +169,7 @@ public class CodeOwners extends CodeOwnersParserBaseVisitor<Void> {
 
     /**
      * Get all mandatory approvers for a specific filename.
-     * @param filename The filename for which the mandatory approvers are requested.
+     * @param filename The filename for which the mandatory approvers are requested. This filename MUST be relative to the project base directory.
      * @return The list of mandatory approver usernames for this filename in the order (as good as possible) as they appear in the code owner rules.
      */
     public List<String> getMandatoryApprovers(String filename) {
@@ -178,7 +178,7 @@ public class CodeOwners extends CodeOwnersParserBaseVisitor<Void> {
 
     /**
      * Get all approvers for a specific filename.
-     * @param filename The filename for which the approvers are requested.
+     * @param filename The filename for which the approvers are requested. This filename MUST be relative to the project base directory.
      * @return The list of approver usernames for this filename in the order (as good as possible) as they appear in the code owner rules.
      */
     public List<String> getAllApprovers(String filename) {
