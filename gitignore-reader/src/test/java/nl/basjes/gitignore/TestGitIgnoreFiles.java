@@ -89,9 +89,15 @@ class TestGitIgnoreFiles {
     private List<String> stripTestTreeBaseDir(List<Path> input) {
         return input
             .stream()
-            .map(path -> path.toString().replaceAll("^\\Q"+testTreeDir+"\\E", "/").replaceAll("//", "/"))
+            .map(Path::toString)
+            .map(GitIgnore::standardizeFilename) // Needed for testing on Windows.
+            .map(path -> path.replaceAll("^\\Q/"+testTreeDir+"\\E", "/").replaceAll("//", "/"))
             .sorted()
             .collect(Collectors.toList());
+    }
+
+    private String stripTestTreeBaseDir(Path input) {
+        return standardizeFilename(input.toString()).replaceAll("^\\Q/"+testTreeDir+"\\E", "/").replaceAll("//", "/");
     }
 
     static final String testTreeDir = "src/test/resources/testtree";
@@ -111,7 +117,7 @@ class TestGitIgnoreFiles {
     void ensureAllFilesInTestTreeAreEitherInKeepOrIgnore() throws IOException {
         try (Stream<Path> projectFiles = Files.find(testTree.toPath(), 128, (filePath, fileAttr) -> fileAttr.isRegularFile())){
             for (Path path : projectFiles.sorted().collect(Collectors.toList())) {
-                String name = path.toString(). replaceAll("^\\Q"+testTreeDir+"/\\E", "/");
+                String name = stripTestTreeBaseDir(path);
                 assertTrue(expectedIgnoredFiles.contains(name) || expectedKeepFiles.contains(name), "Missing entry for " + name);
             }
         }
@@ -346,12 +352,17 @@ class TestGitIgnoreFiles {
         LOG.info("Added gitignore files: {}", addedGitIgnoreFiles);
 
         List<String> expected = Arrays.asList(
-            "src/test/resources/testtree/.gitignore",
-            "src/test/resources/testtree/dir1/.gitignore",
-            "src/test/resources/testtree/dir3/.gitignore"
+            "/src/test/resources/testtree/.gitignore",
+            "/src/test/resources/testtree/dir1/.gitignore",
+            "/src/test/resources/testtree/dir3/.gitignore"
         );
 
-        assertEquals(expected, addedGitIgnoreFiles.stream().map(Path::toString).sorted().collect(Collectors.toList()));
+        assertEquals(expected, addedGitIgnoreFiles
+            .stream()
+            .map(Path::toString)
+            .map(GitIgnore::standardizeFilename) // Needed for testing on Windows.
+            .sorted()
+            .collect(Collectors.toList()));
     }
 
     @Test
