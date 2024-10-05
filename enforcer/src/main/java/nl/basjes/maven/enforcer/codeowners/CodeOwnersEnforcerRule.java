@@ -28,21 +28,20 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static nl.basjes.gitignore.Utils.findAllNonIgnored;
 
 @SuppressWarnings("unused") // Used by the enforcer-plugin that finds it via the @Named annotation
 @Named("codeOwners") // rule name - must start from lowercase character
 public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
 
-    private String baseDir;
+    private File baseDir;
 
     private File codeOwnersFile;
 
@@ -62,36 +61,18 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
     private MavenProject project;
 
     public void execute() throws EnforcerRuleException {
-        List<String> allFilesInProject;
-        List<String> allDirectoriesInProject;
-
         if (baseDir == null) {
-            baseDir = project.getBasedir().getPath();
+            baseDir = project.getBasedir();
         }
         getLog().debug("BaseDir=|"+baseDir+"|");
 
-        // Get a list of all files in the project
-        try {
-            Path baseDirPath = Paths.get(baseDir);
-            try(Stream<Path> projectFiles = Files.find(baseDirPath, 128, (filePath, fileAttr) -> fileAttr.isRegularFile())) {
-                allFilesInProject = projectFiles
-                    .map(file -> file.toString().replace(baseDir,""))
-                    .sorted()
-                    .collect(Collectors.toList());
-            }
-            try(Stream<Path> projectFiles = Files.find(baseDirPath, 128, (filePath, fileAttr) -> fileAttr.isDirectory())) {
-                allDirectoriesInProject = projectFiles
-                    .map(file -> file.toString().replace(baseDir,""))
-                    .sorted()
-                    .collect(Collectors.toList());
-            }
-
-        } catch (IOException e) {
-            throw new EnforcerRuleException("Unable to list the files", e);
-        }
+        Path baseDirPath = baseDir.toPath();
 
         // Get the files that are ignored by the SCM
-        GitIgnoreFileSet gitIgnores = new GitIgnoreFileSet(new File(baseDir), false).assumeQueriesAreProjectRelative();
+        GitIgnoreFileSet gitIgnores = new GitIgnoreFileSet(baseDir, false)
+            .assumeQueriesIncludeProjectBaseDir();
+
+        gitIgnores.setVerbose(verbose);
 
         // Start with the internal files that are used by common SCMs.
         gitIgnores.add(new GitIgnore(
@@ -100,36 +81,28 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             ".svn/\n"
         ));
 
-        List<Object> commonCodeOwnersFiles = Arrays.asList(
+        // Load all available gitignore configs.
+        List<Path> loadedFiles = gitIgnores.addAllGitIgnoreFiles();
+        for (Path loadedFile : loadedFiles) {
+            getLog().info("Using GitIgnore : ${baseDir}/" + baseDirPath.relativize(loadedFile));
+        }
+
+        List<String> commonCodeOwnersFiles = Arrays.asList(
             "/CODEOWNERS",
             "/.github/CODEOWNERS",
             "/.gitlab/CODEOWNERS",
             "/docs/CODEOWNERS"
             );
 
-        CodeOwners codeOwners = null;
+        CodeOwners codeOwners;
 
-        for (String projectFile : allFilesInProject) {
-            if (projectFile.endsWith("/.gitignore")){
-                try {
-                    getLog().info("Using gitignore: " + projectFile);
-                    GitIgnore gitIgnore = new GitIgnore(new File(baseDir + projectFile));
-                    getLog().debug(gitIgnore.toString());
-                    gitIgnores.add(gitIgnore);
-                } catch (IOException e) {
-                    throw new EnforcerRuleException("Unable to open the gitignore file: " + projectFile);
-                }
-            }
-            if (codeOwnersFile == null) {
-                if (commonCodeOwnersFiles.contains(projectFile)) {
-                    getLog().info("Using CODEOWNERS: " + projectFile);
-                    codeOwnersFile = new File(baseDir + projectFile);
-                    try {
-                        codeOwners = new CodeOwners(codeOwnersFile);
-                    } catch (IOException e) {
-                        throw new EnforcerRuleException("Unable to read the CODEOWNERS: " + codeOwnersFile, e);
-                    }
-                    getLog().debug(codeOwners.toString());
+        if (codeOwnersFile == null) {
+            // If no file was specified we try the default locations
+            for (String codeOwnersFileName : commonCodeOwnersFiles) {
+                File tryingFile = new File(baseDir + codeOwnersFileName);
+                if (tryingFile.exists() && tryingFile.isFile()) {
+                    codeOwnersFile = tryingFile;
+                    break;
                 }
             }
         }
@@ -138,15 +111,13 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             throw new EnforcerRuleException("This project does NOT have a CODEOWNERS file");
         }
 
-        if (codeOwners == null) {
-            getLog().info("Using CODEOWNERS: " + codeOwnersFile);
-            try {
-                codeOwners = new CodeOwners(codeOwnersFile);
-                getLog().debug(codeOwners.toString());
-            } catch (IOException e) {
-                throw new EnforcerRuleException("Unable to read the CODEOWNERS: " + codeOwnersFile, e);
-            }
+        getLog().info("Using CODEOWNERS: ${baseDir}/" + baseDirPath.relativize(codeOwnersFile.toPath()));
+        try {
+            codeOwners = new CodeOwners(codeOwnersFile);
+        } catch (IOException e) {
+            throw new EnforcerRuleException("Unable to read the CODEOWNERS: " + codeOwnersFile, e);
         }
+        getLog().debug(codeOwners.toString());
 
         if (verbose) {
             getLog().info("=================================\n");
@@ -156,31 +127,42 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             getLog().info("=================================\n");
         }
 
+        // Get a list of all files in the project and sort them
+        List<Path> allNonIgnoredFilesAndDirectoriesInProject =
+            findAllNonIgnored(gitIgnores)
+                .stream()
+                .map(baseDirPath::relativize)
+                .sorted()
+                .collect(Collectors.toList());
+
+        // Because all files have been forced to be project relative we must change the gitIgnores matching.
+        gitIgnores.assumeQueriesAreProjectRelative();
+
         if (showApprovers) {
             // Run this listing without the verbose set to keep the output usable
-            printApprovers(allFilesInProject
-                .stream()
-                .filter(gitIgnores::keepFile)
-                .collect(Collectors.toList()),
-                codeOwners);
+            codeOwners.setVerbose(false);
+            gitIgnores.setVerbose(false);
+            printApprovers(allNonIgnoredFilesAndDirectoriesInProject, codeOwners);
         }
 
         // Set everything to the requested verbosity
         codeOwners.setVerbose(verbose);
         gitIgnores.setVerbose(verbose);
 
-        List<String> allNonIgnoredFilesInProject = allFilesInProject
+        if (allFilesMustHaveCodeOwner || allExisingFilesMustHaveCodeOwner) {
+            List<String> allNonIgnoredFilesInProject = allNonIgnoredFilesAndDirectoriesInProject
                 .stream()
-                .filter(gitIgnores::keepFile)
+                .filter(path -> path.toFile().isFile())
+                .map(Path::toString)
                 .collect(Collectors.toList());
 
-        if (allFilesMustHaveCodeOwner || allExisingFilesMustHaveCodeOwner) {
             allNonIgnoredFilesHaveApprovers(allNonIgnoredFilesInProject, codeOwners);
         }
 
         if (allFilesMustHaveCodeOwner || allNewlyCreatedFilesMustHaveCodeOwner) {
-            List<String> newFileForEveryDirectory = allDirectoriesInProject
+            List<String> newFileForEveryDirectory = allNonIgnoredFilesAndDirectoriesInProject
                 .stream()
+                .filter(path -> path.toFile().isDirectory())
                 .map(directoryName -> (directoryName + "/" + unlikelyFilename).replace("//", "/"))
                 .filter(gitIgnores::keepFile)
                 .collect(Collectors.toList());
@@ -194,11 +176,11 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         List<String> filesWithoutApprover = new ArrayList<>();
 
         for (String filename : filenames) {
-            getLog().debug("Checking: " + filename);
+            getLog().debug("Checking: ${baseDir}/" + filename);
             List<String> approvers = codeOwners.getMandatoryApprovers(filename);
             getLog().debug("- Approvers: " + approvers);
             if (approvers.isEmpty()) {
-                getLog().error("No approvers for " + filename);
+                getLog().error("No approvers for ${baseDir}/" + filename);
                 filesWithoutApprover.add(filename);
                 pass = false;
             }
@@ -209,12 +191,21 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         }
     }
 
-    void printApprovers(List<String> filenames, CodeOwners codeOwners) {
+    void printApprovers(List<Path> paths, CodeOwners codeOwners) {
         getLog().info("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
         getLog().info("Listing all Mandatory Approvers:");
         getLog().info("--------------------------------");
-        for (String filename : filenames) {
-            getLog().info("Approvers for: " + filename + " : " + codeOwners.getMandatoryApprovers(filename));
+        for (Path path : paths) {
+            List<String> mandatoryApprovers = codeOwners.getMandatoryApprovers(path.toString());
+            if (path.toFile().isDirectory()) {
+                if (path.toString().isEmpty()) {
+                    getLog().info("Approvers for: ${baseDir}/ : " + mandatoryApprovers);
+                } else {
+                    getLog().info("Approvers for: ${baseDir}/" + path + "/ : " + mandatoryApprovers);
+                }
+            } else {
+                getLog().info("Approvers for: ${baseDir}/" + path + " : " + mandatoryApprovers);
+            }
         }
         getLog().info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
     }
