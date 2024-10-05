@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static nl.basjes.gitignore.GitIgnore.standardizeFilename;
+import static nl.basjes.gitignore.Utils.findAllNonIgnored;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -44,6 +45,20 @@ class TestGitIgnoreFiles {
     public static String separatorsToWindows(String path) {
         return path.replace("/", "\\");
     }
+    final List<String> expectedKeepFiles = Stream.of(
+        "/",
+        "/dir1",
+        "/dir1/dir1.md",
+        "/dir1/.gitignore",
+        "/dir2",
+        "/dir2/dir2.txt",
+        "/dir2/file2.log",
+        "/dir3",
+        "/dir3/dir3.txt",
+        "/dir3/file3.log",
+        "/dir3/.gitignore",
+        "/.gitignore"
+    ).sorted().collect(Collectors.toList());
 
     final List<String> expectedIgnoredFiles = Stream.of(
         "/dir1/dir1.log",
@@ -71,7 +86,36 @@ class TestGitIgnoreFiles {
         "/README.md",
         "/root.md").sorted().collect(Collectors.toList());
 
-    static final File testTree = new File("src/test/resources/testtree");
+    private List<String> stripTestTreeBaseDir(List<Path> input) {
+        return input
+            .stream()
+            .map(path -> path.toString().replaceAll("^\\Q"+testTreeDir+"\\E", "/").replaceAll("//", "/"))
+            .sorted()
+            .collect(Collectors.toList());
+    }
+
+    static final String testTreeDir = "src/test/resources/testtree";
+    static final File testTree = new File(testTreeDir);
+
+    @Test
+    void ensureExpectationsDoNotOverlap() {
+        for (String expectedKeepFile : expectedKeepFiles) {
+            assertFalse(expectedIgnoredFiles.contains(expectedKeepFile), "Expected Ignores has " + expectedKeepFile);
+        }
+        for (String expectedIgnoreFile : expectedIgnoredFiles) {
+            assertFalse(expectedKeepFiles.contains(expectedIgnoreFile), "Expected Keeps has " + expectedIgnoreFile);
+        }
+    }
+
+    @Test
+    void ensureAllFilesInTestTreeAreEitherInKeepOrIgnore() throws IOException {
+        try (Stream<Path> projectFiles = Files.find(testTree.toPath(), 128, (filePath, fileAttr) -> fileAttr.isRegularFile())){
+            for (Path path : projectFiles.sorted().collect(Collectors.toList())) {
+                String name = path.toString(). replaceAll("^\\Q"+testTreeDir+"/\\E", "/");
+                assertTrue(expectedIgnoredFiles.contains(name) || expectedKeepFiles.contains(name), "Missing entry for " + name);
+            }
+        }
+    }
 
     private void checkIgnoredList(List<String> ignore) {
         List<String> ignored = ignore
@@ -293,5 +337,32 @@ class TestGitIgnoreFiles {
         gitIgnoreFileSet.addGitIgnoreFile(new File("src/test/resources/no-such-file-really"));
         assertTrue(gitIgnoreFileSet.isEmpty());
     }
+
+    @Test
+    void ignoreDirectoriesWithAndWithoutSlash() {
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree, false);
+        List<Path> addedGitIgnoreFiles = gitIgnoreFileSet.addAllGitIgnoreFiles();
+
+        LOG.info("Added gitignore files: {}", addedGitIgnoreFiles);
+
+        List<String> expected = Arrays.asList(
+            "src/test/resources/testtree/.gitignore",
+            "src/test/resources/testtree/dir1/.gitignore",
+            "src/test/resources/testtree/dir3/.gitignore"
+        );
+
+        assertEquals(expected, addedGitIgnoreFiles.stream().map(Path::toString).sorted().collect(Collectors.toList()));
+    }
+
+    @Test
+    void listNonIgnoredFilesAndDirectories() {
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree).assumeQueriesIncludeProjectBaseDir();
+        List<Path> allNonIgnored = findAllNonIgnored(gitIgnoreFileSet);
+
+        LOG.info("All non ignored files: {}", allNonIgnored);
+
+        assertEquals(expectedKeepFiles, stripTestTreeBaseDir(allNonIgnored));
+    }
+
 
 }
