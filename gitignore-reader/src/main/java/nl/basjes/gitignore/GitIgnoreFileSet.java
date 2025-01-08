@@ -151,8 +151,63 @@ public class GitIgnoreFileSet implements FileFilter {
      * @return List of the loaded gitIgnore files.
      */
     public List<Path> addAllGitIgnoreFiles() {
-        return addAllGitIgnoreFiles(projectBaseDir.toPath(), 128);
+        return addAllGitIgnoreFiles(true);
     }
+
+    /**
+     * Automatically find all .gitignore files starting in the projects root and add them all to the set.
+     *
+     * @param includeGlobalGitignore Whether to also include the global gitignore
+     * @return List of the loaded gitIgnore files.
+     */
+    public List<Path> addAllGitIgnoreFiles(boolean includeGlobalGitignore) {
+        return addAllGitIgnoreFiles(projectBaseDir.toPath(), 128, includeGlobalGitignore);
+    }
+
+
+    /**
+     * add the global gitignore file (from `$XDG_CONFIG_HOME/git/ignore`, or, if `$XDG_CONFIG_HOME` is either not set or empty, `$HOME/.config/git/ignore`)
+     *
+     * @return the loaded global gitignore file, or null if none was found.
+     */
+    static Path getGlobalGitIgnore(String xdgConfigHome, String home) {
+        Path ignorePath;
+        if (xdgConfigHome != null && !xdgConfigHome.isEmpty()) {
+            ignorePath = new File(xdgConfigHome).toPath().resolve("git").resolve("ignore");
+
+        } else {
+            if (home != null && !home.isEmpty()) {
+                ignorePath = new File(home).toPath().resolve(".config").resolve("git").resolve("ignore");
+            } else {
+                return null;
+            }
+        }
+        if (Files.isRegularFile(ignorePath)) {
+            return ignorePath;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * add the global gitignore file (from `$XDG_CONFIG_HOME/git/ignore`, or, if `$XDG_CONFIG_HOME` is either not set or empty, `$HOME/.config/git/ignore`)
+     *
+     * @return the loaded global gitignore file, or null if none was found.
+     */
+    public Path addGlobalGitIgnore() {
+        Path ignorePath = getGlobalGitIgnore(System.getenv("XDG_CONFIG_HOME"), System.getenv("HOME"));
+	if (ignorePath != null) {
+            try {
+                add(new GitIgnore("/", ignorePath.toFile()));
+		return ignorePath;
+            } catch (IOException e) {
+                LOG.error("Cannot read {} due to {}. Will skip this file.", ignorePath, e.getMessage());
+		return null;
+            }
+	} else {
+	    return null;
+	}
+     }
 
     /**
      * Recursively add the gitignore files found in directories.
@@ -160,15 +215,23 @@ public class GitIgnoreFileSet implements FileFilter {
      * and then only traverses into subdirectories that have not been ignored.
      * @param current The current directory
      * @param maxRecursionDepth A limiter to avoid going infinitely deep.
+     * @param includeGlobalGitignore Whether to also include the global gitignore
      * @return List of the loaded gitIgnore files.
      */
-    private List<Path> addAllGitIgnoreFiles(Path current, int maxRecursionDepth) {
+    private List<Path> addAllGitIgnoreFiles(Path current, int maxRecursionDepth, boolean includeGlobalGitignore) {
         List<Path> loadedGitIgnoreFiles = new ArrayList<>();
         List<Path> subDirs = new ArrayList<>();
 
         if (!Files.isDirectory(current)) {
             LOG.debug("Locate GI: Not DIR  {}", current);
             return emptyList(); // It must be a directory
+        }
+
+        if (includeGlobalGitignore) {
+            Path globalGitIgnore = addGlobalGitIgnore();
+            if (globalGitIgnore != null) {
+                loadedGitIgnoreFiles.add(globalGitIgnore);
+            }
         }
 
         String dirPath = current.toFile().getPath();
@@ -206,7 +269,7 @@ public class GitIgnoreFileSet implements FileFilter {
         int nextMaxRecursionDepth = maxRecursionDepth-1;
         if (nextMaxRecursionDepth > 0) {
             for (Path subDir : subDirs) {
-                loadedGitIgnoreFiles.addAll(addAllGitIgnoreFiles(subDir, nextMaxRecursionDepth));
+                loadedGitIgnoreFiles.addAll(addAllGitIgnoreFiles(subDir, nextMaxRecursionDepth, false));
             }
         }
         return loadedGitIgnoreFiles;

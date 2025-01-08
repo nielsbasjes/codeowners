@@ -23,8 +23,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,6 +38,7 @@ import static nl.basjes.gitignore.GitIgnore.standardizeFilename;
 import static nl.basjes.gitignore.Utils.findAllNonIgnored;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestGitIgnoreFiles {
@@ -57,6 +60,7 @@ class TestGitIgnoreFiles {
         "/dir3/dir3.txt",
         "/dir3/file3.log",
         "/dir3/.gitignore",
+        "/dir5",
         "/.gitignore"
     ).sorted().collect(Collectors.toList());
 
@@ -83,6 +87,7 @@ class TestGitIgnoreFiles {
         "/dir4/subdir/subdir/dir1.md",
         "/dir4/subdir/subdir/dir1.txt",
         "/dir4/subdir/subdir/file1.log",
+        "/dir5/ignored_from_global_gitignore",
         "/README.md",
         "/root.md").sorted().collect(Collectors.toList());
 
@@ -131,6 +136,32 @@ class TestGitIgnoreFiles {
             .sorted()
             .collect(Collectors.toList());
         assertEquals(expectedIgnoredFiles, ignored);
+    }
+
+    @Test
+    void testGetGlobalGitIgnore() throws Exception {
+        assertNull(GitIgnoreFileSet.getGlobalGitIgnore(null, null));
+        assertNull(GitIgnoreFileSet.getGlobalGitIgnore(null, ""));
+        assertNull(GitIgnoreFileSet.getGlobalGitIgnore("", null));
+        assertNull(GitIgnoreFileSet.getGlobalGitIgnore("", ""));
+
+        URL dirWithGitIgnoreURL = this.getClass()
+            .getClassLoader()
+            .getResource("xdg_config_home");
+        String dirWithGitIgnore = dirWithGitIgnoreURL.getFile();
+        URL dirWithConfigGitIgnoreURL = this.getClass()
+            .getClassLoader()
+            .getResource("home");
+        String dirWithConfigGitIgnore = dirWithConfigGitIgnoreURL.getFile();
+
+        assertNull(GitIgnoreFileSet.getGlobalGitIgnore(dirWithConfigGitIgnore, ""));
+        assertNull(GitIgnoreFileSet.getGlobalGitIgnore("", dirWithGitIgnore));
+
+        assertEquals(Paths.get(dirWithGitIgnoreURL.toURI()).resolve("git").resolve("ignore"), GitIgnoreFileSet.getGlobalGitIgnore(dirWithGitIgnore, ""));
+        assertEquals(Paths.get(dirWithGitIgnoreURL.toURI()).resolve("git").resolve("ignore"), GitIgnoreFileSet.getGlobalGitIgnore(dirWithGitIgnore, dirWithConfigGitIgnore));
+
+        assertEquals(Paths.get(dirWithConfigGitIgnoreURL.toURI()).resolve(".config").resolve("git").resolve("ignore"), GitIgnoreFileSet.getGlobalGitIgnore(null, dirWithConfigGitIgnore));
+        assertNull(GitIgnoreFileSet.getGlobalGitIgnore(dirWithConfigGitIgnore, dirWithConfigGitIgnore));
     }
 
     @Test
@@ -347,7 +378,7 @@ class TestGitIgnoreFiles {
     @Test
     void ignoreDirectoriesWithAndWithoutSlash() {
         GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree, false);
-        List<Path> addedGitIgnoreFiles = gitIgnoreFileSet.addAllGitIgnoreFiles();
+        List<Path> addedGitIgnoreFiles = gitIgnoreFileSet.addAllGitIgnoreFiles(false);
 
         LOG.info("Added gitignore files: {}", addedGitIgnoreFiles);
 

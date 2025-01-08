@@ -523,6 +523,16 @@
         </configuration>
       </plugin>
 
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
+        <configuration>
+          <environmentVariables>
+            <XDG_CONFIG_HOME>src/test/resources/xdg_config_home</XDG_CONFIG_HOME>
+          </environmentVariables>
+        </configuration>
+      </plugin>
 
       <!-- Coverage analysis for tests -->
       <plugin>
