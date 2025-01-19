@@ -60,6 +60,7 @@ public class GitIgnoreFileSet implements FileFilter {
 
     /**
      * This will automatically find and load all gitignore files.
+     *
      * @param projectBaseDir The base directory of the project.
      *                       The root gitignore rules are relative to this directory.
      */
@@ -69,7 +70,7 @@ public class GitIgnoreFileSet implements FileFilter {
 
     /**
      * @param projectBaseDir The base directory of the project. The root gitignore rules are relative to this directory.
-     * @param autoload Automatically find and load all gitignore files.
+     * @param autoload       Automatically find and load all gitignore files.
      */
     @SuppressWarnings("this-escape") // The 'this-escape' only applies to the optional auto-loading after the construction
     public GitIgnoreFileSet(final File projectBaseDir, boolean autoload) {
@@ -81,6 +82,7 @@ public class GitIgnoreFileSet implements FileFilter {
 
     /**
      * Make all currently loaded gitignore files become verbose when used.
+     *
      * @param verbose True: be verbose, False: be silent
      */
     public GitIgnoreFileSet setVerbose(boolean verbose) {
@@ -91,6 +93,7 @@ public class GitIgnoreFileSet implements FileFilter {
 
     /**
      * Sets the default assumption on how to interpret the filenames that must be checked.
+     *
      * @param assumeProjectRelativeQueries The new assumption: True = all queries are assumed to be project relative;  False = all queries are assumed to start with the path to the project directory in the SAME form as used during construction of this class.
      */
     public GitIgnoreFileSet setAssumeProjectRelativeQueries(boolean assumeProjectRelativeQueries) {
@@ -104,6 +107,7 @@ public class GitIgnoreFileSet implements FileFilter {
     public GitIgnoreFileSet assumeQueriesAreProjectRelative() {
         return setAssumeProjectRelativeQueries(true);
     }
+
     public boolean isAssumeQueriesAreProjectRelative() {
         return assumeProjectRelativeQueries;
     }
@@ -114,6 +118,7 @@ public class GitIgnoreFileSet implements FileFilter {
     public GitIgnoreFileSet assumeQueriesIncludeProjectBaseDir() {
         return setAssumeProjectRelativeQueries(false);
     }
+
     public boolean isAssumeQueriesIncludeProjectBaseDir() {
         return !assumeProjectRelativeQueries;
     }
@@ -124,6 +129,7 @@ public class GitIgnoreFileSet implements FileFilter {
      * The rules in the files depend on the ordering over files!
      * If a second 'GitIgnore' is added for an existing directory then they will be sorted
      * in the order they have been added to this GitIgnoreFileSet.
+     *
      * @param gitIgnore The instance of the gitIgnore file.
      */
     public void add(final GitIgnore gitIgnore) {
@@ -135,6 +141,7 @@ public class GitIgnoreFileSet implements FileFilter {
 
     /**
      * Add a .gitignore file to the set.
+     *
      * @param gitIgnoreFile The handle of the file of a gitignore file to be added. This MUST be able to get the ABSOLUTE path within the project.
      */
     public void addGitIgnoreFile(final File gitIgnoreFile) {
@@ -196,25 +203,26 @@ public class GitIgnoreFileSet implements FileFilter {
      */
     public Path addGlobalGitIgnore() {
         Path ignorePath = getGlobalGitIgnore(System.getenv("XDG_CONFIG_HOME"), System.getenv("HOME"));
-	if (ignorePath != null) {
+        if (ignorePath != null) {
             try {
                 add(new GitIgnore("/", ignorePath.toFile()));
-		return ignorePath;
+                return ignorePath;
             } catch (IOException e) {
                 LOG.error("Cannot read {} due to {}. Will skip this file.", ignorePath, e.getMessage());
-		return null;
+                return null;
             }
-	} else {
-	    return null;
-	}
-     }
+        } else {
+            return null;
+        }
+    }
 
     /**
      * Recursively add the gitignore files found in directories.
      * This first scans the directory, adds the provided gitignore (if any),
      * and then only traverses into subdirectories that have not been ignored.
-     * @param current The current directory
-     * @param maxRecursionDepth A limiter to avoid going infinitely deep.
+     *
+     * @param current                The current directory
+     * @param maxRecursionDepth      A limiter to avoid going infinitely deep.
      * @param includeGlobalGitignore Whether to also include the global gitignore
      * @return List of the loaded gitIgnore files.
      */
@@ -266,7 +274,7 @@ public class GitIgnoreFileSet implements FileFilter {
             return emptyList();
         }
 
-        int nextMaxRecursionDepth = maxRecursionDepth-1;
+        int nextMaxRecursionDepth = maxRecursionDepth - 1;
         if (nextMaxRecursionDepth > 0) {
             for (Path subDir : subDirs) {
                 loadedGitIgnoreFiles.addAll(addAllGitIgnoreFiles(subDir, nextMaxRecursionDepth, false));
@@ -282,6 +290,7 @@ public class GitIgnoreFileSet implements FileFilter {
     /**
      * Checks if the file matches the stored expressions.
      * This is suitable for combining multiple sets of rules!
+     *
      * @param filename The filename to be checked which follows the assumeProjectRelativeQueries flag.
      * @return NULL: not matched, True: must be ignored, False: it must be UNignored
      */
@@ -292,7 +301,8 @@ public class GitIgnoreFileSet implements FileFilter {
     /**
      * Checks if the file matches the stored expressions.
      * This is suitable for combining multiple sets of rules!
-     * @param filename The filename to be checked.
+     *
+     * @param filename   The filename to be checked.
      * @param isRelative True: The provided filename is a RELATIVE path (i.e. the project base directory is assumed to be the root).
      *                   False:  The provided filename is an ABSOLUTE path (i.e. it still includes the project base directory).
      * @return NULL: not matched, True: must be ignored, False: it must be UNignored
@@ -316,6 +326,7 @@ public class GitIgnoreFileSet implements FileFilter {
     /**
      * Checks if the file matches the stored expressions.
      * This is NOT suitable for combining multiple sets of rules!
+     *
      * @param filename The filename to be checked which follows the assumeProjectRelativeQueries flag.
      * @return true: must be ignored, false: it must be not be ignored
      */
@@ -326,7 +337,8 @@ public class GitIgnoreFileSet implements FileFilter {
     /**
      * Checks if the file matches the stored expressions.
      * This is NOT suitable for combining multiple sets of rules!
-     * @param filename The filename to be checked.
+     *
+     * @param filename          The filename to be checked.
      * @param isProjectRelative True: The provided filename is a project RELATIVE path (i.e. "/directory in project/filename").
      *                          False: The provided filename is a path that starts with the path used to initialize this class (i.e. "project base directory/directory in project/filename").
      * @return true: must be ignored, false: it must be not be ignored
@@ -338,6 +350,7 @@ public class GitIgnoreFileSet implements FileFilter {
     /**
      * Checks if the file matches the stored expressions.
      * This is NOT suitable for combining multiple sets of rules!
+     *
      * @param filename The filename to be checked which follows the assumeProjectRelativeQueries flag.
      * @return true: must be kept, false: it must be ignored
      */
@@ -348,9 +361,10 @@ public class GitIgnoreFileSet implements FileFilter {
     /**
      * Checks if the file matches the stored expressions.
      * This is NOT suitable for combining multiple sets of rules!
-     * @param filename The filename to be checked.
+     *
+     * @param filename          The filename to be checked.
      * @param isProjectRelative True: The provided filename is a project RELATIVE path (i.e. "/directory in project/filename").
-     *                   False:  The provided filename is a path that starts with the path used to initialize this class (i.e. "project base directory/directory in project/filename").
+     *                          False:  The provided filename is a path that starts with the path used to initialize this class (i.e. "project base directory/directory in project/filename").
      * @return true: must be kept, false: it must be ignored
      */
     public boolean keepFile(String filename, boolean isProjectRelative) {
@@ -373,7 +387,7 @@ public class GitIgnoreFileSet implements FileFilter {
                 .replace("//", "/");
         }
 
-        throw new IllegalArgumentException("The requested file \""+standardizedFilename+"\" is not relative to project root and is NOT in the projectBaseDir \""+projectBaseDirPath+"\"");
+        throw new IllegalArgumentException("The requested file \"" + standardizedFilename + "\" is not relative to project root and is NOT in the projectBaseDir \"" + projectBaseDirPath + "\"");
     }
 
     @Override
@@ -389,7 +403,7 @@ public class GitIgnoreFileSet implements FileFilter {
             .append("=========================\n");
 
         for (Map.Entry<String, List<GitIgnore>> gitIgnoreListEntry : gitIgnores.entrySet()) {
-            for (GitIgnore gitIgnore: gitIgnoreListEntry.getValue()) {
+            for (GitIgnore gitIgnore : gitIgnoreListEntry.getValue()) {
                 sb
                     .append(gitIgnore)
                     .append("=========================\n");
