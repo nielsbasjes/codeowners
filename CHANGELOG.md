@@ -1,6 +1,10 @@
 
 This is intended as an overview of the major changes
 
+NEXT VERSION
+===
+- Leverage new toolchains plugin: no longer needs toolchains.xml.
+
 v1.9.0
 ===
 - Searching for the gitIgnore files returns the list of added files.
