@@ -61,6 +61,7 @@ class TestGitIgnoreFiles {
         "/dir3/file3.log",
         "/dir3/.gitignore",
         "/dir5",
+        "/dir5/file5.log",
         "/.gitignore"
     ).sorted().collect(Collectors.toList());
 
