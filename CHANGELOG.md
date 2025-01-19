@@ -1,7 +1,7 @@
 
 This is intended as an overview of the major changes
 
-NEXT VERSION
+v1.10.0
 ===
 - Leverage new toolchains plugin: no longer needs toolchains.xml.
 - Automatically load globally defined ignore rules from \$XDG_CONFIG_HOME/git/ignore or \$HOME/.config/git/ignore (same as documented here https://git-scm.com/docs/gitignore ). Feature written by https://github.com/raboof
