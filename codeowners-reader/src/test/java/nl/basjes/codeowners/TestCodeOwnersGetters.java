@@ -52,10 +52,10 @@ class TestCodeOwnersGetters {
             "\n"
         );
 
-        Set<CodeOwners.Section> allDefinedSections = codeOwners.getAllDefinedSections();
+        Set<Section> allDefinedSections = codeOwners.getAllDefinedSections();
         assertEquals(4, allDefinedSections.size());
-        for (CodeOwners.Section section : allDefinedSections) {
-            List<CodeOwners.ApprovalRule> approvalRules;
+        for (Section section : allDefinedSections) {
+            List<ApprovalRule> approvalRules;
             switch (section.getName()) {
                 case "One":
                     assertFalse(section.isOptional());

@@ -16,50 +16,248 @@
  */
 package nl.basjes.maven.enforcer.codeowners;
 
-import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import nl.basjes.codeowners.CodeOwners;
+import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.AccessToken;
+import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.ProjectId;
+import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.ServerUrl;
+import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
 import org.junit.jupiter.api.Test;
-import wiremock.org.apache.hc.core5.net.URIBuilder;
+import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @WireMockTest
 public class TestGitlabUsers {
 
-    private static final String GET_ALL_MEMBERS = "/api/v4/projects/1/members/all"; // FIXME: Project '1'
-    private static final String VALID_GITLAB_TOKEN = "glpat-validtoken";
-    private static final String BAD_GITLAB_TOKEN = "glpat-bad";
-    private static final String EMPTY_GITLAB_TOKEN = "";
+    static GitlabConfiguration makeConfig(String httpBaseUrl, String projectId, String tokenEnvVariableName) {
+        return new GitlabConfiguration(
+            new ServerUrl(httpBaseUrl, null),
+            new ProjectId(projectId, null),
+            new AccessToken(tokenEnvVariableName),
+            true,
+            true
+        );
+    }
 
     @Test
-    public void getAllUsers(WireMockRuntimeInfo wmRuntimeInfo) throws IOException, InterruptedException, URISyntaxException {
-
-        // Instance DSL can be obtained from the runtime info parameter
-        WireMock wireMock = wmRuntimeInfo.getWireMock();
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testValidCodeOwners(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
         String httpBaseUrl = wmRuntimeInfo.getHttpBaseUrl();
+        GitlabConfiguration configuration = makeConfig(httpBaseUrl, null, "FETCH_USER_ACCESS_TOKEN");
 
-        URIBuilder b = new URIBuilder(httpBaseUrl);
-        b.appendPath(GET_ALL_MEMBERS);
-        b.addParameter("per_page", "1");
-        b.addParameter("page", "1");
+        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
+            CodeOwners codeOwners = new CodeOwners(
+                "[README Owners]\n" +
+                "README.md @niels @SomeUser @isguest\n" +
+                "README_owner.md @@owner\n" +
+                "README_owners.md @@owners\n" +
+                "README_maintainer.md @@maintainer\n" +
+                "README_maintainers.md @@maintainers\n" +
+                "README_developer.md @@developer\n" +
+                "README_developers.md @@developers\n" +
+                "README_group_dev.md @codeowners/developers\n" +
+                "README_group_main.md @codeowners/maintainers\n" +
+                "README_user_public_email.md public@example.nl\n"
+            );
 
-        URI uri = b.build();
-
-        HttpClient client = HttpClient.newBuilder().build();
-
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(uri)
-            .setHeader("PRIVATE-TOKEN", VALID_GITLAB_TOKEN)
-            .build();
-        HttpResponse<String> response =
-            client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        System.out.println(response.body());
+            EnforcerTestLogger logger = new EnforcerTestLogger();
+            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, false);
+            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, true);
+        }
     }
+
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testRoles(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
+        String httpBaseUrl = wmRuntimeInfo.getHttpBaseUrl();
+        GitlabConfiguration configuration = makeConfig(httpBaseUrl, null, "FETCH_USER_ACCESS_TOKEN");
+
+        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
+            CodeOwners codeOwners = new CodeOwners(
+                "[README Owners]\n" +
+                    "README_niels.md @niels\n" +
+                    "README_owner.md @@owner\n" +
+                    "README_owners.md @@owners\n" +
+                    "README_maintainer.md @@maintainer\n" +
+                    "README_maintainers.md @@maintainers\n" +
+                    "README_developer.md @@developer\n" +
+                    "README_developers.md @@developers\n"
+            );
+
+            EnforcerTestLogger logger = new EnforcerTestLogger();
+            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, false);
+            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, true);
+        }
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testSharedGroups(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
+        String httpBaseUrl = wmRuntimeInfo.getHttpBaseUrl();
+        GitlabConfiguration configuration = makeConfig(httpBaseUrl, null, "FETCH_USER_ACCESS_TOKEN");
+
+        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
+            CodeOwners codeOwners = new CodeOwners(
+                "[README Owners]\n" +
+                "README_shared_group_guests.md @codeowners/guests\n" +
+                "README_shared_group_developers.md @codeowners/developers\n" +
+                "README_shared_group_maintainers.md @codeowners/maintainers\n"
+            );
+
+            EnforcerTestLogger logger = new EnforcerTestLogger();
+            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, false));
+            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, true));
+            logger.assertContainsError("| README Owners | README_shared_group_guests.md | @codeowners/guests | Shared group does not have sufficient approver level: GUEST |");
+            logger.assertContainsError("| README Owners | README_shared_group_guests.md |                    | NO Valid Approvers for rule                                 |");
+        }
+    }
+
+
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "nomembers")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testBadRoles(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
+        String httpBaseUrl = wmRuntimeInfo.getHttpBaseUrl();
+        GitlabConfiguration configuration = makeConfig(httpBaseUrl, null, "FETCH_USER_ACCESS_TOKEN");
+
+        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
+            CodeOwners codeOwners = new CodeOwners(
+                "[README Owners]\n" +
+                "README_1.md @niels @dummy\n" +
+                "README_2.md @niels @dummy\n" +
+                "README_owner.md @@owner\n" +
+                "README_owners.md @@owners\n" +
+                "README_maintainer.md @@maintainer\n" +
+                "README_maintainers.md @@maintainers\n" +
+                "README_developer.md @@developer\n" +
+                "README_developers.md @@developers\n" +
+                "README_nosuchrole.md @@nosuchrole\n" +
+                "README_disabled.md @disabledowner @disabledmaintainer @disableddeveloper\n" +
+                "README_locked.md @lockedowner @lockedmaintainer @lockeddeveloper\n" +
+                "README_disabled.md @disabledowner @disabledmaintainer @disableddeveloper\n" +
+                "README_locked.md @lockedowner @lockedmaintainer @lockeddeveloper\n" +
+                "README_dummy_1.md @dummy\n" +
+                "README_dummy_2.md @dummy\n" +
+                "README_dummy_3.md @dummy\n" +
+                "README_nonsharedgroup_1.md @opensource \n" +
+                "README_nonsharedgroup_2.md @opensource \n" +
+                "README_nonsharedgroup_3.md @opensource \n" +
+                "README_sharedgroup_guests_1.md @codeowners/guests \n" +
+                "README_sharedgroup_guests_2.md @codeowners/guests \n" +
+                "README_sharedgroup_guests_3.md @codeowners/guests \n" +
+                "README_nosuchgroup_1.md @codeowners/nosuchgroup \n" +
+                "README_nosuchgroup_2.md @codeowners/nosuchgroup \n" +
+                "README_nosuchgroup_3.md @codeowners/nosuchgroup \n"
+            );
+
+            EnforcerTestLogger logger = new EnforcerTestLogger();
+            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, false));
+
+            // We have 10 because of messages during loading the information
+            assertEquals(10, logger.countInfo(), "There should be no INFO level messages.");
+
+            logger.assertContainsError("| README Owners | README_1.md                    | @niels                  | User is not a member of with this project: Niels Basjes     |");
+            logger.assertContainsError("| README Owners | README_1.md                    | @dummy                  | User is not a member of with this project: Dummy User       |");
+            logger.assertContainsError("| README Owners | README_1.md                    |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsError("| README Owners | README_2.md                    | @niels                  | User is not a member of with this project: Niels Basjes     |");
+            logger.assertContainsError("| README Owners | README_2.md                    | @dummy                  | User is not a member of with this project: Dummy User       |");
+            logger.assertContainsError("| README Owners | README_2.md                    |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsWarn ("| README Owners | README_owner.md                | @@owner                 | No direct project members are owner                         |");
+            logger.assertContainsError("| README Owners | README_owner.md                |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsWarn ("| README Owners | README_owners.md               | @@owners                | No direct project members are owner                         |");
+            logger.assertContainsError("| README Owners | README_owners.md               |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsWarn ("| README Owners | README_maintainer.md           | @@maintainer            | No direct project members are maintainer                    |");
+            logger.assertContainsError("| README Owners | README_maintainer.md           |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsWarn ("| README Owners | README_maintainers.md          | @@maintainers           | No direct project members are maintainer                    |");
+            logger.assertContainsError("| README Owners | README_maintainers.md          |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsWarn ("| README Owners | README_developer.md            | @@developer             | No direct project members are developer                     |");
+            logger.assertContainsError("| README Owners | README_developer.md            |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsWarn ("| README Owners | README_developers.md           | @@developers            | No direct project members are developer                     |");
+            logger.assertContainsError("| README Owners | README_developers.md           |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsError("| README Owners | README_nosuchrole.md           | @@nosuchrole            | Illegal role attempted                                      |");
+            logger.assertContainsError("| README Owners | README_nosuchrole.md           |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsWarn ("| README Owners | README_disabled.md             | @disabledowner          | Disabled account: State=disabled; Locked=false              |");
+            logger.assertContainsWarn ("| README Owners | README_disabled.md             | @disabledmaintainer     | Disabled account: State=disabled; Locked=false              |");
+            logger.assertContainsWarn ("| README Owners | README_disabled.md             | @disableddeveloper      | Disabled account: State=disabled; Locked=false              |");
+            logger.assertContainsError("| README Owners | README_disabled.md             |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsWarn ("| README Owners | README_locked.md               | @lockedowner            | Disabled account: State=active; Locked=true                 |");
+            logger.assertContainsWarn ("| README Owners | README_locked.md               | @lockedmaintainer       | Disabled account: State=active; Locked=true                 |");
+            logger.assertContainsWarn ("| README Owners | README_locked.md               | @lockeddeveloper        | Disabled account: State=active; Locked=true                 |");
+            logger.assertContainsError("| README Owners | README_locked.md               |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsWarn ("| README Owners | README_disabled.md             | @disabledowner          | Disabled account: State=disabled; Locked=false              |");
+            logger.assertContainsWarn ("| README Owners | README_disabled.md             | @disabledmaintainer     | Disabled account: State=disabled; Locked=false              |");
+            logger.assertContainsWarn ("| README Owners | README_disabled.md             | @disableddeveloper      | Disabled account: State=disabled; Locked=false              |");
+            logger.assertContainsError("| README Owners | README_disabled.md             |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsWarn ("| README Owners | README_locked.md               | @lockedowner            | Disabled account: State=active; Locked=true                 |");
+            logger.assertContainsWarn ("| README Owners | README_locked.md               | @lockedmaintainer       | Disabled account: State=active; Locked=true                 |");
+            logger.assertContainsWarn ("| README Owners | README_locked.md               | @lockeddeveloper        | Disabled account: State=active; Locked=true                 |");
+            logger.assertContainsError("| README Owners | README_locked.md               |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsError("| README Owners | README_dummy_1.md              | @dummy                  | User is not a member of with this project: Dummy User       |");
+            logger.assertContainsError("| README Owners | README_dummy_1.md              |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsError("| README Owners | README_dummy_2.md              | @dummy                  | User is not a member of with this project: Dummy User       |");
+            logger.assertContainsError("| README Owners | README_dummy_2.md              |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsError("| README Owners | README_dummy_3.md              | @dummy                  | User is not a member of with this project: Dummy User       |");
+            logger.assertContainsError("| README Owners | README_dummy_3.md              |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsError("| README Owners | README_nonsharedgroup_1.md     | @opensource             | Group is not a group shared with this project.opensource    |");
+            logger.assertContainsError("| README Owners | README_nonsharedgroup_1.md     |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsError("| README Owners | README_nonsharedgroup_2.md     | @opensource             | Group is not a group shared with this project.opensource    |");
+            logger.assertContainsError("| README Owners | README_nonsharedgroup_2.md     |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsError("| README Owners | README_nonsharedgroup_3.md     | @opensource             | Group is not a group shared with this project.opensource    |");
+            logger.assertContainsError("| README Owners | README_nonsharedgroup_3.md     |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsError("| README Owners | README_sharedgroup_guests_1.md | @codeowners/guests      | Shared group does not have sufficient approver level: GUEST |");
+            logger.assertContainsError("| README Owners | README_sharedgroup_guests_1.md |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsError("| README Owners | README_sharedgroup_guests_2.md | @codeowners/guests      | Shared group does not have sufficient approver level: GUEST |");
+            logger.assertContainsError("| README Owners | README_sharedgroup_guests_2.md |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsError("| README Owners | README_sharedgroup_guests_3.md | @codeowners/guests      | Shared group does not have sufficient approver level: GUEST |");
+            logger.assertContainsError("| README Owners | README_sharedgroup_guests_3.md |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsWarn ("| README Owners | README_nosuchgroup_1.md        | @codeowners/nosuchgroup | Approver does not exist in Gitlab                           |");
+            logger.assertContainsError("| README Owners | README_nosuchgroup_1.md        |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsWarn ("| README Owners | README_nosuchgroup_2.md        | @codeowners/nosuchgroup | Approver does not exist in Gitlab                           |");
+            logger.assertContainsError("| README Owners | README_nosuchgroup_2.md        |                         | NO Valid Approvers for rule                                 |");
+            logger.assertContainsWarn ("| README Owners | README_nosuchgroup_3.md        | @codeowners/nosuchgroup | Approver does not exist in Gitlab                           |");
+            logger.assertContainsError("| README Owners | README_nosuchgroup_3.md        |                         | NO Valid Approvers for rule                                 |");
+
+        }
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testOwnerHandling(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
+        String httpBaseUrl = wmRuntimeInfo.getHttpBaseUrl();
+        GitlabConfiguration configuration = makeConfig(httpBaseUrl, null, "FETCH_USER_ACCESS_TOKEN");
+
+        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
+            CodeOwners codeOwners = new CodeOwners(
+                "[README Owners]\n" +
+                "README_niels.md @niels\n" + // niels --> is member
+                "README_dummy.md @dummy\n" + // dummy --> is NOT member --> Error
+                "README_niels_public_email.md public@example.nl\n" + // niels --> is member
+                "README_niels_private_email.md private@example.nl\n" + // niels --> is member --> Cannot find --> Warning only
+                "README_dummy_public_email.md public@dummy.example.nl\n" + // dummy --> is NOT member --> Error
+                "README_dummy_private_email.md private@dummy.example.nl\n"  // niels --> is NOT member --> Cannot find --> Warning only
+            );
+
+            EnforcerTestLogger logger = new EnforcerTestLogger();
+            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, false));
+            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, true));
+
+            logger.assertContainsInfo ("| README Owners | README_niels.md               | @niels                   | Valid approver (username:niels)");
+            logger.assertContainsError("| README Owners | README_dummy.md               | @dummy                   | User is not a member of with this project: Dummy User");
+            logger.assertContainsError("| README Owners | README_dummy.md               |                          | NO Valid Approvers for rule");
+            logger.assertContainsInfo ("| README Owners | README_niels_public_email.md  | public@example.nl        | Valid approver (username:niels)");
+            logger.assertContainsWarn ("| README Owners | README_niels_private_email.md | private@example.nl       | Cannot verify access because this is an email address");
+            logger.assertContainsError("| README Owners | README_dummy_public_email.md  | public@dummy.example.nl  | User is not a member of with this project: Dummy User");
+            logger.assertContainsError("| README Owners | README_dummy_public_email.md  |                          | NO Valid Approvers for rule");
+            logger.assertContainsWarn ("| README Owners | README_dummy_private_email.md | private@dummy.example.nl | Cannot verify access because this is an email address");
+        }
+    }
+
+
 }

@@ -32,7 +32,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static nl.basjes.gitignore.GitIgnore.standardizeFilename;
@@ -58,14 +57,26 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
 
     private String unlikelyFilename = "NewlyCreated_NiElSbAsJeSwRoTeThIs";
 
+    private GitlabConfiguration gitlab = null;
+
+    private final MavenProject project;
+
     @Inject
-    private MavenProject project;
+    public CodeOwnersEnforcerRule(MavenProject project) {
+        this.project = project;
+    }
 
     public void execute() throws EnforcerRuleException {
         if (baseDir == null) {
             baseDir = project.getBasedir();
         }
         getLog().debug("BaseDir=|"+baseDir+"|");
+
+        if (gitlab != null) {
+            if (!gitlab.isValid()) {
+                throw new EnforcerRuleException("The GitLab configuration is not valid:" + gitlab);
+            }
+        }
 
         // Get the ignore rules
         GitIgnoreFileSet gitIgnores = loadAllGitIgnoreFiles(baseDir);
@@ -79,6 +90,11 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             getLog().info("=================================\n");
             getLog().info("All configured CODEOWNER rules:\n" + codeOwners);
             getLog().info("=================================\n");
+            if (gitlab == null) {
+                getLog().info("No GitLab configuration found");
+            } else {
+                getLog().info("Found GitLab configuration:\n"     + gitlab);
+            }
         }
 
         // Get a list of all files in the project and sort them
@@ -123,6 +139,12 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
                 .collect(Collectors.toList());
 
             allNonIgnoredFilesHaveApprovers(newFileForEveryDirectory, codeOwners);
+        }
+
+        if (gitlab != null) {
+            try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(gitlab)) {
+                gitlabProjectMembers.verifyAllCodeowners(getLog(), codeOwners, showApprovers);
+            }
         }
     }
 
@@ -254,9 +276,8 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
      */
     @Override
     public String getCacheId() {
-        return String.valueOf(Objects.hash(
-            codeOwnersFile,
-            allFilesMustHaveCodeOwner));
+        // Because of the Gitlab API calls this cannot be cached.
+        return null;
     }
 
     // ------------------------------------------
