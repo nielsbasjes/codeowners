@@ -3,8 +3,10 @@ This is intended as an overview of the major changes
 
 NEXT VERSION
 ===
+- The maven enforcer rule now requires Java 11 or newer
 - Add support for assigning codeowners based on project role (https://gitlab.com/gitlab-org/gitlab/-/issues/282438)
 - Fix parsing of email address
+- Check approvers against the actual users, groups and roles in Gitlab (BETA feature)
 
 v1.10.0
 ===
@@ -37,8 +39,8 @@ v1.5.0
 
 License
 =======
-    Yet Another UserAgent Analyzer
-    Copyright (C) 2013-2024 Niels Basjes
+    CodeOwners Tools
+    Copyright (C) 2023-2025 Niels Basjes
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -47,7 +49,7 @@ License
     https://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
+    distributed under the License is distributed on an AS IS BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.

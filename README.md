@@ -16,9 +16,14 @@ Reality: The syntax of these files can be tricky, and it is quite easy to write 
 # What is this
 1) A Java library to read a CODEOWNERS file.
 2) A Java library to read a/all .gitignore file(s) in directory.
-3) An extra rule for the Maven Enforcer plugin to check the CODEOWNERS against the actual project files. (See Usage below)
+3) An extra rule for the Maven Enforcer plugin to check the CODEOWNERS against
+   1) the actual project files. (See Usage below)
+   2) the actual users, groups and roles in Gitlab. (BETA) (See Usage below)
 
 The intended goal is to make the build fail if the codeowners file does not cover all files and directories in the project.
+
+- The libraries for the CODEOWNERS and gitignore files are usable in Java 8 and newer.
+- The Maven Enforcer rule needs Java 11 or newer.
 
 # CodeOwners Enforcer rule
 ## Configuration parameters
@@ -39,6 +44,81 @@ The intended goal is to make the build fail if the codeowners file does not cove
     - Make the rule output much more details than you would normally like to see.
 - **showApprovers**
     - Make the rule output show the approvers for all non-ignored files in the entire project. The intended usage is that with this you can debug the CODEOWNERS result and manually see for every file in your project if you are happy with the resulting approvers.
+
+## Checking against the users present on a Gitlab Instance (BETA)
+If you have a Gitlab instance with your project then you can get additional checks done.
+This plugin can also verify if all mentioned users, groups and roles are actually allowed to approve a change.
+This is important because when Gitlab determines that all the mentioned approvers either do not exist or do not have the appropriate approval level then everyone can merge any change on a file.
+
+___**This is currently a BETA feature.**___
+
+A known limitation is that checking against the email address in a CODEOWNERS file is only possible IF the user has made that specific email address their public address.
+
+### Usage
+There are 3 parameters needed to activate this feature:
+- The Gitlab Project/Personal Access Token (only `read_api` and `GUEST` role are needed)
+- The Gitlab server url
+- The Gitlab project id of this project
+
+In practice: When running in Gitlab CI only the access token is needed via an environment variable.
+
+### Gitlab Project/Personal Access Token
+To allow this plugin to use the Gitlab API an access token is needed that is created with only `read_api` and the `GUEST` role.
+
+**You should never commit ANY token to a repository so this plugin simply cannot directly read any token.
+It is ONLY possible to read it from an environment variable.**
+
+So the token can only be retrieved from an environment variable.
+In this example it is expected that the environment variable `CHECK_USERS_TOKEN` contains the value of you token.
+
+```xml
+<gitlab>
+    <accessToken>
+        <environmentVariableName>CHECK_USERS_TOKEN</environmentVariableName>
+    </accessToken>
+</gitlab>
+```
+
+### Gitlab server url
+The Gitlab server url can be configured directly or retrieved from an environment variable.
+- If not configured it is assumed it can be found in the environment variable `CI_SERVER_URL` which is the default place where Gitlab CI puts it.
+- Directly configured:
+    ```xml
+    <gitlab>
+        <serverUrl>
+            <url>https://gitlab.example.nl</url>
+        </serverUrl>
+    </gitlab>
+    ```
+- Retrieved from a configured environment variable. In this example it is expected that the environment variable `MY_ENVIRONMENT_VARIABLE` contains something like `https://gitlab.example.nl`.
+    ```xml
+    <gitlab>
+        <serverUrl>
+            <environmentVariableName>MY_ENVIRONMENT_VARIABLE</environmentVariableName>
+        </serverUrl>
+    </gitlab>
+    ```
+
+### Gitlab project id
+The Gitlab project id can be configured directly or retrieved from an environment variable.
+- If not configured it is assumed it can be found in the environment variable `CI_PROJECT_ID` which is the default place where Gitlab CI puts it.
+- Directly configured:
+    ```xml
+    <gitlab>
+        <projectId>
+            <id>group/project</id>
+        </projectId>
+    </gitlab>
+    ```
+- Retrieved from a configured environment variable. In this example it is expected that the environment variable `MY_ENVIRONMENT_VARIABLE` contains something like `group/project`.
+    ```xml
+    <gitlab>
+        <projectId>
+            <environmentVariableName>MY_ENVIRONMENT_VARIABLE</environmentVariableName>
+        </projectId>
+    </gitlab>
+    ```
+
 
 ## Example
 In one of my projects it looks like this:
@@ -70,6 +150,11 @@ In one of my projects it looks like this:
                 <allFilesMustHaveCodeOwner>true</allFilesMustHaveCodeOwner>
                 <!-- <verbose>true</verbose> -->
                 <!-- <showApprovers>true</showApprovers> -->
+                <gitlab>
+                    <accessToken>
+                        <environmentVariableName>CHECK_USERS_TOKEN</environmentVariableName>
+                    </accessToken>
+                </gitlab>
               </codeOwners>
             </rules>
           </configuration>
@@ -155,22 +240,6 @@ I see this as unexpected behaviour yet this is really what git does !
 
 # Building
 The maven build must be run under Java 17 or newer (because of plugins) and will use toolchains to actually build the software using JDK 21.
-
-This means that you must also ensure you have a `~/.m2/toolchains.xml` containing at least this entry (where the path on your system is likely to be different, this path is on my Ubuntu 24.04 LTS system)
-```xml
-<?xml version="1.0" encoding="UTF8"?>
-<toolchains>
-  <toolchain>
-    <type>jdk</type>
-    <provides>
-      <version>21</version>
-    </provides>
-    <configuration>
-      <jdkHome>/usr/lib/jvm/java-21-openjdk-amd64</jdkHome>
-    </configuration>
-  </toolchain>
-</toolchains>
-```
 
 # License
 

@@ -423,7 +423,7 @@
                 </banDuplicateClasses>
 
                 <enforceBytecodeVersion>
-                  <maxJdkVersion>8</maxJdkVersion>
+                  <maxJdkVersion>11</maxJdkVersion>
                   <ignoredScopes>
                     <ignoredScope>test</ignoredScope>
                   </ignoredScopes>

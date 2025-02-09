@@ -1,0 +1,30 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/v4/projects/niels%2Fproject/members/all",
+    "headers": {
+      "PRIVATE-TOKEN": {
+        "equalTo": "gltst-badtoken"
+      }
+    },
+    "queryParameters": {
+      "per_page": {
+        "equalTo": "96"
+      },
+      "page": {
+        "equalTo": "1"
+      }
+    }
+  },
+  "response": {
+    "transformers": [
+      "response-template"
+    ],
+    "status": 401,
+    "headers": {
+      "Content-Type": "application/json;charset=UTF-8"
+    },
+    "bodyFileName": "gitlab/InvalidToken.json"
+  }
+}
