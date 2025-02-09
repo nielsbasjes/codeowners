@@ -67,58 +67,11 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         }
         getLog().debug("BaseDir=|"+baseDir+"|");
 
-        Path baseDirPath = baseDir.toPath();
+        // Get the ignore rules
+        GitIgnoreFileSet gitIgnores = loadAllGitIgnoreFiles(baseDir);
 
-        // Get the files that are ignored by the SCM
-        GitIgnoreFileSet gitIgnores = new GitIgnoreFileSet(baseDir, false)
-            .assumeQueriesIncludeProjectBaseDir();
-
-        gitIgnores.setVerbose(verbose);
-
-        // Start with the internal files that are used by common SCMs.
-        gitIgnores.add(new GitIgnore(
-            "/.git/\n" +
-            "/.hg/\n" +
-            ".svn/\n"
-        ));
-
-        // Load all available gitignore configs.
-        List<Path> loadedFiles = gitIgnores.addAllGitIgnoreFiles();
-        for (Path loadedFile : loadedFiles) {
-            getLog().info("Using GitIgnore : " + pathToLoggingString(baseDirPath.relativize(loadedFile)));
-        }
-
-        List<String> commonCodeOwnersFiles = Arrays.asList(
-            "/CODEOWNERS",
-            "/.github/CODEOWNERS",
-            "/.gitlab/CODEOWNERS",
-            "/docs/CODEOWNERS"
-            );
-
-        CodeOwners codeOwners;
-
-        if (codeOwnersFile == null) {
-            // If no file was specified we try the default locations
-            for (String codeOwnersFileName : commonCodeOwnersFiles) {
-                File tryingFile = new File(baseDir + codeOwnersFileName);
-                if (tryingFile.exists() && tryingFile.isFile()) {
-                    codeOwnersFile = tryingFile;
-                    break;
-                }
-            }
-        }
-
-        if (codeOwnersFile == null) {
-            throw new EnforcerRuleException("This project does NOT have a CODEOWNERS file");
-        }
-
-        getLog().info("Using CODEOWNERS: " + pathToLoggingString(baseDirPath.relativize(codeOwnersFile.toPath())));
-        try {
-            codeOwners = new CodeOwners(codeOwnersFile);
-        } catch (IOException e) {
-            throw new EnforcerRuleException("Unable to read the CODEOWNERS: " + codeOwnersFile, e);
-        }
-        getLog().debug(codeOwners.toString());
+        // Get the codeowners
+        CodeOwners codeOwners = loadCodeOwners(baseDir, codeOwnersFile);
 
         if (verbose) {
             getLog().info("=================================\n");
@@ -129,6 +82,7 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         }
 
         // Get a list of all files in the project and sort them
+        Path baseDirPath = baseDir.toPath();
         List<Path> allNonIgnoredFilesAndDirectoriesInProject =
             findAllNonIgnored(gitIgnores)
                 .stream()
@@ -172,6 +126,68 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         }
     }
 
+    // ------------------------------------------
+
+    GitIgnoreFileSet loadAllGitIgnoreFiles(File baseDir) {
+        // Get the files that are ignored by the SCM
+        GitIgnoreFileSet gitIgnores = new GitIgnoreFileSet(this.baseDir, false)
+            .assumeQueriesIncludeProjectBaseDir();
+
+        gitIgnores.setVerbose(verbose);
+
+        // Start with the internal files that are used by common SCMs.
+        gitIgnores.add(new GitIgnore(
+            "/.git/\n" +
+            "/.hg/\n" +
+            ".svn/\n"
+        ));
+
+        // Load all available gitignore configs.
+        List<Path> loadedFiles = gitIgnores.addAllGitIgnoreFiles();
+        for (Path loadedFile : loadedFiles) {
+            getLog().info("Using GitIgnore : " + pathToLoggingString(baseDir.toPath().relativize(loadedFile)));
+        }
+
+        return gitIgnores;
+    }
+
+    // ------------------------------------------
+
+    CodeOwners loadCodeOwners(File baseDir, File codeOwnersFile) throws EnforcerRuleException {
+        List<String> commonCodeOwnersFiles = Arrays.asList(
+            "/CODEOWNERS",
+            "/.github/CODEOWNERS",
+            "/.gitlab/CODEOWNERS",
+            "/docs/CODEOWNERS"
+        );
+
+        if (this.codeOwnersFile == null) {
+            // If no file was specified we try the default locations
+            for (String codeOwnersFileName : commonCodeOwnersFiles) {
+                File tryingFile = new File(baseDir + codeOwnersFileName);
+                if (tryingFile.exists() && tryingFile.isFile()) {
+                    this.codeOwnersFile = tryingFile;
+                    break;
+                }
+            }
+        }
+
+        if (this.codeOwnersFile == null) {
+            throw new EnforcerRuleException("This project does NOT have a CODEOWNERS file");
+        }
+
+        getLog().info("Using CODEOWNERS: " + pathToLoggingString(baseDir.toPath().relativize(this.codeOwnersFile.toPath())));
+        try {
+            CodeOwners codeOwners = new CodeOwners(this.codeOwnersFile);
+            getLog().debug(codeOwners.toString());
+            return codeOwners;
+        } catch (IOException e) {
+            throw new EnforcerRuleException("Unable to read the CODEOWNERS: " + this.codeOwnersFile, e);
+        }
+    }
+
+    // ------------------------------------------
+
     void allNonIgnoredFilesHaveApprovers(List<String> filenames, CodeOwners codeOwners) throws EnforcerRuleException {
         boolean pass = true;
         List<String> filesWithoutApprover = new ArrayList<>();
@@ -192,6 +208,8 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         }
     }
 
+    // ------------------------------------------
+
     void printApprovers(List<Path> paths, CodeOwners codeOwners) {
         getLog().info("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
         getLog().info("Listing all Mandatory Approvers:");
@@ -203,6 +221,8 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         getLog().info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
     }
 
+    // ------------------------------------------
+
     private String pathToLoggingString(String path) {
         String filename = standardizeFilename(path);
         if (filename.startsWith("/")) {
@@ -211,6 +231,8 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         return filename;
     }
 
+    // ------------------------------------------
+
     private String pathToLoggingString(Path path) {
         String filename = standardizeFilename(path.toString()) + (path.toFile().isDirectory()?"/":"");
         if (filename.startsWith("/")) {
@@ -218,6 +240,8 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         }
         return filename;
     }
+
+    // ------------------------------------------
 
     /**
      * If your rule is cacheable, you must return a unique id when parameters or conditions
@@ -234,6 +258,8 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             codeOwnersFile,
             allFilesMustHaveCodeOwner));
     }
+
+    // ------------------------------------------
 
     /**
      * A good practice is provided toString method for Enforcer Rule.
