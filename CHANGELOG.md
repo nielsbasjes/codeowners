@@ -1,6 +1,11 @@
 
 This is intended as an overview of the major changes
 
+NEXT VERSION
+===
+- Add support for assigning codeowners based on project role (https://gitlab.com/gitlab-org/gitlab/-/issues/282438)
+- Fix parsing of email address
+
 v1.10.0
 ===
 - Leverage new toolchains plugin: no longer needs toolchains.xml.

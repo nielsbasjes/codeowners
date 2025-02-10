@@ -57,7 +57,9 @@ SPACES
     ;
 
 USERID
-    : [a-zA-Z_-]* '@' [a-zA-Z0-9/._-]+ EOL?
+    : '@'  [a-zA-Z0-9/._-]+ EOL?               // A username or groupname
+    | '@@' [a-zA-Z0-9_-]+ EOL?                 // A role name
+    | [a-zA-Z0-9_-]+ '@' [a-zA-Z0-9._-]+ EOL?  // An email address
     ;
 
 NEWLINE

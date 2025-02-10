@@ -356,4 +356,45 @@ class TestCodeOwnersGitlab {
             "\n", codeOwners.toString());
     }
 
+    @Test
+    void gitlabRoles() {
+        CodeOwners codeOwners = new CodeOwners(
+            "^[One][11] @docs-team @@optionalsection some-1@example.nl\n" + // Optional + minimal --> Warning message
+            "docs/\n" +
+            "*.md\n" +
+            "\n" +
+            "[Two][22] @database-team @@developer user_1_foo@example.nl\n" +
+            "model/db/\n" +
+            "config/db/database-setup.md @docs-team @@maintainer other-2_user@example.nl\n" +
+            "\n"
+        );
+
+        codeOwners.setVerbose(false);
+        assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team", "@@optionalsection", "some-1@example.nl");
+        assertMandatoryOwners(codeOwners, "docs/api/graphql/index.md");
+
+        codeOwners.setVerbose(true);
+        assertOwners(codeOwners, "/something/README.md", "@docs-team", "@@optionalsection", "some-1@example.nl");
+        assertMandatoryOwners(codeOwners, "/something/README.md");
+
+        assertOwners(codeOwners, "/model/db/README.md", "@docs-team", "@database-team", "@@developer", "@@optionalsection", "some-1@example.nl", "user_1_foo@example.nl");
+        assertMandatoryOwners(codeOwners, "/model/db/README.md", "@database-team", "@@developer", "user_1_foo@example.nl");
+
+        assertOwners(codeOwners, "/config/db/database-setup.md", "@docs-team", "@@maintainer", "@@optionalsection", "some-1@example.nl", "other-2_user@example.nl");
+        assertMandatoryOwners(codeOwners, "/config/db/database-setup.md", "@docs-team", "@@maintainer", "other-2_user@example.nl");
+
+        codeOwners.setVerbose(false);
+        assertEquals(
+            "# CODEOWNERS file:\n" +
+            "^[One][11] @docs-team @@optionalsection some-1@example.nl\n" +
+            "docs/ \n" +
+            "*.md \n" +
+            "\n" +
+            "[Two][22] @database-team @@developer user_1_foo@example.nl\n" +
+            "model/db/ \n" +
+            "config/db/database-setup.md @docs-team @@maintainer other-2_user@example.nl\n" +
+            "\n",
+            codeOwners.toString());
+    }
+
 }
