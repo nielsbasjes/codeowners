@@ -10,7 +10,7 @@ Note that the generated file contains INVALID comment blocks (using /** ... */ a
 These problem cases have been manually fixed and were pushed upstream using https://github.com/github/gitignore/pull/4394 and https://github.com/toptal/gitignore/pull/562
 
 [//]: # ( CodeOwners Tools                                                         )
-[//]: # ( Copyright &#40;C&#41; 2023-2024 Niels Basjes                                  )
+[//]: # ( Copyright &#40;C&#41; 2023-2025 Niels Basjes                                  )
 [//]: # (                                                                          )
 [//]: # ( Licensed under the Apache License, Version 2.0 &#40;the "License"&#41;;  )
 [//]: # ( you may not use this file except in compliance with the License.         )
