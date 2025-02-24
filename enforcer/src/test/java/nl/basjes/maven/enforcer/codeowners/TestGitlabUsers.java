@@ -37,7 +37,6 @@ public class TestGitlabUsers {
             new ServerUrl(httpBaseUrl, null),
             new ProjectId(projectId, null),
             new AccessToken(tokenEnvVariableName),
-            true,
             true
         );
     }
@@ -65,8 +64,10 @@ public class TestGitlabUsers {
             );
 
             EnforcerTestLogger logger = new EnforcerTestLogger();
-            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, false);
-            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, true);
+            gitlabProjectMembers.setShowAllApprovers(true);
+            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
+            gitlabProjectMembers.setShowAllApprovers(false);
+            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
         }
     }
 
@@ -90,8 +91,10 @@ public class TestGitlabUsers {
             );
 
             EnforcerTestLogger logger = new EnforcerTestLogger();
-            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, false);
-            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, true);
+            gitlabProjectMembers.setShowAllApprovers(true);
+            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
+            gitlabProjectMembers.setShowAllApprovers(false);
+            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
         }
     }
 
@@ -111,9 +114,11 @@ public class TestGitlabUsers {
             );
 
             EnforcerTestLogger logger = new EnforcerTestLogger();
-            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, false));
-            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, true));
-            logger.assertContainsError("| README Owners | README_shared_group_guests.md | @codeowners/guests | Shared group does not have sufficient approver level: GUEST |");
+            gitlabProjectMembers.setShowAllApprovers(true);
+            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners));
+            gitlabProjectMembers.setShowAllApprovers(false);
+            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners));
+            logger.assertContainsWarn ("| README Owners | README_shared_group_guests.md | @codeowners/guests | Shared group does not have sufficient approver level: GUEST |");
             logger.assertContainsError("| README Owners | README_shared_group_guests.md |                    | NO Valid Approvers for rule                                 |");
         }
     }
@@ -157,7 +162,8 @@ public class TestGitlabUsers {
             );
 
             EnforcerTestLogger logger = new EnforcerTestLogger();
-            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, false));
+            gitlabProjectMembers.setShowAllApprovers(false);
+            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners));
 
             // We have 10 because of messages during loading the information
             assertEquals(10, logger.countInfo(), "There should be no INFO level messages.");
@@ -204,17 +210,17 @@ public class TestGitlabUsers {
             logger.assertContainsError("| README Owners | README_dummy_2.md              |                         | NO Valid Approvers for rule                                 |");
             logger.assertContainsError("| README Owners | README_dummy_3.md              | @dummy                  | User is not a member of with this project: Dummy User       |");
             logger.assertContainsError("| README Owners | README_dummy_3.md              |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_nonsharedgroup_1.md     | @opensource             | Group is not a group shared with this project.opensource    |");
+            logger.assertContainsError("| README Owners | README_nonsharedgroup_1.md     | @opensource             | Group is not a group shared with this project.              |");
             logger.assertContainsError("| README Owners | README_nonsharedgroup_1.md     |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_nonsharedgroup_2.md     | @opensource             | Group is not a group shared with this project.opensource    |");
+            logger.assertContainsError("| README Owners | README_nonsharedgroup_2.md     | @opensource             | Group is not a group shared with this project.              |");
             logger.assertContainsError("| README Owners | README_nonsharedgroup_2.md     |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_nonsharedgroup_3.md     | @opensource             | Group is not a group shared with this project.opensource    |");
+            logger.assertContainsError("| README Owners | README_nonsharedgroup_3.md     | @opensource             | Group is not a group shared with this project.              |");
             logger.assertContainsError("| README Owners | README_nonsharedgroup_3.md     |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_sharedgroup_guests_1.md | @codeowners/guests      | Shared group does not have sufficient approver level: GUEST |");
+            logger.assertContainsWarn ("| README Owners | README_sharedgroup_guests_1.md | @codeowners/guests      | Shared group does not have sufficient approver level: GUEST |");
             logger.assertContainsError("| README Owners | README_sharedgroup_guests_1.md |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_sharedgroup_guests_2.md | @codeowners/guests      | Shared group does not have sufficient approver level: GUEST |");
+            logger.assertContainsWarn ("| README Owners | README_sharedgroup_guests_2.md | @codeowners/guests      | Shared group does not have sufficient approver level: GUEST |");
             logger.assertContainsError("| README Owners | README_sharedgroup_guests_2.md |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_sharedgroup_guests_3.md | @codeowners/guests      | Shared group does not have sufficient approver level: GUEST |");
+            logger.assertContainsWarn ("| README Owners | README_sharedgroup_guests_3.md | @codeowners/guests      | Shared group does not have sufficient approver level: GUEST |");
             logger.assertContainsError("| README Owners | README_sharedgroup_guests_3.md |                         | NO Valid Approvers for rule                                 |");
             logger.assertContainsWarn ("| README Owners | README_nosuchgroup_1.md        | @codeowners/nosuchgroup | Approver does not exist in Gitlab                           |");
             logger.assertContainsError("| README Owners | README_nosuchgroup_1.md        |                         | NO Valid Approvers for rule                                 |");
@@ -245,13 +251,15 @@ public class TestGitlabUsers {
             );
 
             EnforcerTestLogger logger = new EnforcerTestLogger();
-            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, false));
-            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners, true));
+            gitlabProjectMembers.setShowAllApprovers(true);
+            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners));
+            gitlabProjectMembers.setShowAllApprovers(false);
+            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners));
 
-            logger.assertContainsInfo ("| README Owners | README_niels.md               | @niels                   | Valid approver (username:niels)");
+            logger.assertContainsInfo ("| README Owners | README_niels.md               | @niels                   | Valid approver. Member with username \"niels\" has access level 50 (=OWNER)");
             logger.assertContainsError("| README Owners | README_dummy.md               | @dummy                   | User is not a member of with this project: Dummy User");
             logger.assertContainsError("| README Owners | README_dummy.md               |                          | NO Valid Approvers for rule");
-            logger.assertContainsInfo ("| README Owners | README_niels_public_email.md  | public@example.nl        | Valid approver (username:niels)");
+            logger.assertContainsInfo ("| README Owners | README_niels_public_email.md  | public@example.nl        | Valid approver. Member with username \"niels\" has access level 50 (=OWNER)");
             logger.assertContainsWarn ("| README Owners | README_niels_private_email.md | private@example.nl       | Cannot verify access because this is an email address");
             logger.assertContainsError("| README Owners | README_dummy_public_email.md  | public@dummy.example.nl  | User is not a member of with this project: Dummy User");
             logger.assertContainsError("| README Owners | README_dummy_public_email.md  |                          | NO Valid Approvers for rule");

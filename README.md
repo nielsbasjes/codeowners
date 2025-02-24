@@ -62,6 +62,21 @@ There are 3 parameters needed to activate this feature:
 
 In practice: When running in Gitlab CI only the access token is needed via an environment variable.
 
+This check will fail on existing users/groups that are not part of the project, on illegal roles (i.e. `@@something`) and if it is certain a rule has 0 approvers.
+If a user is configured by email address and this cannot be found it is NOT certain this user does or does not have access.
+This is because of security limitations in the Gitlab API which only allow a regular user to find other users by their public email address.
+See https://docs.gitlab.com/api/users/#as-a-regular-user
+
+### Output
+By default a table is output with the warnings and errors.
+You can set this to get output on all approvers.
+
+```xml
+<gitlab>
+    <showAllApprovers>true</showAllApprovers>
+</gitlab>
+```
+
 ### Gitlab Project/Personal Access Token
 To allow this plugin to use the Gitlab API an access token is needed that is created with only `read_api` and the `GUEST` role.
 

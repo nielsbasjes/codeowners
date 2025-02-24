@@ -17,12 +17,12 @@
 
 package nl.basjes.maven.enforcer.codeowners;
 
+import lombok.Getter;
+import lombok.Setter;
 import nl.basjes.codeowners.ApprovalRule;
 import nl.basjes.codeowners.CodeOwners;
 import nl.basjes.codeowners.Section;
-import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.AccessToken;
 import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.ProjectId;
-import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.ServerUrl;
 import nl.basjes.maven.enforcer.codeowners.utils.Problem;
 import nl.basjes.maven.enforcer.codeowners.utils.ProblemTable;
 import org.apache.maven.enforcer.rule.api.EnforcerLogger;
@@ -44,9 +44,9 @@ import static org.gitlab4j.api.models.AccessLevel.OWNER;
 
 public class GitlabProjectMembers implements AutoCloseable {
 
-    private final ServerUrl     serverUrl;
     private final ProjectId     projectId;
-    private final AccessToken   accessToken;
+    @Getter @Setter
+    private       boolean       showAllApprovers;
 
     private final GitLabApi gitLabApi;
 
@@ -54,20 +54,23 @@ public class GitlabProjectMembers implements AutoCloseable {
     private static final Pattern EMAIL_ADDRESS = Pattern.compile("^[a-zA-Z0-9_-]+@[a-zA-Z0-9._-]+$");
 
     public GitlabProjectMembers(GitlabConfiguration configuration) throws EnforcerRuleException {
-        serverUrl = configuration.getServerUrl();
-        projectId = configuration.getProjectId();
-        accessToken = configuration.getAccessToken();
         if (!configuration.isValid()) {
             throw new EnforcerRuleException("Invalid Gitlab configuration: " + configuration);
         }
-        gitLabApi = new GitLabApi(serverUrl.getValue(), accessToken.getValue());
+
+        gitLabApi = new GitLabApi(
+            configuration.getServerUrl().getValue(),
+            configuration.getAccessToken().getValue()
+        );
+
+        projectId = configuration.getProjectId();
 
         try {
             gitLabApi.getProjectApi().getProject(projectId.getValue());
         } catch (GitLabApiException e) {
             throw new EnforcerRuleException("Unable to load projectId from Gitlab: " + configuration, e);
         }
-
+        showAllApprovers = configuration.isShowAllApprovers();
     }
 
     @Override
@@ -134,8 +137,7 @@ public class GitlabProjectMembers implements AutoCloseable {
         table.addProblem(new Problem.Error(section.getName(), approvalRule.getFileExpression(), approver, message));
     }
 
-
-    public void verifyAllCodeowners(EnforcerLogger log, CodeOwners codeOwners, boolean logValidApprovers) throws EnforcerRuleException {
+    public void verifyAllCodeowners(EnforcerLogger log, CodeOwners codeOwners) throws EnforcerRuleException {
         log.info("Fetching all project members from Gitlab (can easily take >15 seconds on a many user project)");
         Map<String, Member>      allProjectMembers    = getAllProjectMembers().stream().collect(Collectors.toMap(Member::getUsername, Function.identity()));
         log.info("-- Received project members: " + allProjectMembers.size());
@@ -177,7 +179,7 @@ public class GitlabProjectMembers implements AutoCloseable {
                                 if (owners.isEmpty()) {
                                     warning(results, definedSection, approvalRule, rawApprover, "No direct project members are owner");
                                 } else {
-                                    if (logValidApprovers) {
+                                    if (showAllApprovers) {
                                         info(results, definedSection, approvalRule, rawApprover, "Valid approver (found " + owners.size() + " owners:" + owners.stream().map(Member::getUsername).collect(Collectors.toList()) + ")");
                                     }
                                     ruleHasValidApprovers=true;
@@ -188,7 +190,7 @@ public class GitlabProjectMembers implements AutoCloseable {
                                 if (developers.isEmpty()) {
                                     warning(results, definedSection, approvalRule, rawApprover, "No direct project members are developer");
                                 } else {
-                                    if (logValidApprovers) {
+                                    if (showAllApprovers) {
                                         info(results, definedSection, approvalRule, rawApprover, "Valid approver (found " + developers.size() + " developers:" + developers.stream().map(Member::getUsername).collect(Collectors.toList()) + ")");
                                     }
                                     ruleHasValidApprovers=true;
@@ -199,7 +201,7 @@ public class GitlabProjectMembers implements AutoCloseable {
                                 if (maintainers.isEmpty()) {
                                     warning(results, definedSection, approvalRule, rawApprover, "No direct project members are maintainer");
                                 } else {
-                                    if (logValidApprovers) {
+                                    if (showAllApprovers) {
                                         info(results, definedSection, approvalRule, rawApprover, "Valid approver (found " + maintainers.size() + " maintainers: " + maintainers.stream().map(Member::getUsername).collect(Collectors.toList()) + ")");
                                     }
                                     ruleHasValidApprovers=true;
@@ -246,8 +248,9 @@ public class GitlabProjectMembers implements AutoCloseable {
                         }
                         if (canApprove(member)) {
                             // Success, we have found this valid approver.
-                            if (logValidApprovers) {
-                                info(results, definedSection, approvalRule, rawApprover, "Valid approver (username:"+approver+")");
+                            if (showAllApprovers) {
+                                AccessLevel memberAccessLevel = member.getAccessLevel();
+                                info(results, definedSection, approvalRule, rawApprover, "Valid approver. Member with username \""+approver+"\" has access level "+ memberAccessLevel.toValue() +" (="+memberAccessLevel.name()+")");
                             }
                             ruleHasValidApprovers=true;
                         } else {
@@ -262,13 +265,14 @@ public class GitlabProjectMembers implements AutoCloseable {
                         SharedGroup sharedGroup = sharedGroups.get(approver);
                         if (accessLevelCanApprove(sharedGroup.getGroupAccessLevel())) {
                             // Success, we have found this valid approver to be the name of a shared group.
-                            if (logValidApprovers) {
-                                info(results, definedSection, approvalRule, rawApprover, "Valid approver");
+                            if (showAllApprovers) {
+                                AccessLevel groupAccessLevel = sharedGroup.getGroupAccessLevel();
+                                info(results, definedSection, approvalRule, rawApprover, "Valid approver. Group with groupname \""+approver+"\" has access level "+ groupAccessLevel.toValue() +" (="+groupAccessLevel.name()+")");
                             }
                             ruleHasValidApprovers = true;
                             continue;
                         }
-                        error(results, definedSection, approvalRule, rawApprover, "Shared group does not have sufficient approver level: " + sharedGroup.getGroupAccessLevel().name());
+                        warning(results, definedSection, approvalRule, rawApprover, "Shared group does not have sufficient approver level: " + sharedGroup.getGroupAccessLevel().name());
                         continue;
                     }
 
@@ -298,7 +302,7 @@ public class GitlabProjectMembers implements AutoCloseable {
                         groupCache.put(approver, group);
                     }
                     if (group != null) {
-                        error(results, definedSection, approvalRule, rawApprover, "Group is not a group shared with this project." + group.getFullPath());
+                        error(results, definedSection, approvalRule, rawApprover, "Group is not a group shared with this project.");
                         continue;
                     }
 

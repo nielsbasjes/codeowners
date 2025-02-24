@@ -31,8 +31,7 @@ public class GitlabConfiguration {
     private ProjectId   projectId   = new ProjectId();
     private AccessToken accessToken = new AccessToken();
 
-    private Boolean allCodeownersMustExist;
-    private Boolean allCodeownersMustHaveApprovalRights;
+    private boolean showAllApprovers = false;
 
     public Boolean isValid() {
         return serverUrl.isValid() && projectId.isValid() && accessToken.isValid();

@@ -93,8 +93,9 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             if (gitlab == null) {
                 getLog().info("No GitLab configuration found");
             } else {
-                getLog().info("Found GitLab configuration:\n"     + gitlab);
+                getLog().info("Found GitLab configuration:\n" + gitlab);
             }
+            getLog().info("=================================\n");
         }
 
         // Get a list of all files in the project and sort them
@@ -143,7 +144,7 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
 
         if (gitlab != null) {
             try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(gitlab)) {
-                gitlabProjectMembers.verifyAllCodeowners(getLog(), codeOwners, showApprovers);
+                gitlabProjectMembers.verifyAllCodeowners(getLog(), codeOwners);
             }
         }
     }
