@@ -38,7 +38,7 @@ public class EnforcerTestLogger implements EnforcerLogger {
     }
 
     public void assertContainsWarnOrError(String message) {
-        assertContainsMsg("[WARN_ON_ERROR]:" + message);
+        assertContainsMsg("[WARN_OR_ERROR]:" + message);
     }
     public void assertContainsDebug(String message) {
         assertContainsMsg("[DEBUG]:" + message);
@@ -53,7 +53,7 @@ public class EnforcerTestLogger implements EnforcerLogger {
         assertContainsMsg("[ERROR]:" + message);
     }
 
-    public long countWarnOrError() { return loggedLines.stream().filter(l -> l.startsWith("[WARN_ON_ERROR]:")).count(); }
+    public long countWarnOrError() { return loggedLines.stream().filter(l -> l.startsWith("[WARN_OR_ERROR]:")).count(); }
     public long countDebug() { return loggedLines.stream().filter(l -> l.startsWith("[DEBUG]:")).count(); }
     public long countInfo() { return loggedLines.stream().filter(l -> l.startsWith("[INFO]:")).count(); }
     public long countWarn() { return loggedLines.stream().filter(l -> l.startsWith("[WARN]:")).count(); }
@@ -61,13 +61,13 @@ public class EnforcerTestLogger implements EnforcerLogger {
 
     @Override
     public void warnOrError(CharSequence charSequence) {
-        loggedLines.add("[WARN_ON_ERROR]:" + charSequence.toString());
+        loggedLines.add("[WARN_OR_ERROR]:" + charSequence.toString());
         logger.warn(charSequence.toString());
     }
 
     @Override
     public void warnOrError(Supplier<CharSequence> supplier) {
-        loggedLines.add("[WARN_ON_ERROR]:" + supplier.get().toString());
+        loggedLines.add("[WARN_OR_ERROR]:" + supplier.get().toString());
         logger.warn(supplier.get().toString());
     }
 
