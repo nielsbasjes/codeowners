@@ -3,6 +3,10 @@ This is intended as an overview of the major changes
 
 NEXT VERSION
 ===
+- ...
+
+v1.11.0
+===
 - The maven enforcer rule now requires Java 11 or newer
 - Add support for assigning codeowners based on project role (https://gitlab.com/gitlab-org/gitlab/-/issues/282438)
 - Fix parsing of email address
