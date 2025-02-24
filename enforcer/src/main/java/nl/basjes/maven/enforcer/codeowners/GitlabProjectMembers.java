@@ -29,7 +29,12 @@ import org.apache.maven.enforcer.rule.api.EnforcerLogger;
 import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
-import org.gitlab4j.api.models.*;
+import org.gitlab4j.api.models.AccessLevel;
+import org.gitlab4j.api.models.Group;
+import org.gitlab4j.api.models.Member;
+import org.gitlab4j.api.models.Project;
+import org.gitlab4j.api.models.SharedGroup;
+import org.gitlab4j.api.models.User;
 
 import java.util.HashMap;
 import java.util.List;
