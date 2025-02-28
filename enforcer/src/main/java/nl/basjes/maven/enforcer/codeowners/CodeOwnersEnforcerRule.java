@@ -72,9 +72,18 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         }
         getLog().debug("BaseDir=|"+baseDir+"|");
 
+         boolean runGitlabMembersCheck = false;
         if (gitlab != null) {
-            if (!gitlab.isValid()) {
-                throw new EnforcerRuleException("The GitLab configuration is not valid:" + gitlab);
+            if (gitlab.isDefaultCIConfigRunningOutsideCI()) {
+                getLog().info("Found Gitlab CI config that only works within Gitlab CI.");
+                getLog().info("Skipping Gitlab Project Members check because this is not GitlabCI.");
+                getLog().info("Found GitLab configuration:\n" + gitlab);
+            } else {
+                if (gitlab.isValid()) {
+                    runGitlabMembersCheck = true;
+                } else {
+                    throw new EnforcerRuleException("The GitLab configuration is not valid:" + gitlab);
+                }
             }
         }
 
@@ -142,8 +151,8 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
             allNonIgnoredFilesHaveApprovers(newFileForEveryDirectory, codeOwners);
         }
 
-        if (gitlab != null) {
-            try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(gitlab)) {
+        if (runGitlabMembersCheck) {
+            try (GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(gitlab)) {
                 gitlabProjectMembers.verifyAllCodeowners(getLog(), codeOwners);
             }
         }

@@ -60,8 +60,6 @@ There are 3 parameters needed to activate this feature:
 - The Gitlab server url
 - The Gitlab project id of this project
 
-In practice: When running in Gitlab CI only the access token is needed via an environment variable.
-
 This check will fail on existing users/groups that are not part of the project, on illegal roles (i.e. `@@something`) and if it is certain a rule has 0 approvers.
 If a user is configured by email address and this cannot be found it is NOT certain this user does or does not have access.
 This is because of security limitations in the Gitlab API which only allow a regular user to find other users by their public email address.
@@ -93,6 +91,8 @@ In this example it is expected that the environment variable `CHECK_USERS_TOKEN`
     </accessToken>
 </gitlab>
 ```
+
+TIP: When running in Gitlab CI only the access token is needed via an environment variable. If you configure it this way (which is recommended) then starting with version 1.11.1 it will automatically skip this check if you are NOT running within a GitlabCI environment.
 
 ### Gitlab server url
 The Gitlab server url can be configured directly or retrieved from an environment variable.

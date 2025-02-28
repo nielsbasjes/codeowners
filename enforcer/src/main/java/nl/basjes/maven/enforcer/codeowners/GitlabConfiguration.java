@@ -37,6 +37,20 @@ public class GitlabConfiguration {
         return serverUrl.isValid() && projectId.isValid() && accessToken.isValid();
     }
 
+    /**
+     * Is this config assuming the default CI settings used for obtaining the serverUrl and projectId settings
+     * AND is it missing all of them --> i.e. this is settings specific for running in CI and it is run now outside of CI.
+     * @return If this is CI config running OUTSIDE of CI
+     */
+    public boolean isDefaultCIConfigRunningOutsideCI() {
+        serverUrl.load();
+        projectId.load();
+        accessToken.load();
+        return  serverUrl.isDefaultCIConfig() && !serverUrl.isValid() &&
+                projectId.isDefaultCIConfig() && !projectId.isValid() &&
+                !accessToken.isValid();
+    }
+
     @Override
     public String toString() {
         return "GitlabConfiguration: {\n" +
@@ -131,13 +145,14 @@ public class GitlabConfiguration {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ServerUrl extends EnvironmentValueLoader {
+        private static final String CI_SERVER_VARIABLE = "CI_SERVER_URL";
         private String url = null;
         private String environmentVariableName = null;
 
         private static final Pattern BASEURL_REGEX = Pattern.compile("^https?://[a-zA-Z0-9](?:(?:[a-zA-Z0-9-]*|(?<!-)\\.(?![-.]))*[a-zA-Z0-9]+)?(?::[0-9]+)?");
 
         public void load() {
-            load(url, "gitlab.serverUrl.url", environmentVariableName, "CI_SERVER_URL");
+            load(url, "gitlab.serverUrl.url", environmentVariableName, CI_SERVER_VARIABLE);
         }
 
         @Override
@@ -146,6 +161,10 @@ public class GitlabConfiguration {
                 return false;
             }
             return BASEURL_REGEX.matcher(value).matches();
+        }
+
+        public boolean isDefaultCIConfig() {
+            return (CI_SERVER_VARIABLE.equals(environmentVariableName) || environmentVariableName == null) && url == null;
         }
 
         @Override
@@ -157,11 +176,16 @@ public class GitlabConfiguration {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProjectId extends EnvironmentValueLoader {
+        private static final String CI_PROJECT_VARIABLE = "CI_PROJECT_ID";
         private String id = null;
         private String environmentVariableName = null;
 
         public void load() {
-            load(id, "gitlab.projectId.id", environmentVariableName, "CI_PROJECT_ID");
+            load(id, "gitlab.projectId.id", environmentVariableName, CI_PROJECT_VARIABLE);
+        }
+
+        public boolean isDefaultCIConfig() {
+            return (CI_PROJECT_VARIABLE.equals(environmentVariableName) || environmentVariableName == null) && id == null;
         }
 
         @Override
