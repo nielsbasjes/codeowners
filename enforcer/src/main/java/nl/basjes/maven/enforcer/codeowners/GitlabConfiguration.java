@@ -33,6 +33,14 @@ public class GitlabConfiguration {
 
     private boolean showAllApprovers = false;
 
+    public static enum FailLevel {
+        NEVER,
+        ERROR,
+        WARNING
+    }
+
+    private FailLevel failLevel = FailLevel.ERROR;
+
     public Boolean isValid() {
         return serverUrl.isValid() && projectId.isValid() && accessToken.isValid();
     }

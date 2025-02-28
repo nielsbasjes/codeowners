@@ -27,7 +27,11 @@ public class ProblemTable {
     private final List<Problem> problems = new ArrayList<>();
 
     public boolean hasErrors() {
-        return problems.stream().anyMatch(problem -> problem instanceof Problem.Error);
+        return getNumberOfErrors() > 0;
+    }
+
+    public boolean hasWarnings() {
+        return getNumberOfWarnings() > 0;
     }
 
     public int getNumberOfProblems() {
@@ -36,6 +40,10 @@ public class ProblemTable {
 
     public long getNumberOfErrors() {
         return problems.stream().filter(problem -> problem instanceof Problem.Error).count();
+    }
+
+    public long getNumberOfWarnings() {
+        return problems.stream().filter(problem -> problem instanceof Problem.Warning).count();
     }
 
     public boolean isEmpty() {

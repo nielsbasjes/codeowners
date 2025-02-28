@@ -22,6 +22,8 @@ import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
+import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel.ERROR;
+import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel.NEVER;
 import static nl.basjes.maven.enforcer.codeowners.TestGitlabUsers.makeConfig;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -159,7 +161,8 @@ public class TestGitlabConfiguration {
             new GitlabConfiguration.ServerUrl(null, null),
             new GitlabConfiguration.ProjectId(null, null),
             new GitlabConfiguration.AccessToken("FETCH_USER_ACCESS_TOKEN"),
-            true
+            true,
+            ERROR
         );
         assertFalse(configuration.isDefaultCIConfigRunningOutsideCI(), "This is the default config INSIDE the pipeline");
         assertTrue(configuration.isValid(), "Config should be valid");
@@ -170,7 +173,8 @@ public class TestGitlabConfiguration {
                 new GitlabConfiguration.ServerUrl(null, null),
                 new GitlabConfiguration.ProjectId(null, null),
                 new GitlabConfiguration.AccessToken("FETCH_USER_ACCESS_TOKEN"),
-                true
+                true,
+                ERROR
         );
     }
 

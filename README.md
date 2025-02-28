@@ -92,7 +92,22 @@ In this example it is expected that the environment variable `CHECK_USERS_TOKEN`
 </gitlab>
 ```
 
-TIP: When running in Gitlab CI only the access token is needed via an environment variable. If you configure it this way (which is recommended) then starting with version 1.11.1 it will automatically skip this check if you are NOT running within a GitlabCI environment.
+**TIP**: When running in Gitlab CI only the access token is needed via an environment variable. If you configure it this way (which is recommended) then starting with version 1.11.1 it will automatically skip this check if you are NOT running within a GitlabCI environment.
+
+### When to fail
+For some projects it is not wanted to fail if there is a problem with the CODEOWNERS in relation to the Gitlab accounts and permissions.
+Normally this rule will fail if an Error level situation is found.
+
+You can change when to fail in relation to the Gitlab users and groups:
+- **NEVER**:   Never fail.
+- **ERROR**:   Only fail if there is an Error. (this is the default setting)
+- **WARNING**: Fail if there is at least a single Warning or Error.
+
+```xml
+<gitlab>
+    <failLevel>NEVER</failLevel>
+</gitlab>
+```
 
 ### Gitlab server url
 The Gitlab server url can be configured directly or retrieved from an environment variable.

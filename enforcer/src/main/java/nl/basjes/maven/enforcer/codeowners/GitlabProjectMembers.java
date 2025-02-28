@@ -22,6 +22,7 @@ import lombok.Setter;
 import nl.basjes.codeowners.ApprovalRule;
 import nl.basjes.codeowners.CodeOwners;
 import nl.basjes.codeowners.Section;
+import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel;
 import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.ProjectId;
 import nl.basjes.maven.enforcer.codeowners.utils.Problem;
 import nl.basjes.maven.enforcer.codeowners.utils.ProblemTable;
@@ -52,6 +53,7 @@ public class GitlabProjectMembers implements AutoCloseable {
     private final ProjectId     projectId;
     @Getter @Setter
     private       boolean       showAllApprovers;
+    private       FailLevel     failLevel;
 
     private final GitLabApi gitLabApi;
 
@@ -76,6 +78,7 @@ public class GitlabProjectMembers implements AutoCloseable {
             throw new EnforcerRuleException("Unable to load projectId from Gitlab: " + configuration, e);
         }
         showAllApprovers = configuration.isShowAllApprovers();
+        failLevel = configuration.getFailLevel();
     }
 
     @Override
@@ -323,9 +326,21 @@ public class GitlabProjectMembers implements AutoCloseable {
 
         if (!results.isEmpty()) {
             results.toLog(log);
-            if (results.hasErrors()) {
-                throw new EnforcerRuleException("Found " + results.getNumberOfErrors() + " errors of the CODEOWNERS file in relation to the Gitlab project.");
+            switch (failLevel) {
+                case NEVER:
+                    return; // We're done
+                case ERROR:
+                    if (!results.hasErrors()) {
+                        return; // We're done
+                    }
+                    break;
+                case WARNING:
+                    if (!results.hasErrors() && !results.hasWarnings()) {
+                        return; // We're done
+                    }
+                    break;
             }
+            throw new EnforcerRuleException("Found " + results.getNumberOfWarnings() + " warnings and " + results.getNumberOfErrors() + " errors of the CODEOWNERS file in relation to the Gitlab project.");
         }
     }
 }

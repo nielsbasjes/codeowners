@@ -26,7 +26,12 @@ import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
+import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel.ERROR;
+import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel.NEVER;
+import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel.WARNING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @WireMockTest
@@ -37,7 +42,8 @@ public class TestGitlabUsers {
             new ServerUrl(httpBaseUrl, null),
             new ProjectId(projectId, null),
             new AccessToken(tokenEnvVariableName),
-            true
+            true,
+            ERROR
         );
     }
 
@@ -267,5 +273,138 @@ public class TestGitlabUsers {
         }
     }
 
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testFailLevelNever(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
+        GitlabConfiguration configuration = new GitlabConfiguration(
+            new ServerUrl(wmRuntimeInfo.getHttpBaseUrl(), null),
+            new ProjectId(null, null),
+            new AccessToken("FETCH_USER_ACCESS_TOKEN"),
+            true,
+            NEVER
+        );
+
+        EnforcerRuleException enforcerRuleException;
+        enforcerRuleException = runFailLevelTestInfo(configuration);
+        assertNull(enforcerRuleException, "No exception should have been thrown");
+        enforcerRuleException = runFailLevelTestWarning(configuration);
+        assertNull(enforcerRuleException, "No exception should have been thrown");
+        enforcerRuleException = runFailLevelTestError(configuration);
+        assertNull(enforcerRuleException, "No exception should have been thrown");
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testFailLevelError(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
+        GitlabConfiguration configuration = new GitlabConfiguration(
+            new ServerUrl(wmRuntimeInfo.getHttpBaseUrl(), null),
+            new ProjectId(null, null),
+            new AccessToken("FETCH_USER_ACCESS_TOKEN"),
+            true,
+            ERROR
+        );
+
+        EnforcerRuleException enforcerRuleException;
+        enforcerRuleException = runFailLevelTestInfo(configuration);
+        assertNull(enforcerRuleException, "No exception should have been thrown");
+        enforcerRuleException = runFailLevelTestWarning(configuration);
+        assertNull(enforcerRuleException, "No exception should have been thrown");
+        enforcerRuleException = runFailLevelTestError(configuration);
+        assertNotNull(enforcerRuleException, "An exception should have been thrown");
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testFailLevelWarning(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
+        GitlabConfiguration configuration = new GitlabConfiguration(
+            new ServerUrl(wmRuntimeInfo.getHttpBaseUrl(), null),
+            new ProjectId(null, null),
+            new AccessToken("FETCH_USER_ACCESS_TOKEN"),
+            true,
+            WARNING
+        );
+
+        EnforcerRuleException enforcerRuleException;
+        enforcerRuleException = runFailLevelTestInfo(configuration);
+        assertNull(enforcerRuleException, "No exception should have been thrown");
+        enforcerRuleException = runFailLevelTestWarning(configuration);
+        assertNotNull(enforcerRuleException, "An exception should have been thrown");
+        enforcerRuleException = runFailLevelTestError(configuration);
+        assertNotNull(enforcerRuleException, "An exception should have been thrown");
+    }
+
+
+    private EnforcerRuleException runFailLevelTestError(GitlabConfiguration configuration) throws EnforcerRuleException {
+        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
+            CodeOwners codeOwners = new CodeOwners(
+                "[README Owners]\n" +
+                "README_niels.md @niels\n" + // INFO:  niels --> is member
+                "README_niels_private_email.md private@example.nl\n" + // WARNING: niels --> is member --> Cannot find --> Warning only
+                "README_dummy.md @dummy\n" // ERROR: dummy --> is NOT member --> Error
+            );
+
+            EnforcerTestLogger logger = new EnforcerTestLogger();
+            gitlabProjectMembers.setShowAllApprovers(true);
+            EnforcerRuleException enforcerRuleException = null;
+            try {
+                gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
+            } catch (EnforcerRuleException e) {
+                enforcerRuleException = e;
+            }
+
+            logger.assertContainsInfo ("| README Owners | README_niels.md               | @niels             | Valid approver. Member with username \"niels\" has access level 50 (=OWNER) |");
+            logger.assertContainsWarn ("| README Owners | README_niels_private_email.md | private@example.nl | Cannot verify access because this is an email address                     |");
+            logger.assertContainsError("| README Owners | README_dummy.md               | @dummy             | User is not a member of with this project: Dummy User                     |");
+            logger.assertContainsError("| README Owners | README_dummy.md               |                    | NO Valid Approvers for rule                                               |");
+            return enforcerRuleException;
+        }
+    }
+
+    private EnforcerRuleException runFailLevelTestWarning(GitlabConfiguration configuration) throws EnforcerRuleException {
+        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
+            CodeOwners codeOwners = new CodeOwners(
+                "[README Owners]\n" +
+                "README_niels.md @niels\n" + // INFO:  niels --> is member
+                "README_niels_private_email.md private@example.nl\n" // WARNING: niels --> is member --> Cannot find --> Warning only
+            );
+
+            EnforcerTestLogger logger = new EnforcerTestLogger();
+            gitlabProjectMembers.setShowAllApprovers(true);
+            EnforcerRuleException enforcerRuleException = null;
+            try {
+                gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
+            } catch (EnforcerRuleException e) {
+                enforcerRuleException = e;
+            }
+
+            logger.assertContainsInfo ("| README Owners | README_niels.md               | @niels             | Valid approver. Member with username \"niels\" has access level 50 (=OWNER) |");
+            logger.assertContainsWarn ("| README Owners | README_niels_private_email.md | private@example.nl | Cannot verify access because this is an email address                     |");
+            return enforcerRuleException;
+        }
+    }
+
+    private EnforcerRuleException runFailLevelTestInfo(GitlabConfiguration configuration) throws EnforcerRuleException {
+        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
+            CodeOwners codeOwners = new CodeOwners(
+                "[README Owners]\n" +
+                "README_niels.md @niels\n" // INFO:  niels --> is member
+            );
+
+            EnforcerTestLogger logger = new EnforcerTestLogger();
+            gitlabProjectMembers.setShowAllApprovers(true);
+            EnforcerRuleException enforcerRuleException = null;
+            try {
+                gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
+            } catch (EnforcerRuleException e) {
+                enforcerRuleException = e;
+            }
+
+            logger.assertContainsInfo ("| README Owners | README_niels.md | @niels   | Valid approver. Member with username \"niels\" has access level 50 (=OWNER) |");
+            return enforcerRuleException;
+        }
+    }
 
 }
