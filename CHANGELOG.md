@@ -5,6 +5,12 @@ NEXT VERSION
 ===
 - ...
 
+v1.11.1
+===
+- Make problem level at which to fail configurable for the Gitlab rule.
+- Automatically skip if not in Gitlab CI
+
+
 v1.11.0
 ===
 - The maven enforcer rule now requires Java 11 or newer
