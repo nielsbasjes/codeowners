@@ -3,7 +3,7 @@ This is intended as an overview of the major changes
 
 NEXT VERSION
 ===
-- ...
+- Improve readability of the all approvers list.
 
 v1.11.1
 ===
