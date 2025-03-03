@@ -20,4 +20,20 @@ assert file.exists()
 
 String text = file.getText( "utf-8" )
 
+assert text.contains("[ERROR] --> src/main/README.txt");
+
+assert text.contains("| \${baseDir}/                     | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/.gitlab/             | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/.gitlab/CODEOWNERS   | [@nielsbasjes]      |");
+assert text.contains("| \${baseDir}/.mvn/                | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/build.log            | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/invoker.properties   | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/pom.xml              | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/src/                 | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/src/main/            | []                  | <-- NO APPROVERS!");
+assert text.contains("| \${baseDir}/src/main/README.java | []                  | <-- NO APPROVERS!");
+assert text.contains("| \${baseDir}/src/main/README.md   | [@username]         |");
+assert text.contains("| \${baseDir}/src/main/README.txt  | []                  | <-- NO APPROVERS!");
+assert text.contains("| \${baseDir}/verify.groovy        | [@integrationtest]  |");
+
 return true

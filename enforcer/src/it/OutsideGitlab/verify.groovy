@@ -20,4 +20,23 @@ assert file.exists()
 
 String text = file.getText( "utf-8" )
 
+assert text.contains("| \${baseDir}/                     | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/.gitlab/             | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/.gitlab/CODEOWNERS   | [@nielsbasjes]      |");
+assert text.contains("| \${baseDir}/.mvn/                | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/build.log            | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/invoker.properties   | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/pom.xml              | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/src/                 | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/src/main/            | []                  | <-- NO APPROVERS!");
+assert text.contains("| \${baseDir}/src/main/README.java | []                  | <-- NO APPROVERS!");
+assert text.contains("| \${baseDir}/src/main/README.md   | [@username]         |");
+assert text.contains("| \${baseDir}/src/main/README.txt  | []                  | <-- NO APPROVERS!");
+assert text.contains("| \${baseDir}/verify.groovy        | [@integrationtest]  |");
+
+assert text.contains("[ERROR] Unable to load projectId from Gitlab: GitlabConfiguration: {");
+assert text.contains("[ERROR]   ServerUrl='http://localhost:0' found via gitlab.serverUrl.url is valid.");
+assert text.contains("[ERROR]   ProjectId='niels/project' found via gitlab.projectId.id is valid.");
+assert text.contains("[ERROR]   AccessToken= 'gltst-*****ue' found via environment variable CHECK_USERS_TOKEN is valid.");
+
 return true

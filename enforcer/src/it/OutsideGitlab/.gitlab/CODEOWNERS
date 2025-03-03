@@ -14,10 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-.gitlab/   @projectteam
+.gitlab/             @projectteam
+# src/                 @projectteam   --> This triggers errors
 
 *.md @username
-CODEOWNERS @nielsbasjes
+CODEOWNERS           @nielsbasjes
+.gitignore           @nielsbasjes
 
 # These files should not be part of the test ... but they have to be
 /invoker.properties  @integrationtest
