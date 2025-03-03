@@ -20,6 +20,7 @@ package nl.basjes.maven.enforcer.codeowners;
 import nl.basjes.codeowners.CodeOwners;
 import nl.basjes.gitignore.GitIgnore;
 import nl.basjes.gitignore.GitIgnoreFileSet;
+import nl.basjes.maven.enforcer.codeowners.utils.StringTable;
 import org.apache.maven.enforcer.rule.api.AbstractEnforcerRule;
 import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
 import org.apache.maven.project.MavenProject;
@@ -243,14 +244,17 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
     // ------------------------------------------
 
     void printApprovers(List<Path> paths, CodeOwners codeOwners) {
-        getLog().info("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
-        getLog().info("Listing all Mandatory Approvers:");
-        getLog().info("--------------------------------");
+        StringTable table = new StringTable();
+        table.withHeaders("Path", "Mandatory Approvers");
         for (Path path : paths) {
             List<String> mandatoryApprovers = codeOwners.getMandatoryApprovers(path.toString());
-            getLog().info("Approvers for: " + pathToLoggingString(path) + " : " + mandatoryApprovers);
+            if (mandatoryApprovers.isEmpty()) {
+                table.addRow(pathToLoggingString(path), mandatoryApprovers.toString(), "<-- NO APPROVERS!");
+            } else {
+                table.addRow(pathToLoggingString(path), mandatoryApprovers.toString());
+            }
         }
-        getLog().info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+        getLog().info("\n" + table);
     }
 
     // ------------------------------------------

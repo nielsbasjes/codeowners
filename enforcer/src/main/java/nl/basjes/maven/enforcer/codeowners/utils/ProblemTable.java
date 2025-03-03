@@ -22,9 +22,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ProblemTable {
-    private final List<String> headers = Arrays.asList("Section", "Expression", "Approver", "Problem");
+public final class ProblemTable extends StringTable{
     private final List<Problem> problems = new ArrayList<>();
+
+    public ProblemTable() {
+        super();
+        withHeaders("Section", "Expression", "Approver", "Problem");
+    }
 
     public boolean hasErrors() {
         return getNumberOfErrors() > 0;
@@ -50,109 +54,37 @@ public class ProblemTable {
         return problems.isEmpty();
     }
 
-    private List<Integer> calculateColumnWidths() {
-        List<Integer> columnWidths = new ArrayList<>();
-        for (int column = 0; column < headers.size(); column++) {
-            int maxWidth = headers.get(column).length();
-            for (Problem problem : problems) {
-                String columnValue = problem.getFields().get(column);
-                if (columnValue != null) {
-                    maxWidth = Math.max(maxWidth, columnValue.length());
-                }
-            }
-            columnWidths.add(maxWidth);
-        }
-        return columnWidths;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder(1024);
-        List<Integer> columnWidths = calculateColumnWidths();
-        sb.append(writeSeparator(columnWidths)).append("\n");
-        sb.append(writeLine(columnWidths, headers)).append("\n");
-        sb.append(writeSeparator(columnWidths)).append("\n");
-        for (Problem problem : problems) {
-            sb.append(writeLine(columnWidths, problem)).append("\n");
-        }
-        sb.append(writeSeparator(columnWidths)).append("\n");
-        return sb.toString();
-    }
 
     public void toLog(EnforcerLogger logger) {
-        List<Integer> columnWidths = calculateColumnWidths();
-        logger.info(writeSeparator(columnWidths));
-        logger.info(writeLine(columnWidths, headers));
-        logger.info(writeSeparator(columnWidths));
+        logger.info(writeSeparator());
+        logger.info(writeHeaders());
+        logger.info(writeSeparator());
         for (Problem problem : problems) {
             if (problem instanceof Problem.Info) {
-                logger.info(writeLine(columnWidths, problem));
+                logger.info(writeLine(problem));
                 continue;
             }
             if (problem instanceof Problem.Warning) {
-                logger.warn(writeLine(columnWidths, problem));
+                logger.warn(writeLine(problem));
                 continue;
             }
             if (problem instanceof Problem.Error) {
-                logger.error(writeLine(columnWidths, problem));
+                logger.error(writeLine(problem));
                 continue;
             }
             if (problem != null) {
-                logger.info(writeLine(columnWidths, problem));
+                logger.info(writeLine(problem));
             }
         }
-        logger.warn(writeSeparator(columnWidths));
+        logger.warn(writeSeparator());
     }
 
-    private String writeSeparator(List<Integer> columnWidths) {
-        StringBuilder sb = new StringBuilder(512);
-        boolean first = true;
-        for (Integer columnWidth : columnWidths) {
-            if (first) {
-                sb.append('|');
-                first = false;
-            } else {
-                sb.append('+');
-            }
-            sb.append("-".repeat(columnWidth+2));
-        }
-        sb.append('|');
-        return sb.toString();
-    }
-
-    private String writeLine(List<Integer> columnWidths, Problem problem) {
-        return writeLine(columnWidths, problem.getFields());
-    }
-
-    private String writeLine(List<Integer> columnWidths, List<String> fields) {
-        if (fields.isEmpty()) {
-            return writeSeparator(columnWidths);
-        }
-
-        int columns = Math.max(columnWidths.size(), fields.size());
-
-        StringBuilder sb = new StringBuilder(512);
-        for (int columnNr = 0; columnNr < columns; columnNr++) {
-            int columnWidth = 1;
-            if (columnNr < columnWidths.size()) {
-                columnWidth = columnWidths.get(columnNr);
-            }
-            if (columnNr <= columnWidths.size()) {
-                sb.append('|');
-            }
-            String field = "";
-            if (columnNr < fields.size()) {
-                field = fields.get(columnNr);
-            }
-            sb.append(String.format(" %-" + columnWidth + "s ", field)); // NOSONAR java:S3457 This is creative, I know.
-        }
-        if (columns <= columnWidths.size()) {
-            sb.append('|');
-        }
-        return sb.toString();
+    private String writeLine(Problem problem) {
+        return writeLine(problem.getFields());
     }
 
     public void addProblem(Problem problem) {
-        this.problems.add(problem);
+        problems.add(problem);
+        addRow(problem.getFields());
     }
 }
