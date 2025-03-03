@@ -20,4 +20,21 @@ assert file.exists()
 
 String text = file.getText( "utf-8" )
 
+assert text.contains("| \${baseDir}/                   | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/.gitignore         | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/.gitlab/           | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/.gitlab/CODEOWNERS | [@nielsbasjes]      |");
+assert text.contains("| \${baseDir}/.mvn/              | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/invoker.properties | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/pom.xml            | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/src/               | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/src/.gitignore     | [@nielsbasjes]      |");
+assert text.contains("| \${baseDir}/src/main/          | [@projectteam]      |");
+assert text.contains("| \${baseDir}/src/main/README.md | [@username]         |");
+assert text.contains("| \${baseDir}/verify.groovy      | [@integrationtest]  |");
+
+assert !text.contains("\${baseDir}/build.log");
+assert !text.contains("\${baseDir}/src/main/README.java");
+assert !text.contains("\${baseDir}/src/main/README.txt");
+
 return true

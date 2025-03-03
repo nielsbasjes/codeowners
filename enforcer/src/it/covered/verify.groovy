@@ -25,4 +25,18 @@ assert text.contains("[INFO] Using CODEOWNERS: \${baseDir}/.gitlab/CODEOWNERS")
 assert !text.contains("[INFO] NO MATCH     |.svn/| ~ |^/?(.*/)?\\.svn/| --> |/.svn/|")
 assert !text.contains("[INFO] MATCH IGNORE |.svn/| ~ |^/?(.*/)?\\.svn/| --> |/.svn/dummy.txt|")
 
+assert text.contains("| \${baseDir}/                     | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/.gitlab/             | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/.gitlab/CODEOWNERS   | [@nielsbasjes]      |");
+assert text.contains("| \${baseDir}/.mvn/                | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/build.log            | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/invoker.properties   | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/pom.xml              | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/src/                 | [@integrationtest]  |");
+assert text.contains("| \${baseDir}/src/main/            | [@projectteam]      |");
+assert text.contains("| \${baseDir}/src/main/README.java | [@projectteam]      |");
+assert text.contains("| \${baseDir}/src/main/README.md   | [@username]         |");
+assert text.contains("| \${baseDir}/src/main/README.txt  | [@projectteam]      |");
+assert text.contains("| \${baseDir}/verify.groovy        | [@integrationtest]  |");
+
 return true
