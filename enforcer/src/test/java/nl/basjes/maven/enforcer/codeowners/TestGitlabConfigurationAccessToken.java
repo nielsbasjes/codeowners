@@ -57,7 +57,7 @@ public class TestGitlabConfigurationAccessToken {
         AccessToken accessToken = new AccessToken("MY_SECRET_TOKEN");
         assertFalse(accessToken.isValid());
         assertNull(accessToken.getValue());
-        assertTrue(accessToken.toString().contains("AccessToken found via environment variable MY_SECRET_TOKEN is NOT valid."));
+        assertTrue(accessToken.toString().contains("AccessToken found via environment variable MY_SECRET_TOKEN is NOT valid"));
     }
 
     @Test

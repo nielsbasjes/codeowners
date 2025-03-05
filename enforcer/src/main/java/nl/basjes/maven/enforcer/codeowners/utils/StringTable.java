@@ -35,7 +35,10 @@ public class StringTable {
                     if (!line.isEmpty() && line.size() > column) {
                         String columnValue = line.get(column);
                         if (columnValue != null) {
-                            maxWidth = Math.max(maxWidth, columnValue.length());
+                            long count = columnValue.codePoints().count();
+                            if (count < Integer.MAX_VALUE) {
+                                maxWidth =  Math.max(maxWidth, (int) count);
+                            }
                         }
                     }
                 }
@@ -48,7 +51,6 @@ public class StringTable {
 
     public String toString() {
         StringBuilder sb = new StringBuilder(1024);
-        List<Integer> columnWidths = calculateColumnWidths();
         sb.append(writeSeparator()).append("\n");
         sb.append(writeLine(headers)).append("\n");
         sb.append(writeSeparator()).append("\n");

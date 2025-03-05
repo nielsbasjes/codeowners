@@ -17,6 +17,7 @@
 
 package nl.basjes.maven.enforcer.codeowners;
 
+import lombok.AllArgsConstructor;
 import org.apache.maven.enforcer.rule.api.EnforcerLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,50 +25,84 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class EnforcerTestLogger implements EnforcerLogger {
 
-    private static final Logger logger = LoggerFactory.getLogger("Tests");
+    public EnforcerTestLogger(String className) {
+        logger = LoggerFactory.getLogger(className);
+    }
 
-    final List<String> loggedLines = new ArrayList<>();
+    final Logger logger;
 
-    private void assertContainsMsg(String message) {
-        assertTrue(loggedLines.stream().anyMatch(l -> l.contains(message)), "'" + message + "' was not found");
+    enum LineType {
+        WARN_OR_ERROR,
+        DEBUG,
+        INFO,
+        WARN,
+        ERROR
+    }
+
+    @AllArgsConstructor
+    static class Line {
+        LineType type;
+        String message;
+
+        @Override
+        public String toString() {
+            return "Line {" +
+                "type=" + type +
+                ", message='" + message + '\'' +
+                '}';
+        }
+    }
+
+    final List<Line> loggedLines = new ArrayList<>();
+
+    private void assertContainsMsg(LineType type, String expectedSubstring) {
+        for (Line loggedLine : loggedLines) {
+            if (loggedLine.type == type) {
+                if (loggedLine.message.contains(expectedSubstring)) {
+                    return;
+                }
+            }
+        }
+        fail("A message of type "+type+" containing '" + expectedSubstring + "' was not found.\n"+ "Known lines are: \n" + loggedLines.stream().map(line -> "---> " + line.type + " | " + line.message + "\n").collect(Collectors.joining()));
     }
 
     public void assertContainsWarnOrError(String message) {
-        assertContainsMsg("[WARN_OR_ERROR]:" + message);
+        assertContainsMsg(LineType.WARN_OR_ERROR, message);
     }
     public void assertContainsDebug(String message) {
-        assertContainsMsg("[DEBUG]:" + message);
+        assertContainsMsg(LineType.DEBUG, message);
     }
     public void assertContainsInfo(String message) {
-        assertContainsMsg("[INFO]:" + message);
+        assertContainsMsg(LineType.INFO ,message);
     }
     public void assertContainsWarn(String message) {
-        assertContainsMsg("[WARN]:" + message);
+        assertContainsMsg(LineType.WARN, message);
     }
     public void assertContainsError(String message) {
-        assertContainsMsg("[ERROR]:" + message);
+        assertContainsMsg(LineType.ERROR, message);
     }
 
-    public long countWarnOrError() { return loggedLines.stream().filter(l -> l.startsWith("[WARN_OR_ERROR]:")).count(); }
-    public long countDebug() { return loggedLines.stream().filter(l -> l.startsWith("[DEBUG]:")).count(); }
-    public long countInfo() { return loggedLines.stream().filter(l -> l.startsWith("[INFO]:")).count(); }
-    public long countWarn() { return loggedLines.stream().filter(l -> l.startsWith("[WARN]:")).count(); }
-    public long countError() { return loggedLines.stream().filter(l -> l.startsWith("[ERROR]:")).count(); }
+    public long countWarnOrError() { return loggedLines.stream().filter(l -> l.type == LineType.WARN_OR_ERROR) .count(); }
+    public long countDebug()       { return loggedLines.stream().filter(l -> l.type == LineType.DEBUG)         .count(); }
+    public long countInfo()        { return loggedLines.stream().filter(l -> l.type == LineType.INFO)          .count(); }
+    public long countWarn()        { return loggedLines.stream().filter(l -> l.type == LineType.WARN)          .count(); }
+    public long countError()       { return loggedLines.stream().filter(l -> l.type == LineType.ERROR)         .count(); }
 
     @Override
     public void warnOrError(CharSequence charSequence) {
-        loggedLines.add("[WARN_OR_ERROR]:" + charSequence.toString());
+        loggedLines.add(new Line(LineType.WARN_OR_ERROR, charSequence.toString()));
         logger.warn(charSequence.toString());
     }
 
     @Override
     public void warnOrError(Supplier<CharSequence> supplier) {
-        loggedLines.add("[WARN_OR_ERROR]:" + supplier.get().toString());
+        loggedLines.add(new Line(LineType.WARN_OR_ERROR, supplier.get().toString()));
         logger.warn(supplier.get().toString());
     }
 
@@ -78,13 +113,13 @@ public class EnforcerTestLogger implements EnforcerLogger {
 
     @Override
     public void debug(CharSequence charSequence) {
-        loggedLines.add("[DEBUG]:" + charSequence.toString());
+        loggedLines.add(new Line(LineType.DEBUG, charSequence.toString()));
         logger.debug(charSequence.toString());
     }
 
     @Override
     public void debug(Supplier<CharSequence> supplier) {
-        loggedLines.add("[DEBUG]:" + supplier.get().toString());
+        loggedLines.add(new Line(LineType.DEBUG, supplier.get().toString()));
         logger.debug(supplier.get().toString());
     }
 
@@ -95,13 +130,13 @@ public class EnforcerTestLogger implements EnforcerLogger {
 
     @Override
     public void info(CharSequence charSequence) {
-        loggedLines.add("[INFO]:" + charSequence.toString());
+        loggedLines.add(new Line(LineType.INFO, charSequence.toString()));
         logger.info(charSequence.toString());
     }
 
     @Override
     public void info(Supplier<CharSequence> supplier) {
-        loggedLines.add("[INFO]:" + supplier.get().toString());
+        loggedLines.add(new Line(LineType.INFO, supplier.get().toString()));
         logger.info(supplier.get().toString());
     }
 
@@ -112,13 +147,13 @@ public class EnforcerTestLogger implements EnforcerLogger {
 
     @Override
     public void warn(CharSequence charSequence) {
-        loggedLines.add("[WARN]:" + charSequence.toString());
+        loggedLines.add(new Line(LineType.WARN, charSequence.toString()));
         logger.warn(charSequence.toString());
     }
 
     @Override
     public void warn(Supplier<CharSequence> supplier) {
-        loggedLines.add("[WARN]:" + supplier.get().toString());
+        loggedLines.add(new Line(LineType.WARN, supplier.get().toString()));
         logger.warn(supplier.get().toString());
     }
 
@@ -129,13 +164,13 @@ public class EnforcerTestLogger implements EnforcerLogger {
 
     @Override
     public void error(CharSequence charSequence) {
-        loggedLines.add("[ERROR]:" + charSequence.toString());
+        loggedLines.add(new Line(LineType.ERROR, charSequence.toString()));
         logger.error(charSequence.toString());
     }
 
     @Override
     public void error(Supplier<CharSequence> supplier) {
-        loggedLines.add("[ERROR]:" + supplier.get().toString());
+        loggedLines.add(new Line(LineType.ERROR, supplier.get().toString()));
         logger.error(supplier.get().toString());
     }
 }

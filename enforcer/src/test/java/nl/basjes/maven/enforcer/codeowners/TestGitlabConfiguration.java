@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
 import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel.ERROR;
-import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel.NEVER;
 import static nl.basjes.maven.enforcer.codeowners.TestGitlabUsers.makeConfig;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -101,7 +100,7 @@ public class TestGitlabConfiguration {
     @SetEnvironmentVariable(key = "CI_PROJECT_ID", value = "doesnotexist")
     @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
     public void testProjectIdDoesNotExist(WireMockRuntimeInfo wmRuntimeInfo) {
-        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo.getHttpBaseUrl(), null, "FETCH_USER_ACCESS_TOKEN");
+        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN");
 
         EnforcerRuleException enforcerRuleException = assertThrows(EnforcerRuleException.class, () -> {
                 try (GitlabProjectMembers ignored = new GitlabProjectMembers(configuration)) {
@@ -119,7 +118,7 @@ public class TestGitlabConfiguration {
     @SetEnvironmentVariable(key = "CI_PROJECT_ID", value = "niels/project")
     @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "")
     public void testAccessTokenInvalid(WireMockRuntimeInfo wmRuntimeInfo) {
-        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo.getHttpBaseUrl(), null, "FETCH_USER_ACCESS_TOKEN");
+        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN");
 
         EnforcerRuleException enforcerRuleException = assertThrows(EnforcerRuleException.class, () -> {
                 try (GitlabProjectMembers ignored = new GitlabProjectMembers(configuration)) {
@@ -138,7 +137,7 @@ public class TestGitlabConfiguration {
     @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
     @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-badtoken")
     public void testAccessTokenBad(WireMockRuntimeInfo wmRuntimeInfo) {
-        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo.getHttpBaseUrl(), null, "FETCH_USER_ACCESS_TOKEN");
+        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN");
 
         EnforcerRuleException enforcerRuleException = assertThrows(EnforcerRuleException.class, () -> {
                 try (GitlabProjectMembers ignored = new GitlabProjectMembers(configuration)) {
@@ -160,9 +159,7 @@ public class TestGitlabConfiguration {
         GitlabConfiguration configuration = new GitlabConfiguration(
             new GitlabConfiguration.ServerUrl(null, null),
             new GitlabConfiguration.ProjectId(null, null),
-            new GitlabConfiguration.AccessToken("FETCH_USER_ACCESS_TOKEN"),
-            true,
-            ERROR
+            new GitlabConfiguration.AccessToken("FETCH_USER_ACCESS_TOKEN")
         );
         assertFalse(configuration.isDefaultCIConfigRunningOutsideCI(), "This is the default config INSIDE the pipeline");
         assertTrue(configuration.isValid(), "Config should be valid");
@@ -172,9 +169,7 @@ public class TestGitlabConfiguration {
         return new GitlabConfiguration(
                 new GitlabConfiguration.ServerUrl(null, null),
                 new GitlabConfiguration.ProjectId(null, null),
-                new GitlabConfiguration.AccessToken("FETCH_USER_ACCESS_TOKEN"),
-                true,
-                ERROR
+                new GitlabConfiguration.AccessToken("FETCH_USER_ACCESS_TOKEN")
         );
     }
 
