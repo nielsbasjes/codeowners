@@ -20,9 +20,15 @@ package nl.basjes.maven.enforcer.codeowners;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.util.regex.Pattern;
 
+import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.Level.ERROR;
+import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.Level.WARNING;
+
+@Accessors(chain = true)
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -31,15 +37,60 @@ public class GitlabConfiguration {
     private ProjectId   projectId   = new ProjectId();
     private AccessToken accessToken = new AccessToken();
 
+    @Setter
     private boolean showAllApprovers = false;
 
-    public static enum FailLevel {
+    @Setter
+    private boolean assumeUncheckableEmailExistsAndCanApprove = true;
+
+    public enum FailLevel {
         NEVER,
+        FATAL,
         ERROR,
         WARNING
     }
 
+    public enum Level {
+        INFO,
+        WARNING,
+        ERROR,
+        FATAL
+    }
+
+    @Setter
     private FailLevel failLevel = FailLevel.ERROR;
+
+    private ProblemLevels problemLevels = new ProblemLevels();
+    @Getter @Setter
+    public static class ProblemLevels {
+        public Level roleNoUsers             = WARNING;
+        public Level userUnknownEmail        = WARNING;
+        public Level userDisabled            = WARNING;
+        public Level approverDoesNotExist    = WARNING;
+        public Level userTooLowPermissions   = WARNING;
+        public Level groupTooLowPermissions  = WARNING;
+        public Level userNotProjectMember    = ERROR;
+        public Level groupNotProjectMember   = ERROR;
+        public Level noValidApprovers        = ERROR;
+
+        @Override
+        public String toString() {
+            return "Configured ProblemLevels: \n" +
+                "- roleNoUsers            = " + roleNoUsers + "\n" +
+                "- approverDoesNotExist   = " + approverDoesNotExist + "\n" +
+                "- userUnknownEmail       = " + userUnknownEmail + "\n" +
+                "- userDisabled           = " + userDisabled + "\n" +
+                "- userTooLowPermissions  = " + userTooLowPermissions + "\n" +
+                "- groupTooLowPermissions = " + groupTooLowPermissions + "\n" +
+                "- userNotProjectMember   = " + userNotProjectMember + "\n" +
+                "- groupNotProjectMember  = " + groupNotProjectMember + "\n" +
+                "- noValidApprovers       = " + noValidApprovers + "\n";
+        }
+    }
+
+    public GitlabConfiguration(ServerUrl serverUrl, ProjectId projectId, AccessToken accessToken) {
+        this(serverUrl, projectId, accessToken, false, true, FailLevel.ERROR, new ProblemLevels());
+    }
 
     public Boolean isValid() {
         return serverUrl.isValid() && projectId.isValid() && accessToken.isValid();
@@ -65,6 +116,8 @@ public class GitlabConfiguration {
             "  " + serverUrl + "\n" +
             "  " + projectId + "\n" +
             "  " + accessToken + "\n" +
+            "  assumeUncheckableEmailExistsAndCanApprove = " + assumeUncheckableEmailExistsAndCanApprove + "\n" +
+            "  " + problemLevels + "\n" +
             '}';
     }
 

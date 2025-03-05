@@ -23,6 +23,7 @@ import nl.basjes.codeowners.ApprovalRule;
 import nl.basjes.codeowners.CodeOwners;
 import nl.basjes.codeowners.Section;
 import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel;
+import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.Level;
 import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.ProjectId;
 import nl.basjes.maven.enforcer.codeowners.utils.Problem;
 import nl.basjes.maven.enforcer.codeowners.utils.ProblemTable;
@@ -46,6 +47,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.Level.INFO;
 import static org.gitlab4j.api.models.AccessLevel.DEVELOPER;
 import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
 import static org.gitlab4j.api.models.AccessLevel.OWNER;
@@ -55,17 +57,39 @@ public class GitlabProjectMembers implements AutoCloseable {
     private final ProjectId     projectId;
     @Getter @Setter
     private       boolean       showAllApprovers;
-    private       FailLevel     failLevel;
+    private final FailLevel     failLevel;
+    private final boolean       assumeUncheckableEmailExistsAndCanApprove;
 
     private final GitLabApi gitLabApi;
 
     // Same pattern as defined in the codeowners parser
     private static final Pattern EMAIL_ADDRESS = Pattern.compile("^[a-zA-Z0-9_-]+@[a-zA-Z0-9._-]+$");
 
+    private final Level roleNoUsers;
+    private final Level userUnknownEmail;
+    private final Level userDisabled;
+    private final Level approverDoesNotExist;
+    private final Level userTooLowPermissions;
+    private final Level groupTooLowPermissions;
+    private final Level userNotProjectMember;
+    private final Level groupNotProjectMember;
+    private final Level noValidApprovers;
+
     public GitlabProjectMembers(GitlabConfiguration configuration) throws EnforcerRuleException {
         if (!configuration.isValid()) {
             throw new EnforcerRuleException("Invalid Gitlab configuration: " + configuration);
         }
+
+        GitlabConfiguration.ProblemLevels problemLevels = configuration.getProblemLevels();
+        roleNoUsers              = problemLevels.roleNoUsers;
+        userUnknownEmail         = problemLevels.userUnknownEmail;
+        userDisabled             = problemLevels.userDisabled;
+        approverDoesNotExist     = problemLevels.approverDoesNotExist;
+        userTooLowPermissions    = problemLevels.userTooLowPermissions;
+        groupTooLowPermissions   = problemLevels.groupTooLowPermissions;
+        userNotProjectMember     = problemLevels.userNotProjectMember;
+        groupNotProjectMember    = problemLevels.groupNotProjectMember;
+        noValidApprovers         = problemLevels.noValidApprovers;
 
         gitLabApi = new GitLabApi(
             configuration.getServerUrl().getValue(),
@@ -80,6 +104,7 @@ public class GitlabProjectMembers implements AutoCloseable {
             throw new EnforcerRuleException("Unable to load projectId from Gitlab: " + configuration, e);
         }
         showAllApprovers = configuration.isShowAllApprovers();
+        assumeUncheckableEmailExistsAndCanApprove = configuration.isAssumeUncheckableEmailExistsAndCanApprove();
         failLevel = configuration.getFailLevel();
     }
 
@@ -137,17 +162,24 @@ public class GitlabProjectMembers implements AutoCloseable {
         return gitLabApi.getGroupApi().getGroup(groupId);
     }
 
-    private void info(ProblemTable table, Section section, ApprovalRule approvalRule, String approver, String message) {
-        table.addProblem(new Problem.Info(section.getName(), approvalRule.getFileExpression(), approver, message));
-    }
-    private void warning(ProblemTable table, Section section, ApprovalRule approvalRule, String approver, String message) {
-        table.addProblem(new Problem.Warning(section.getName(), approvalRule.getFileExpression(), approver, message));
-    }
-    private void error(ProblemTable table, Section section, ApprovalRule approvalRule, String approver, String message) {
-        table.addProblem(new Problem.Error(section.getName(), approvalRule.getFileExpression(), approver, message));
+    private void report(Level level, ProblemTable table, Section section, ApprovalRule approvalRule, String approver, String message) {
+        switch (level) {
+            case FATAL:
+                table.addProblem(new Problem.Fatal(section.getName(), approvalRule.getFileExpression(), approver, message));
+                break;
+            case ERROR:
+                table.addProblem(new Problem.Error(section.getName(), approvalRule.getFileExpression(), approver, message));
+                break;
+            case WARNING:
+                table.addProblem(new Problem.Warning(section.getName(), approvalRule.getFileExpression(), approver, message));
+                break;
+            case INFO:
+                table.addProblem(new Problem.Info(section.getName(), approvalRule.getFileExpression(), approver, message));
+                break;
+        }
     }
 
-    public void verifyAllCodeowners(EnforcerLogger log, CodeOwners codeOwners) throws EnforcerRuleException {
+    public ProblemTable verifyAllCodeowners(EnforcerLogger log, CodeOwners codeOwners) throws EnforcerRuleException {
         log.info("Fetching all project members from Gitlab (can easily take >15 seconds on a many user project)");
         Map<String, Member>      allProjectMembers    = getAllProjectMembers().stream().filter(distinctByKey(Member::getUsername)).collect(Collectors.toMap(Member::getUsername, Function.identity()));
         log.info("-- Received project members: " + allProjectMembers.size());
@@ -187,10 +219,12 @@ public class GitlabProjectMembers implements AutoCloseable {
                             case "@@owner":
                             case "@@owners":
                                 if (owners.isEmpty()) {
-                                    warning(results, definedSection, approvalRule, rawApprover, "No direct project members are owner");
+                                    report(roleNoUsers, results, definedSection, approvalRule, rawApprover,
+                                        "No direct project members have the \"owner\" role");
                                 } else {
                                     if (showAllApprovers) {
-                                        info(results, definedSection, approvalRule, rawApprover, "Valid approver (found " + owners.size() + " owners:" + owners.stream().map(Member::getUsername).collect(Collectors.toList()) + ")");
+                                        report(INFO, results, definedSection, approvalRule, rawApprover,
+                                            "Valid approver: Found " + owners.size() + " owners");
                                     }
                                     ruleHasValidApprovers=true;
                                 }
@@ -198,10 +232,12 @@ public class GitlabProjectMembers implements AutoCloseable {
                             case "@@developer":
                             case "@@developers":
                                 if (developers.isEmpty()) {
-                                    warning(results, definedSection, approvalRule, rawApprover, "No direct project members are developer");
+                                    report(roleNoUsers, results, definedSection, approvalRule, rawApprover,
+                                        "No direct project members have the \"developer\" role");
                                 } else {
                                     if (showAllApprovers) {
-                                        info(results, definedSection, approvalRule, rawApprover, "Valid approver (found " + developers.size() + " developers:" + developers.stream().map(Member::getUsername).collect(Collectors.toList()) + ")");
+                                        report(INFO, results, definedSection, approvalRule, rawApprover,
+                                            "Valid approver: Found " + developers.size() + " developers");
                                     }
                                     ruleHasValidApprovers=true;
                                 }
@@ -209,16 +245,18 @@ public class GitlabProjectMembers implements AutoCloseable {
                             case "@@maintainer":
                             case "@@maintainers":
                                 if (maintainers.isEmpty()) {
-                                    warning(results, definedSection, approvalRule, rawApprover, "No direct project members are maintainer");
+                                    report(roleNoUsers, results, definedSection, approvalRule, rawApprover,
+                                        "No direct project members have the \"maintainer\" role");
                                 } else {
                                     if (showAllApprovers) {
-                                        info(results, definedSection, approvalRule, rawApprover, "Valid approver (found " + maintainers.size() + " maintainers: " + maintainers.stream().map(Member::getUsername).collect(Collectors.toList()) + ")");
+                                        report(INFO, results, definedSection, approvalRule, rawApprover,
+                                            "Valid approver: Found " + maintainers.size() + " maintainers");
                                     }
                                     ruleHasValidApprovers=true;
                                 }
                                 continue;
                             default:
-                                error(results, definedSection, approvalRule, rawApprover, "Illegal role attempted");
+                                report(Level.FATAL, results, definedSection, approvalRule, rawApprover, "Illegal role was specified");
                                 continue;
                         }
                     }
@@ -232,8 +270,9 @@ public class GitlabProjectMembers implements AutoCloseable {
                                 // (who commonly runs this code) to query other users by their private email.
                                 // Gitlab itself IS allowed to check this while verifying the CODEOWNERS file.
                                 // https://docs.gitlab.com/api/users/#as-a-regular-user
-                                warning(results, definedSection, approvalRule, rawApprover, "Cannot verify access because this is an email address");
-                                ruleHasValidApprovers=true; // FIXME: Dubious choice; we cannot verify if this approver will actually work
+                                report(userUnknownEmail, results, definedSection, approvalRule, rawApprover, "Unable to verify email address: " +
+                                    "Assuming the user " + (assumeUncheckableEmailExistsAndCanApprove ? "exists and can approve" : "does not exist and/or cannot approve"));
+                                ruleHasValidApprovers=assumeUncheckableEmailExistsAndCanApprove;
                                 continue;
                             } else {
                                 approver = userByEmail.getUsername();
@@ -250,7 +289,7 @@ public class GitlabProjectMembers implements AutoCloseable {
                     if (allProjectMembers.containsKey(approver)) {
                         Member member = allProjectMembers.get(approver);
                         if (!usableAccount(member)) {
-                            warning(results, definedSection, approvalRule, rawApprover,
+                            report(userDisabled, results, definedSection, approvalRule, rawApprover,
                                 "Disabled account: " +
                                     "State=" + member.getState() + "; " +
                                     "Locked=" + member.getLocked());
@@ -260,12 +299,13 @@ public class GitlabProjectMembers implements AutoCloseable {
                             // Success, we have found this valid approver.
                             if (showAllApprovers) {
                                 AccessLevel memberAccessLevel = member.getAccessLevel();
-                                info(results, definedSection, approvalRule, rawApprover, "Valid approver. Member with username \""+approver+"\" has access level "+ memberAccessLevel.toValue() +" (="+memberAccessLevel.name()+")");
+                                report(INFO, results, definedSection, approvalRule, rawApprover,
+                                    "Valid approver: Member with username \"" + approver + "\" can approve (AccessLevel:" + memberAccessLevel.toValue() + "=" + memberAccessLevel.name() + ")");
                             }
                             ruleHasValidApprovers=true;
                         } else {
-                            warning(results, definedSection, approvalRule, rawApprover,
-                                "Insufficient permissions to approve: AccessLevel=" + member.getAccessLevel().name());
+                            report(userTooLowPermissions, results, definedSection, approvalRule, rawApprover,
+                                "User does not have sufficient permissions to approve: AccessLevel=" + member.getAccessLevel().name());
                         }
                         continue;
                     }
@@ -273,16 +313,18 @@ public class GitlabProjectMembers implements AutoCloseable {
                     // Is this a Shared Group?
                     if (sharedGroups.containsKey(approver)) {
                         SharedGroup sharedGroup = sharedGroups.get(approver);
-                        if (accessLevelCanApprove(sharedGroup.getGroupAccessLevel())) {
+                        AccessLevel groupAccessLevel = sharedGroup.getGroupAccessLevel();
+                        if (accessLevelCanApprove(groupAccessLevel)) {
                             // Success, we have found this valid approver to be the name of a shared group.
                             if (showAllApprovers) {
-                                AccessLevel groupAccessLevel = sharedGroup.getGroupAccessLevel();
-                                info(results, definedSection, approvalRule, rawApprover, "Valid approver. Group with groupname \""+approver+"\" has access level "+ groupAccessLevel.toValue() +" (="+groupAccessLevel.name()+")");
+                                report(INFO, results, definedSection, approvalRule, rawApprover,
+                                    "Valid approver: Members of group \"" + approver + "\" can approve (AccessLevel:" + groupAccessLevel.toValue() + "="+groupAccessLevel.name() + ")");
                             }
                             ruleHasValidApprovers = true;
                             continue;
                         }
-                        warning(results, definedSection, approvalRule, rawApprover, "Shared group does not have sufficient approver level: " + sharedGroup.getGroupAccessLevel().name());
+                        report(groupTooLowPermissions, results, definedSection, approvalRule, rawApprover,
+                            "Shared group does not have sufficient permissions to approve: AccessLevel=" + groupAccessLevel.toValue() + " (="+groupAccessLevel.name() + ")");
                         continue;
                     }
 
@@ -297,7 +339,7 @@ public class GitlabProjectMembers implements AutoCloseable {
                         userCache.put(approver, user);
                     }
                     if (user != null) {
-                        error(results, definedSection, approvalRule, rawApprover, "User is not a member of with this project: " + user.getName());
+                        report(userNotProjectMember, results, definedSection, approvalRule, rawApprover, "User exists but is not a member of with this project: " + user.getName());
                         continue;
                     }
 
@@ -312,38 +354,46 @@ public class GitlabProjectMembers implements AutoCloseable {
                         groupCache.put(approver, group);
                     }
                     if (group != null) {
-                        error(results, definedSection, approvalRule, rawApprover, "Group is not a group shared with this project.");
+                        report(groupNotProjectMember, results, definedSection, approvalRule, rawApprover, "Group exists and is not shared with this project");
                         continue;
                     }
 
                     // Ok, it doesn't exist.
-                    warning(results, definedSection, approvalRule, rawApprover, "Approver does not exist in Gitlab");
+                    report(approverDoesNotExist, results, definedSection, approvalRule, rawApprover, "Approver does not exist in Gitlab (not as user and not as group)");
                 }
 
                 if (!ruleHasValidApprovers) {
-                    error(results, definedSection, approvalRule, "", "NO Valid Approvers for rule");
+                    report(noValidApprovers, results, definedSection, approvalRule, "", "NO Valid Approvers for rule");
                 }
             }
         }
+        return results;
+    }
 
-        if (!results.isEmpty()) {
-            results.toLog(log);
-            switch (failLevel) {
-                case NEVER:
-                    return; // We're done
-                case ERROR:
-                    if (!results.hasErrors()) {
-                        return; // We're done
-                    }
-                    break;
-                case WARNING:
-                    if (!results.hasErrors() && !results.hasWarnings()) {
-                        return; // We're done
-                    }
-                    break;
-            }
-            throw new EnforcerRuleException("Found " + results.getNumberOfWarnings() + " warnings and " + results.getNumberOfErrors() + " errors of the CODEOWNERS file in relation to the Gitlab project.");
+    public void failIfExceededFailLevel(ProblemTable problemTable) throws EnforcerRuleException {
+        if (problemTable.isEmpty()) {
+            return;
         }
+        switch (failLevel) {
+            case NEVER: // Never fail
+                return;
+            case FATAL:
+                if (!problemTable.hasFatalErrors()) {
+                    return;
+                }
+                break;
+            case ERROR:
+                if (!problemTable.hasFatalErrors() && !problemTable.hasErrors()) {
+                    return;
+                }
+                break;
+            case WARNING:
+                if (!problemTable.hasFatalErrors() && !problemTable.hasErrors() && !problemTable.hasWarnings()) {
+                    return;
+                }
+                break;
+        }
+        throw new EnforcerRuleException("Found " + problemTable.getNumberOfWarnings() + " warnings, " + problemTable.getNumberOfErrors() + " errors and " + problemTable.getNumberOfFatalErrors() + " fatal problems of the CODEOWNERS file in relation to the Gitlab project.\n" + problemTable);
     }
 
     private static <T> Predicate<T> distinctByKey(
@@ -352,4 +402,5 @@ public class GitlabProjectMembers implements AutoCloseable {
         Map<Object, Boolean> seen = new ConcurrentHashMap<>();
         return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }
+
 }

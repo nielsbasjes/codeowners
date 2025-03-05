@@ -3,8 +3,8 @@ This is intended as an overview of the major changes
 
 NEXT VERSION
 ===
-- Improve readability of the all approvers list.
-...
+- Improve readability of the all approvers list and the logging.
+- Make level configurable per type of problem.
 
 v.1.11.2
 ===

@@ -20,6 +20,7 @@ package nl.basjes.maven.enforcer.codeowners;
 import nl.basjes.codeowners.CodeOwners;
 import nl.basjes.gitignore.GitIgnore;
 import nl.basjes.gitignore.GitIgnoreFileSet;
+import nl.basjes.maven.enforcer.codeowners.utils.ProblemTable;
 import nl.basjes.maven.enforcer.codeowners.utils.StringTable;
 import org.apache.maven.enforcer.rule.api.AbstractEnforcerRule;
 import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
@@ -154,7 +155,8 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
 
         if (runGitlabMembersCheck) {
             try (GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(gitlab)) {
-                gitlabProjectMembers.verifyAllCodeowners(getLog(), codeOwners);
+                ProblemTable problemTable = gitlabProjectMembers.verifyAllCodeowners(getLog(), codeOwners);
+                gitlabProjectMembers.failIfExceededFailLevel(problemTable);
             }
         }
     }

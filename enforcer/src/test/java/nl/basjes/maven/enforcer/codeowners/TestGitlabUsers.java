@@ -18,32 +18,40 @@ package nl.basjes.maven.enforcer.codeowners;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import lombok.extern.slf4j.Slf4j;
 import nl.basjes.codeowners.CodeOwners;
 import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.AccessToken;
+import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel;
 import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.ProjectId;
 import nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.ServerUrl;
+import nl.basjes.maven.enforcer.codeowners.utils.Problem;
+import nl.basjes.maven.enforcer.codeowners.utils.ProblemTable;
 import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
+import java.lang.reflect.Method;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel.ERROR;
+import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel.FATAL;
 import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel.NEVER;
 import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel.WARNING;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Slf4j
 @WireMockTest
 public class TestGitlabUsers {
 
-    static GitlabConfiguration makeConfig(String httpBaseUrl, String projectId, String tokenEnvVariableName) {
+    static GitlabConfiguration makeConfig(WireMockRuntimeInfo wmRuntimeInfo, String projectId, String tokenEnvVariableName) {
         return new GitlabConfiguration(
-            new ServerUrl(httpBaseUrl, null),
+            new ServerUrl(wmRuntimeInfo==null ? null : wmRuntimeInfo.getHttpBaseUrl(), null),
             new ProjectId(projectId, null),
-            new AccessToken(tokenEnvVariableName),
-            true,
-            ERROR
+            new AccessToken(tokenEnvVariableName)
         );
     }
 
@@ -51,29 +59,28 @@ public class TestGitlabUsers {
     @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
     @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
     public void testValidCodeOwners(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
-        String httpBaseUrl = wmRuntimeInfo.getHttpBaseUrl();
-        GitlabConfiguration configuration = makeConfig(httpBaseUrl, null, "FETCH_USER_ACCESS_TOKEN");
+        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN");
 
         try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
             CodeOwners codeOwners = new CodeOwners(
                 "[README Owners]\n" +
-                "README.md @niels @SomeUser @isguest\n" +
-                "README_owner.md @@owner\n" +
-                "README_owners.md @@owners\n" +
-                "README_maintainer.md @@maintainer\n" +
-                "README_maintainers.md @@maintainers\n" +
-                "README_developer.md @@developer\n" +
-                "README_developers.md @@developers\n" +
-                "README_group_dev.md @codeowners/developers\n" +
-                "README_group_main.md @codeowners/maintainers\n" +
-                "README_user_public_email.md public@example.nl\n"
+                "README.md                    @niels @SomeUser @isguest\n" +
+                "README_owner.md              @@owner\n" +
+                "README_owners.md             @@owners\n" +
+                "README_maintainer.md         @@maintainer\n" +
+                "README_maintainers.md        @@maintainers\n" +
+                "README_developer.md          @@developer\n" +
+                "README_developers.md         @@developers\n" +
+                "README_group_dev.md          @codeowners/developers\n" +
+                "README_group_main.md         @codeowners/maintainers\n" +
+                "README_user_public_email.md  public@example.nl\n"
             );
 
-            EnforcerTestLogger logger = new EnforcerTestLogger();
+            EnforcerTestLogger logger = new EnforcerTestLogger("testValidCodeOwners");
             gitlabProjectMembers.setShowAllApprovers(true);
-            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
+            logger.info(gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners).toString());
             gitlabProjectMembers.setShowAllApprovers(false);
-            gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
+            logger.info(gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners).toString());
         }
     }
 
@@ -81,22 +88,21 @@ public class TestGitlabUsers {
     @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
     @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
     public void testRoles(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
-        String httpBaseUrl = wmRuntimeInfo.getHttpBaseUrl();
-        GitlabConfiguration configuration = makeConfig(httpBaseUrl, null, "FETCH_USER_ACCESS_TOKEN");
+        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN");
 
         try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
             CodeOwners codeOwners = new CodeOwners(
                 "[README Owners]\n" +
-                    "README_niels.md @niels\n" +
-                    "README_owner.md @@owner\n" +
-                    "README_owners.md @@owners\n" +
-                    "README_maintainer.md @@maintainer\n" +
-                    "README_maintainers.md @@maintainers\n" +
-                    "README_developer.md @@developer\n" +
-                    "README_developers.md @@developers\n"
+                "README_niels.md       @niels\n" +
+                "README_owner.md       @@owner\n" +
+                "README_owners.md      @@owners\n" +
+                "README_maintainer.md  @@maintainer\n" +
+                "README_maintainers.md @@maintainers\n" +
+                "README_developer.md   @@developer\n" +
+                "README_developers.md  @@developers\n"
             );
 
-            EnforcerTestLogger logger = new EnforcerTestLogger();
+            EnforcerTestLogger logger = new EnforcerTestLogger("testRoles");
             gitlabProjectMembers.setShowAllApprovers(true);
             gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
             gitlabProjectMembers.setShowAllApprovers(false);
@@ -107,304 +113,394 @@ public class TestGitlabUsers {
     @Test
     @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
     @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
-    public void testSharedGroups(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
-        String httpBaseUrl = wmRuntimeInfo.getHttpBaseUrl();
-        GitlabConfiguration configuration = makeConfig(httpBaseUrl, null, "FETCH_USER_ACCESS_TOKEN");
+    public void testSharedGroups(WireMockRuntimeInfo wmRuntimeInfo, TestInfo testInfo) throws EnforcerRuleException {
+        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN");
+        configuration.setFailLevel(FATAL);
 
-        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
-            CodeOwners codeOwners = new CodeOwners(
+        EnforcerRuleException enforcerRuleException = runCodeownersValidation(testInfo, configuration,
+            new CodeOwners(
                 "[README Owners]\n" +
-                "README_shared_group_guests.md @codeowners/guests\n" +
-                "README_shared_group_developers.md @codeowners/developers\n" +
+                "README_shared_group_guests.md      @codeowners/guests\n" +
+                "README_shared_group_developers.md  @codeowners/developers\n" +
                 "README_shared_group_maintainers.md @codeowners/maintainers\n"
-            );
-
-            EnforcerTestLogger logger = new EnforcerTestLogger();
-            gitlabProjectMembers.setShowAllApprovers(true);
-            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners));
-            gitlabProjectMembers.setShowAllApprovers(false);
-            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners));
-            logger.assertContainsWarn ("| README Owners | README_shared_group_guests.md | @codeowners/guests | Shared group does not have sufficient approver level: GUEST |");
-            logger.assertContainsError("| README Owners | README_shared_group_guests.md |                    | NO Valid Approvers for rule                                 |");
+            ),
+            new Problem.Warning("README Owners", "README_shared_group_guests.md", "@codeowners/guests", "Shared group does not have sufficient permissions to approve: AccessLevel=10 (=GUEST)"),
+            new Problem.Error  ("README Owners", "README_shared_group_guests.md", "",                   "NO Valid Approvers for rule")
+        );
+        if (enforcerRuleException != null) {
+            throw enforcerRuleException;
         }
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testUnknownEmailAssumptions(WireMockRuntimeInfo wmRuntimeInfo, TestInfo testInfo) throws EnforcerRuleException {
+        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN");
+
+        CodeOwners codeOwners = new CodeOwners(
+            "[README Owners]\n" +
+            "README_niels_private_email.md private@example.nl\n" // WARNING: niels --> is member --> Cannot find --> Warning only
+        );
+
+        configuration.setAssumeUncheckableEmailExistsAndCanApprove(true);
+        assertNull(runCodeownersValidation(testInfo, configuration, codeOwners,
+            new Problem.Warning("README Owners", "README_niels_private_email.md", "private@example.nl", "Unable to verify email address: Assuming the user exists and can approve")
+        ));
+
+        configuration.setAssumeUncheckableEmailExistsAndCanApprove(false);
+        configuration.getProblemLevels().setUserUnknownEmail(GitlabConfiguration.Level.ERROR);
+        configuration.getProblemLevels().setNoValidApprovers(GitlabConfiguration.Level.FATAL);
+        assertNotNull(runCodeownersValidation(testInfo, configuration, codeOwners,
+            new Problem.Error("README Owners", "README_niels_private_email.md", "private@example.nl", "Unable to verify email address: Assuming the user does not exist and/or cannot approve"),
+            new Problem.Fatal("README Owners", "README_niels_private_email.md", "",                   "NO Valid Approvers for rule")
+        ));
     }
 
 
     @Test
     @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "nomembers")
     @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
-    public void testBadRoles(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
-        String httpBaseUrl = wmRuntimeInfo.getHttpBaseUrl();
-        GitlabConfiguration configuration = makeConfig(httpBaseUrl, null, "FETCH_USER_ACCESS_TOKEN");
+    public void testBadRoles(WireMockRuntimeInfo wmRuntimeInfo, TestInfo testInfo) throws EnforcerRuleException {
+        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN");
 
-        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
-            CodeOwners codeOwners = new CodeOwners(
+        EnforcerRuleException enforcerRuleException = runCodeownersValidation(testInfo, configuration,
+            new CodeOwners(
                 "[README Owners]\n" +
-                "README_1.md @niels @dummy\n" +
-                "README_2.md @niels @dummy\n" +
-                "README_owner.md @@owner\n" +
-                "README_owners.md @@owners\n" +
-                "README_maintainer.md @@maintainer\n" +
-                "README_maintainers.md @@maintainers\n" +
-                "README_developer.md @@developer\n" +
-                "README_developers.md @@developers\n" +
-                "README_nosuchrole.md @@nosuchrole\n" +
-                "README_disabled.md @disabledowner @disabledmaintainer @disableddeveloper\n" +
-                "README_locked.md @lockedowner @lockedmaintainer @lockeddeveloper\n" +
-                "README_disabled.md @disabledowner @disabledmaintainer @disableddeveloper\n" +
-                "README_locked.md @lockedowner @lockedmaintainer @lockeddeveloper\n" +
-                "README_dummy_1.md @dummy\n" +
-                "README_dummy_2.md @dummy\n" +
-                "README_dummy_3.md @dummy\n" +
-                "README_nonsharedgroup_1.md @opensource \n" +
-                "README_nonsharedgroup_2.md @opensource \n" +
-                "README_nonsharedgroup_3.md @opensource \n" +
-                "README_sharedgroup_guests_1.md @codeowners/guests \n" +
-                "README_sharedgroup_guests_2.md @codeowners/guests \n" +
-                "README_sharedgroup_guests_3.md @codeowners/guests \n" +
-                "README_nosuchgroup_1.md @codeowners/nosuchgroup \n" +
-                "README_nosuchgroup_2.md @codeowners/nosuchgroup \n" +
-                "README_nosuchgroup_3.md @codeowners/nosuchgroup \n"
-            );
+                "README_1.md                      @niels @dummy\n" +
+                "README_2.md                      @niels @dummy\n" +
+                "README_owner.md                  @@owner\n" +
+                "README_owners.md                 @@owners\n" +
+                "README_maintainer.md             @@maintainer\n" +
+                "README_maintainers.md            @@maintainers\n" +
+                "README_developer.md              @@developer\n" +
+                "README_developers.md             @@developers\n" +
+                "README_nosuchrole.md             @@nosuchrole\n" +
+                "README_disabled_1.md             @disabledowner @disabledmaintainer @disableddeveloper\n" +
+                "README_locked_1.md               @lockedowner   @lockedmaintainer   @lockeddeveloper\n" +
+                "README_disabled_2.md             @disabledowner @disabledmaintainer @disableddeveloper\n" +
+                "README_locked_2.md               @lockedowner   @lockedmaintainer   @lockeddeveloper\n" +
+                "README_dummy_1.md                @dummy\n" +
+                "README_dummy_2.md                @dummy\n" +
+                "README_dummy_3.md                @dummy\n" +
+                "README_nonsharedgroup_1.md       @opensource \n" +
+                "README_nonsharedgroup_2.md       @opensource \n" +
+                "README_nonsharedgroup_3.md       @opensource \n" +
+                "README_sharedgroup_guests_1.md   @codeowners/guests \n" +
+                "README_sharedgroup_guests_2.md   @codeowners/guests \n" +
+                "README_sharedgroup_guests_3.md   @codeowners/guests \n" +
+                "README_nosuchgroup_1.md          @codeowners/nosuchgroup \n" +
+                "README_nosuchgroup_2.md          @codeowners/nosuchgroup \n" +
+                "README_nosuchgroup_3.md          @codeowners/nosuchgroup \n"
+            ),
 
-            EnforcerTestLogger logger = new EnforcerTestLogger();
-            gitlabProjectMembers.setShowAllApprovers(false);
-            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners));
+            new Problem.Error   ("README Owners", "README_1.md",                    "@niels",                   "User exists but is not a member of with this project: Niels Basjes"),
+            new Problem.Error   ("README Owners", "README_1.md",                    "@dummy",                   "User exists but is not a member of with this project: Dummy User"),
+            new Problem.Error   ("README Owners", "README_1.md",                    "",                         "NO Valid Approvers for rule"),
+            new Problem.Error   ("README Owners", "README_2.md",                    "@niels",                   "User exists but is not a member of with this project: Niels Basjes"),
+            new Problem.Error   ("README Owners", "README_2.md",                    "@dummy",                   "User exists but is not a member of with this project: Dummy User"),
+            new Problem.Error   ("README Owners", "README_2.md",                    "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_owner.md",                "@@owner",                  "No direct project members have the \"owner\" role"),
+            new Problem.Error   ("README Owners", "README_owner.md",                "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_owners.md",               "@@owners",                 "No direct project members have the \"owner\" role"),
+            new Problem.Error   ("README Owners", "README_owners.md",               "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_maintainer.md",           "@@maintainer",             "No direct project members have the \"maintainer\" role"),
+            new Problem.Error   ("README Owners", "README_maintainer.md",           "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_maintainers.md",          "@@maintainers",            "No direct project members have the \"maintainer\" role"),
+            new Problem.Error   ("README Owners", "README_maintainers.md",          "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_developer.md",            "@@developer",              "No direct project members have the \"developer\" role"),
+            new Problem.Error   ("README Owners", "README_developer.md",            "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_developers.md",           "@@developers",             "No direct project members have the \"developer\" role"),
+            new Problem.Error   ("README Owners", "README_developers.md",           "",                         "NO Valid Approvers for rule"),
+            new Problem.Fatal   ("README Owners", "README_nosuchrole.md",           "@@nosuchrole",             "Illegal role was specified"),
+            new Problem.Error   ("README Owners", "README_nosuchrole.md",           "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_disabled_1.md",           "@disabledowner",           "Disabled account: State=disabled; Locked=false"),
+            new Problem.Warning ("README Owners", "README_disabled_1.md",           "@disabledmaintainer",      "Disabled account: State=disabled; Locked=false"),
+            new Problem.Warning ("README Owners", "README_disabled_1.md",           "@disableddeveloper",       "Disabled account: State=disabled; Locked=false"),
+            new Problem.Error   ("README Owners", "README_disabled_1.md",           "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_locked_1.md",             "@lockedowner",             "Disabled account: State=active; Locked=true"),
+            new Problem.Warning ("README Owners", "README_locked_1.md",             "@lockedmaintainer",        "Disabled account: State=active; Locked=true"),
+            new Problem.Warning ("README Owners", "README_locked_1.md",             "@lockeddeveloper",         "Disabled account: State=active; Locked=true"),
+            new Problem.Error   ("README Owners", "README_locked_1.md",             "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_disabled_2.md",           "@disabledowner",           "Disabled account: State=disabled; Locked=false"),
+            new Problem.Warning ("README Owners", "README_disabled_2.md",           "@disabledmaintainer",      "Disabled account: State=disabled; Locked=false"),
+            new Problem.Warning ("README Owners", "README_disabled_2.md",           "@disableddeveloper",       "Disabled account: State=disabled; Locked=false"),
+            new Problem.Error   ("README Owners", "README_disabled_2.md",           "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_locked_2.md",             "@lockedowner",             "Disabled account: State=active; Locked=true"),
+            new Problem.Warning ("README Owners", "README_locked_2.md",             "@lockedmaintainer",        "Disabled account: State=active; Locked=true"),
+            new Problem.Warning ("README Owners", "README_locked_2.md",             "@lockeddeveloper",         "Disabled account: State=active; Locked=true"),
+            new Problem.Error   ("README Owners", "README_locked_2.md",             "",                         "NO Valid Approvers for rule"),
+            new Problem.Error   ("README Owners", "README_dummy_1.md",              "@dummy",                   "User exists but is not a member of with this project: Dummy User"),
+            new Problem.Error   ("README Owners", "README_dummy_1.md",              "",                         "NO Valid Approvers for rule"),
+            new Problem.Error   ("README Owners", "README_dummy_2.md",              "@dummy",                   "User exists but is not a member of with this project: Dummy User"),
+            new Problem.Error   ("README Owners", "README_dummy_2.md",              "",                         "NO Valid Approvers for rule"),
+            new Problem.Error   ("README Owners", "README_dummy_3.md",              "@dummy",                   "User exists but is not a member of with this project: Dummy User"),
+            new Problem.Error   ("README Owners", "README_dummy_3.md",              "",                         "NO Valid Approvers for rule"),
+            new Problem.Error   ("README Owners", "README_nonsharedgroup_1.md",     "@opensource",              "Group exists and is not shared with this project"),
+            new Problem.Error   ("README Owners", "README_nonsharedgroup_1.md",     "",                         "NO Valid Approvers for rule"),
+            new Problem.Error   ("README Owners", "README_nonsharedgroup_2.md",     "@opensource",              "Group exists and is not shared with this project"),
+            new Problem.Error   ("README Owners", "README_nonsharedgroup_2.md",     "",                         "NO Valid Approvers for rule"),
+            new Problem.Error   ("README Owners", "README_nonsharedgroup_3.md",     "@opensource",              "Group exists and is not shared with this project"),
+            new Problem.Error   ("README Owners", "README_nonsharedgroup_3.md",     "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_sharedgroup_guests_1.md", "@codeowners/guests",       "Shared group does not have sufficient permissions to approve: AccessLevel=10 (=GUEST)"),
+            new Problem.Error   ("README Owners", "README_sharedgroup_guests_1.md", "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_sharedgroup_guests_2.md", "@codeowners/guests",       "Shared group does not have sufficient permissions to approve: AccessLevel=10 (=GUEST)"),
+            new Problem.Error   ("README Owners", "README_sharedgroup_guests_2.md", "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_sharedgroup_guests_3.md", "@codeowners/guests",       "Shared group does not have sufficient permissions to approve: AccessLevel=10 (=GUEST)"),
+            new Problem.Error   ("README Owners", "README_sharedgroup_guests_3.md", "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_nosuchgroup_1.md",        "@codeowners/nosuchgroup",  "Approver does not exist in Gitlab (not as user and not as group)"),
+            new Problem.Error   ("README Owners", "README_nosuchgroup_1.md",        "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_nosuchgroup_2.md",        "@codeowners/nosuchgroup",  "Approver does not exist in Gitlab (not as user and not as group)"),
+            new Problem.Error   ("README Owners", "README_nosuchgroup_2.md",        "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_nosuchgroup_3.md",        "@codeowners/nosuchgroup",  "Approver does not exist in Gitlab (not as user and not as group)"),
+            new Problem.Error   ("README Owners", "README_nosuchgroup_3.md",        "",                         "NO Valid Approvers for rule")
+        );
+        assertNotNull(enforcerRuleException, "There should be an exception because we have a Fatal Error and the FailLevel is ERROR");
+    }
 
-            // We have 10 because of messages during loading the information
-            assertEquals(10, logger.countInfo(), "There should be no INFO level messages.");
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testOwnerHandling(WireMockRuntimeInfo wmRuntimeInfo, TestInfo testInfo) throws EnforcerRuleException {
+        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN").setFailLevel(FATAL);
 
-            logger.assertContainsError("| README Owners | README_1.md                    | @niels                  | User is not a member of with this project: Niels Basjes     |");
-            logger.assertContainsError("| README Owners | README_1.md                    | @dummy                  | User is not a member of with this project: Dummy User       |");
-            logger.assertContainsError("| README Owners | README_1.md                    |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_2.md                    | @niels                  | User is not a member of with this project: Niels Basjes     |");
-            logger.assertContainsError("| README Owners | README_2.md                    | @dummy                  | User is not a member of with this project: Dummy User       |");
-            logger.assertContainsError("| README Owners | README_2.md                    |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_owner.md                | @@owner                 | No direct project members are owner                         |");
-            logger.assertContainsError("| README Owners | README_owner.md                |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_owners.md               | @@owners                | No direct project members are owner                         |");
-            logger.assertContainsError("| README Owners | README_owners.md               |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_maintainer.md           | @@maintainer            | No direct project members are maintainer                    |");
-            logger.assertContainsError("| README Owners | README_maintainer.md           |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_maintainers.md          | @@maintainers           | No direct project members are maintainer                    |");
-            logger.assertContainsError("| README Owners | README_maintainers.md          |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_developer.md            | @@developer             | No direct project members are developer                     |");
-            logger.assertContainsError("| README Owners | README_developer.md            |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_developers.md           | @@developers            | No direct project members are developer                     |");
-            logger.assertContainsError("| README Owners | README_developers.md           |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_nosuchrole.md           | @@nosuchrole            | Illegal role attempted                                      |");
-            logger.assertContainsError("| README Owners | README_nosuchrole.md           |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_disabled.md             | @disabledowner          | Disabled account: State=disabled; Locked=false              |");
-            logger.assertContainsWarn ("| README Owners | README_disabled.md             | @disabledmaintainer     | Disabled account: State=disabled; Locked=false              |");
-            logger.assertContainsWarn ("| README Owners | README_disabled.md             | @disableddeveloper      | Disabled account: State=disabled; Locked=false              |");
-            logger.assertContainsError("| README Owners | README_disabled.md             |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_locked.md               | @lockedowner            | Disabled account: State=active; Locked=true                 |");
-            logger.assertContainsWarn ("| README Owners | README_locked.md               | @lockedmaintainer       | Disabled account: State=active; Locked=true                 |");
-            logger.assertContainsWarn ("| README Owners | README_locked.md               | @lockeddeveloper        | Disabled account: State=active; Locked=true                 |");
-            logger.assertContainsError("| README Owners | README_locked.md               |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_disabled.md             | @disabledowner          | Disabled account: State=disabled; Locked=false              |");
-            logger.assertContainsWarn ("| README Owners | README_disabled.md             | @disabledmaintainer     | Disabled account: State=disabled; Locked=false              |");
-            logger.assertContainsWarn ("| README Owners | README_disabled.md             | @disableddeveloper      | Disabled account: State=disabled; Locked=false              |");
-            logger.assertContainsError("| README Owners | README_disabled.md             |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_locked.md               | @lockedowner            | Disabled account: State=active; Locked=true                 |");
-            logger.assertContainsWarn ("| README Owners | README_locked.md               | @lockedmaintainer       | Disabled account: State=active; Locked=true                 |");
-            logger.assertContainsWarn ("| README Owners | README_locked.md               | @lockeddeveloper        | Disabled account: State=active; Locked=true                 |");
-            logger.assertContainsError("| README Owners | README_locked.md               |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_dummy_1.md              | @dummy                  | User is not a member of with this project: Dummy User       |");
-            logger.assertContainsError("| README Owners | README_dummy_1.md              |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_dummy_2.md              | @dummy                  | User is not a member of with this project: Dummy User       |");
-            logger.assertContainsError("| README Owners | README_dummy_2.md              |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_dummy_3.md              | @dummy                  | User is not a member of with this project: Dummy User       |");
-            logger.assertContainsError("| README Owners | README_dummy_3.md              |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_nonsharedgroup_1.md     | @opensource             | Group is not a group shared with this project.              |");
-            logger.assertContainsError("| README Owners | README_nonsharedgroup_1.md     |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_nonsharedgroup_2.md     | @opensource             | Group is not a group shared with this project.              |");
-            logger.assertContainsError("| README Owners | README_nonsharedgroup_2.md     |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsError("| README Owners | README_nonsharedgroup_3.md     | @opensource             | Group is not a group shared with this project.              |");
-            logger.assertContainsError("| README Owners | README_nonsharedgroup_3.md     |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_sharedgroup_guests_1.md | @codeowners/guests      | Shared group does not have sufficient approver level: GUEST |");
-            logger.assertContainsError("| README Owners | README_sharedgroup_guests_1.md |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_sharedgroup_guests_2.md | @codeowners/guests      | Shared group does not have sufficient approver level: GUEST |");
-            logger.assertContainsError("| README Owners | README_sharedgroup_guests_2.md |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_sharedgroup_guests_3.md | @codeowners/guests      | Shared group does not have sufficient approver level: GUEST |");
-            logger.assertContainsError("| README Owners | README_sharedgroup_guests_3.md |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_nosuchgroup_1.md        | @codeowners/nosuchgroup | Approver does not exist in Gitlab                           |");
-            logger.assertContainsError("| README Owners | README_nosuchgroup_1.md        |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_nosuchgroup_2.md        | @codeowners/nosuchgroup | Approver does not exist in Gitlab                           |");
-            logger.assertContainsError("| README Owners | README_nosuchgroup_2.md        |                         | NO Valid Approvers for rule                                 |");
-            logger.assertContainsWarn ("| README Owners | README_nosuchgroup_3.md        | @codeowners/nosuchgroup | Approver does not exist in Gitlab                           |");
-            logger.assertContainsError("| README Owners | README_nosuchgroup_3.md        |                         | NO Valid Approvers for rule                                 |");
-
+        EnforcerRuleException enforcerRuleException = runCodeownersValidation(testInfo, configuration,
+            new CodeOwners(
+                "[README Owners]\n" +
+                "README_niels.md                @niels\n" + // niels --> is member
+                "README_dummy.md                @dummy\n" + // dummy --> is NOT member --> Error
+                "README_niels_public_email.md   public@example.nl\n" + // niels --> is member
+                "README_niels_private_email.md  private@example.nl\n" + // niels --> is member --> Cannot find --> Warning only
+                "README_dummy_public_email.md   public@dummy.example.nl\n" + // dummy --> is NOT member --> Error
+                "README_dummy_private_email.md  private@dummy.example.nl\n"  // niels --> is NOT member --> Cannot find --> Warning only
+            ),
+            new Problem.Info    ("README Owners", "README_niels.md",               "@niels",                   "Valid approver: Member with username \"niels\" can approve (AccessLevel:50=OWNER)"),
+            new Problem.Error   ("README Owners", "README_dummy.md",               "@dummy",                   "User exists but is not a member of with this project: Dummy User"),
+            new Problem.Error   ("README Owners", "README_dummy.md",               "",                         "NO Valid Approvers for rule"),
+            new Problem.Info    ("README Owners", "README_niels_public_email.md",  "public@example.nl",        "Valid approver: Member with username \"niels\" can approve (AccessLevel:50=OWNER)"),
+            new Problem.Warning ("README Owners", "README_niels_private_email.md", "private@example.nl",       "Unable to verify email address: Assuming the user exists and can approve"),
+            new Problem.Error   ("README Owners", "README_dummy_public_email.md",  "public@dummy.example.nl",  "User exists but is not a member of with this project: Dummy User"),
+            new Problem.Error   ("README Owners", "README_dummy_public_email.md",  "",                         "NO Valid Approvers for rule"),
+            new Problem.Warning ("README Owners", "README_dummy_private_email.md", "private@dummy.example.nl", "Unable to verify email address: Assuming the user exists and can approve")
+        );
+        if (enforcerRuleException != null) {
+            throw enforcerRuleException;
         }
     }
 
     @Test
     @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
     @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
-    public void testOwnerHandling(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
-        String httpBaseUrl = wmRuntimeInfo.getHttpBaseUrl();
-        GitlabConfiguration configuration = makeConfig(httpBaseUrl, null, "FETCH_USER_ACCESS_TOKEN");
-
-        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
-            CodeOwners codeOwners = new CodeOwners(
+    public void testShowMixedErrorReport(WireMockRuntimeInfo wmRuntimeInfo, TestInfo testInfo) throws EnforcerRuleException {
+        GitlabConfiguration configuration = new GitlabConfiguration(
+            new ServerUrl(wmRuntimeInfo.getHttpBaseUrl(), null),
+            new ProjectId(null, null),
+            new AccessToken("FETCH_USER_ACCESS_TOKEN")
+        )
+            .setShowAllApprovers(true);
+        EnforcerRuleException enforcerRuleException = runCodeownersValidation(testInfo, configuration,
+            true,
+            new CodeOwners(
                 "[README Owners]\n" +
-                "README_niels.md @niels\n" + // niels --> is member
-                "README_dummy.md @dummy\n" + // dummy --> is NOT member --> Error
-                "README_niels_public_email.md public@example.nl\n" + // niels --> is member
-                "README_niels_private_email.md private@example.nl\n" + // niels --> is member --> Cannot find --> Warning only
-                "README_dummy_public_email.md public@dummy.example.nl\n" + // dummy --> is NOT member --> Error
-                "README_dummy_private_email.md private@dummy.example.nl\n"  // niels --> is NOT member --> Cannot find --> Warning only
-            );
+                "README_niels.md @niels\n" + // INFO:  niels --> is member
+                "README_niels_private_email.md private@example.nl\n" + // WARNING: niels --> is member --> Cannot find --> Warning only
+                "README_dummy.md @dummy\n" + // ERROR: dummy --> is NOT member --> Error
+                "README_badrole.md @@badrole\n" // ERROR: dummy --> is NOT member --> Error
+            ),
+            new Problem.Info    ("README Owners", "README_niels.md",               "@niels",             "Valid approver: Member with username \"niels\" can approve (AccessLevel:50=OWNER)"),
+            new Problem.Warning ("README Owners", "README_niels_private_email.md", "private@example.nl", "Unable to verify email address: Assuming the user exists and can approve"),
+            new Problem.Error   ("README Owners", "README_dummy.md",               "@dummy",             "User exists but is not a member of with this project: Dummy User"),
+            new Problem.Error   ("README Owners", "README_dummy.md",               "",                   "NO Valid Approvers for rule"),
+            new Problem.Fatal   ("README Owners", "README_badrole.md",             "@@badrole",          "Illegal role was specified")
+        );
+        assertNotNull(enforcerRuleException);
+    }
 
-            EnforcerTestLogger logger = new EnforcerTestLogger();
-            gitlabProjectMembers.setShowAllApprovers(true);
-            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners));
-            gitlabProjectMembers.setShowAllApprovers(false);
-            assertThrows(EnforcerRuleException.class, () -> gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners));
 
-            logger.assertContainsInfo ("| README Owners | README_niels.md               | @niels                   | Valid approver. Member with username \"niels\" has access level 50 (=OWNER)");
-            logger.assertContainsError("| README Owners | README_dummy.md               | @dummy                   | User is not a member of with this project: Dummy User");
-            logger.assertContainsError("| README Owners | README_dummy.md               |                          | NO Valid Approvers for rule");
-            logger.assertContainsInfo ("| README Owners | README_niels_public_email.md  | public@example.nl        | Valid approver. Member with username \"niels\" has access level 50 (=OWNER)");
-            logger.assertContainsWarn ("| README Owners | README_niels_private_email.md | private@example.nl       | Cannot verify access because this is an email address");
-            logger.assertContainsError("| README Owners | README_dummy_public_email.md  | public@dummy.example.nl  | User is not a member of with this project: Dummy User");
-            logger.assertContainsError("| README Owners | README_dummy_public_email.md  |                          | NO Valid Approvers for rule");
-            logger.assertContainsWarn ("| README Owners | README_dummy_private_email.md | private@dummy.example.nl | Cannot verify access because this is an email address");
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testFailLevelNever(WireMockRuntimeInfo wmRuntimeInfo, TestInfo testInfo) throws EnforcerRuleException {
+        GitlabConfiguration configuration = new GitlabConfiguration(
+            new ServerUrl(wmRuntimeInfo.getHttpBaseUrl(), null),
+            new ProjectId(null, null),
+            new AccessToken("FETCH_USER_ACCESS_TOKEN")
+        );
+        runFailLevelTests(testInfo, configuration, NEVER);
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testFailLevelFatal(WireMockRuntimeInfo wmRuntimeInfo, TestInfo testInfo) throws EnforcerRuleException {
+        GitlabConfiguration configuration = new GitlabConfiguration(
+            new ServerUrl(wmRuntimeInfo.getHttpBaseUrl(), null),
+            new ProjectId(null, null),
+            new AccessToken("FETCH_USER_ACCESS_TOKEN")
+        );
+        runFailLevelTests(testInfo, configuration, FATAL);
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testFailLevelError(WireMockRuntimeInfo wmRuntimeInfo, TestInfo testInfo) throws EnforcerRuleException {
+        GitlabConfiguration configuration = new GitlabConfiguration(
+            new ServerUrl(wmRuntimeInfo.getHttpBaseUrl(), null),
+            new ProjectId(null, null),
+            new AccessToken("FETCH_USER_ACCESS_TOKEN")
+        );
+        runFailLevelTests(testInfo, configuration, ERROR);
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testFailLevelWarning(WireMockRuntimeInfo wmRuntimeInfo, TestInfo testInfo) throws EnforcerRuleException {
+        GitlabConfiguration configuration = new GitlabConfiguration(
+            new ServerUrl(wmRuntimeInfo.getHttpBaseUrl(), null),
+            new ProjectId(null, null),
+            new AccessToken("FETCH_USER_ACCESS_TOKEN")
+        )
+        .setFailLevel(WARNING);
+
+        EnforcerRuleException enforcerRuleException;
+        enforcerRuleException = runFailLevelTestInfo(testInfo, configuration);
+        assertNull(enforcerRuleException, "No exception should have been thrown");
+        enforcerRuleException = runFailLevelTestWarning(testInfo, configuration);
+        assertNotNull(enforcerRuleException, "An exception should have been thrown");
+        enforcerRuleException = runFailLevelTestError(testInfo, configuration);
+        assertNotNull(enforcerRuleException, "An exception should have been thrown");
+        enforcerRuleException = runFailLevelTestFatal(testInfo, configuration);
+        assertNotNull(enforcerRuleException, "An exception should have been thrown");
+    }
+
+    private void runFailLevelTests(TestInfo testInfo,
+                                   GitlabConfiguration configuration,
+                                   FailLevel failLevel
+                                   ) throws EnforcerRuleException {
+
+        boolean infoShouldFail = false;
+        boolean warningShouldFail = false;
+        boolean errorShouldFail = false;
+        boolean fatalShouldFail = false;
+        switch (failLevel) {
+            case NEVER:
+                break;
+            case FATAL:
+                fatalShouldFail = true;
+                break;
+            case ERROR:
+                errorShouldFail = true;
+                fatalShouldFail = true;
+                break;
+            case WARNING:
+                warningShouldFail = true;
+                errorShouldFail = true;
+                fatalShouldFail = true;
+                break;
+        }
+        configuration.setFailLevel(failLevel);
+        EnforcerRuleException enforcerRuleException;
+        enforcerRuleException = runFailLevelTestInfo(testInfo, configuration);
+        assertFail(infoShouldFail, enforcerRuleException);
+        enforcerRuleException = runFailLevelTestWarning(testInfo, configuration);
+        assertFail(warningShouldFail, enforcerRuleException);
+        enforcerRuleException = runFailLevelTestError(testInfo, configuration);
+        assertFail(errorShouldFail, enforcerRuleException);
+        enforcerRuleException = runFailLevelTestFatal(testInfo, configuration);
+        assertFail(fatalShouldFail, enforcerRuleException);
+    }
+
+    private void assertFail(boolean shouldFail, EnforcerRuleException enforcerRuleException) {
+        if (shouldFail) {
+            assertNotNull(enforcerRuleException, "An exception should have been thrown");
+        } else {
+            assertNull(enforcerRuleException, "No exception should have been thrown");
         }
     }
 
-    @Test
-    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
-    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
-    public void testFailLevelNever(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
-        GitlabConfiguration configuration = new GitlabConfiguration(
-            new ServerUrl(wmRuntimeInfo.getHttpBaseUrl(), null),
-            new ProjectId(null, null),
-            new AccessToken("FETCH_USER_ACCESS_TOKEN"),
-            true,
-            NEVER
+    private EnforcerRuleException runFailLevelTestFatal(TestInfo testInfo, GitlabConfiguration configuration) {
+        return runCodeownersValidation(testInfo, configuration,
+            new CodeOwners(
+                "[README Owners]\n" +
+                "README_niels.md @niels\n" + // INFO:  niels --> is member
+                "README_niels_private_email.md private@example.nl\n" + // WARNING: niels --> is member --> Cannot find --> Warning only
+                "README_dummy.md @dummy\n" + // ERROR: dummy --> is NOT member --> Error
+                "README_badrole.md @@badrole\n" // ERROR: dummy --> is NOT member --> Error
+            ),
+            new Problem.Info    ("README Owners", "README_niels.md",               "@niels",             "Valid approver: Member with username \"niels\" can approve (AccessLevel:50=OWNER)"),
+            new Problem.Warning ("README Owners", "README_niels_private_email.md", "private@example.nl", "Unable to verify email address: Assuming the user exists and can approve"),
+            new Problem.Error   ("README Owners", "README_dummy.md",               "@dummy",             "User exists but is not a member of with this project: Dummy User"),
+            new Problem.Error   ("README Owners", "README_dummy.md",               "",                   "NO Valid Approvers for rule"),
+            new Problem.Fatal   ("README Owners", "README_badrole.md",             "@@badrole",          "Illegal role was specified")
         );
-
-        EnforcerRuleException enforcerRuleException;
-        enforcerRuleException = runFailLevelTestInfo(configuration);
-        assertNull(enforcerRuleException, "No exception should have been thrown");
-        enforcerRuleException = runFailLevelTestWarning(configuration);
-        assertNull(enforcerRuleException, "No exception should have been thrown");
-        enforcerRuleException = runFailLevelTestError(configuration);
-        assertNull(enforcerRuleException, "No exception should have been thrown");
     }
 
-    @Test
-    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
-    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
-    public void testFailLevelError(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
-        GitlabConfiguration configuration = new GitlabConfiguration(
-            new ServerUrl(wmRuntimeInfo.getHttpBaseUrl(), null),
-            new ProjectId(null, null),
-            new AccessToken("FETCH_USER_ACCESS_TOKEN"),
-            true,
-            ERROR
-        );
-
-        EnforcerRuleException enforcerRuleException;
-        enforcerRuleException = runFailLevelTestInfo(configuration);
-        assertNull(enforcerRuleException, "No exception should have been thrown");
-        enforcerRuleException = runFailLevelTestWarning(configuration);
-        assertNull(enforcerRuleException, "No exception should have been thrown");
-        enforcerRuleException = runFailLevelTestError(configuration);
-        assertNotNull(enforcerRuleException, "An exception should have been thrown");
-    }
-
-    @Test
-    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
-    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
-    public void testFailLevelWarning(WireMockRuntimeInfo wmRuntimeInfo) throws EnforcerRuleException {
-        GitlabConfiguration configuration = new GitlabConfiguration(
-            new ServerUrl(wmRuntimeInfo.getHttpBaseUrl(), null),
-            new ProjectId(null, null),
-            new AccessToken("FETCH_USER_ACCESS_TOKEN"),
-            true,
-            WARNING
-        );
-
-        EnforcerRuleException enforcerRuleException;
-        enforcerRuleException = runFailLevelTestInfo(configuration);
-        assertNull(enforcerRuleException, "No exception should have been thrown");
-        enforcerRuleException = runFailLevelTestWarning(configuration);
-        assertNotNull(enforcerRuleException, "An exception should have been thrown");
-        enforcerRuleException = runFailLevelTestError(configuration);
-        assertNotNull(enforcerRuleException, "An exception should have been thrown");
-    }
-
-
-    private EnforcerRuleException runFailLevelTestError(GitlabConfiguration configuration) throws EnforcerRuleException {
-        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
-            CodeOwners codeOwners = new CodeOwners(
+    private EnforcerRuleException runFailLevelTestError(TestInfo testInfo, GitlabConfiguration configuration) {
+        return runCodeownersValidation(testInfo, configuration,
+            new CodeOwners(
                 "[README Owners]\n" +
                 "README_niels.md @niels\n" + // INFO:  niels --> is member
                 "README_niels_private_email.md private@example.nl\n" + // WARNING: niels --> is member --> Cannot find --> Warning only
                 "README_dummy.md @dummy\n" // ERROR: dummy --> is NOT member --> Error
-            );
-
-            EnforcerTestLogger logger = new EnforcerTestLogger();
-            gitlabProjectMembers.setShowAllApprovers(true);
-            EnforcerRuleException enforcerRuleException = null;
-            try {
-                gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
-            } catch (EnforcerRuleException e) {
-                enforcerRuleException = e;
-            }
-
-            logger.assertContainsInfo ("| README Owners | README_niels.md               | @niels             | Valid approver. Member with username \"niels\" has access level 50 (=OWNER) |");
-            logger.assertContainsWarn ("| README Owners | README_niels_private_email.md | private@example.nl | Cannot verify access because this is an email address                     |");
-            logger.assertContainsError("| README Owners | README_dummy.md               | @dummy             | User is not a member of with this project: Dummy User                     |");
-            logger.assertContainsError("| README Owners | README_dummy.md               |                    | NO Valid Approvers for rule                                               |");
-            return enforcerRuleException;
-        }
+            ),
+            new Problem.Info    ("README Owners", "README_niels.md",               "@niels",             "Valid approver: Member with username \"niels\" can approve (AccessLevel:50=OWNER)"),
+            new Problem.Warning ("README Owners", "README_niels_private_email.md", "private@example.nl", "Unable to verify email address: Assuming the user exists and can approve"),
+            new Problem.Error   ("README Owners", "README_dummy.md",               "@dummy",             "User exists but is not a member of with this project: Dummy User"),
+            new Problem.Error   ("README Owners", "README_dummy.md",               "",                   "NO Valid Approvers for rule")
+        );
     }
 
-    private EnforcerRuleException runFailLevelTestWarning(GitlabConfiguration configuration) throws EnforcerRuleException {
-        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
-            CodeOwners codeOwners = new CodeOwners(
+    private EnforcerRuleException runFailLevelTestWarning(TestInfo testInfo, GitlabConfiguration configuration) {
+        return runCodeownersValidation(testInfo, configuration,
+            new CodeOwners(
                 "[README Owners]\n" +
                 "README_niels.md @niels\n" + // INFO:  niels --> is member
                 "README_niels_private_email.md private@example.nl\n" // WARNING: niels --> is member --> Cannot find --> Warning only
-            );
-
-            EnforcerTestLogger logger = new EnforcerTestLogger();
-            gitlabProjectMembers.setShowAllApprovers(true);
-            EnforcerRuleException enforcerRuleException = null;
-            try {
-                gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
-            } catch (EnforcerRuleException e) {
-                enforcerRuleException = e;
-            }
-
-            logger.assertContainsInfo ("| README Owners | README_niels.md               | @niels             | Valid approver. Member with username \"niels\" has access level 50 (=OWNER) |");
-            logger.assertContainsWarn ("| README Owners | README_niels_private_email.md | private@example.nl | Cannot verify access because this is an email address                     |");
-            return enforcerRuleException;
-        }
+            ),
+            new Problem.Warning("README Owners", "README_niels_private_email.md", "private@example.nl","Unable to verify email address: Assuming the user exists and can approve")
+        );
     }
 
-    private EnforcerRuleException runFailLevelTestInfo(GitlabConfiguration configuration) throws EnforcerRuleException {
-        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
-            CodeOwners codeOwners = new CodeOwners(
+    private EnforcerRuleException runFailLevelTestInfo(TestInfo testInfo, GitlabConfiguration configuration) {
+        return runCodeownersValidation(testInfo, configuration,
+            new CodeOwners(
                 "[README Owners]\n" +
                 "README_niels.md @niels\n" // INFO:  niels --> is member
-            );
+            ),
+            new Problem.Info("README Owners", "README_niels.md", "@niels", "Valid approver: Member with username \"niels\" can approve (AccessLevel:50=OWNER)")
+        );
+    }
 
-            EnforcerTestLogger logger = new EnforcerTestLogger();
+    private EnforcerRuleException runCodeownersValidation(TestInfo testInfo, GitlabConfiguration configuration, CodeOwners codeOwners, Problem...expectedProblems) {
+        return runCodeownersValidation(testInfo, configuration, false, codeOwners, expectedProblems);
+    }
+
+    private EnforcerRuleException runCodeownersValidation(TestInfo testInfo, GitlabConfiguration configuration, boolean logResult, CodeOwners codeOwners, Problem...expectedProblems) {
+        try(GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(configuration)) {
+            EnforcerTestLogger logger = new EnforcerTestLogger(testInfo.getTestMethod().map(Method::getName).orElse("runCodeownersValidation"));
             gitlabProjectMembers.setShowAllApprovers(true);
             EnforcerRuleException enforcerRuleException = null;
+            ProblemTable problemTable = null;
             try {
-                gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
+                problemTable = gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners);
+                gitlabProjectMembers.failIfExceededFailLevel(problemTable);
             } catch (EnforcerRuleException e) {
                 enforcerRuleException = e;
             }
 
-            logger.assertContainsInfo ("| README Owners | README_niels.md | @niels   | Valid approver. Member with username \"niels\" has access level 50 (=OWNER) |");
+            assertNotNull(problemTable);
+            for (Problem expectedProblem : expectedProblems) {
+                assertTrue(problemTable.contains(expectedProblem), "The problem table \n" + problemTable.getProblems().stream().map(Problem::toString).collect(Collectors.joining("\n")) + "\n should contain \n" + expectedProblem);
+            }
+            if (logResult) {
+                logger.info(problemTable.toString());
+            }
             return enforcerRuleException;
         }
+        catch (EnforcerRuleException e) {
+            return e;
+        }
     }
-
 }
