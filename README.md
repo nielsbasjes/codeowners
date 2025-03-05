@@ -100,8 +100,9 @@ Normally this rule will fail if an Error level situation is found.
 
 You can change when to fail in relation to the Gitlab users and groups:
 - **NEVER**:   Never fail.
-- **ERROR**:   Only fail if there is an Error. (this is the default setting)
-- **WARNING**: Fail if there is at least a single Warning or Error.
+- **FATAL**:   Only fail if there is a Fatal problem.
+- **ERROR**:   Only fail if there is an Error or Fatal problem. (this is the default setting)
+- **WARNING**: Fail if there is at least a single Warning, Error or Fatal.
 
 ```xml
 <gitlab>

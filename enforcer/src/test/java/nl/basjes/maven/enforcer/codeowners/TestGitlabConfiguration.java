@@ -22,6 +22,10 @@ import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel.ERROR;
 import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.FailLevel.NEVER;
 import static nl.basjes.maven.enforcer.codeowners.TestGitlabUsers.makeConfig;
@@ -34,6 +38,40 @@ import static wiremock.org.hamcrest.core.StringContains.containsString;
 
 @WireMockTest
 public class TestGitlabConfiguration {
+
+    @Test
+    void testStr() {
+        List<String> strings = Arrays.asList(
+            "A",
+            "你",
+            "🖖",
+            "👹",
+            "❌",
+            "❗",
+            "❗\uFE0F",
+            "⚠",
+            "⚠\uFE0F",
+            "x"
+        ) ;
+        strings.forEach(this::print);
+    }
+    static final String digits = "0123456789ABCDEF";
+
+    static String integerToHex(int input) {
+        if (input <= 0)
+            return "0";
+        StringBuilder hex = new StringBuilder();
+        while (input > 0) {
+            int digit = input % 16;
+            hex.insert(0, digits.charAt(digit));
+            input = input / 16;
+        }
+        return hex.toString();
+    }
+    private void print(String s) {
+        System.out.println(s + " : " + s.length() + " chars; " + s.codePoints().count() + " codepoints: " + s.codePoints().mapToObj(c -> "0x" + integerToHex(c)).collect(Collectors.joining(" ")));
+    }
+
 
     @Test
 //    @SetEnvironmentVariable(key = "CI_SERVER_URL",           value = "foobar") // <<-- Is bad

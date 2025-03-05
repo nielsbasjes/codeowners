@@ -72,6 +72,10 @@ public final class ProblemTable extends StringTable{
                 logger.error(writeLine(problem));
                 continue;
             }
+            if (problem instanceof Problem.Fatal) {
+                logger.error(writeLine(problem));
+                continue;
+            }
             if (problem != null) {
                 logger.info(writeLine(problem));
             }

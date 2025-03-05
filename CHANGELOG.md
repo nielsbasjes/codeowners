@@ -4,6 +4,7 @@ This is intended as an overview of the major changes
 NEXT VERSION
 ===
 - Improve readability of the all approvers list.
+- Make level configurable per type of problem
 
 v1.11.1
 ===

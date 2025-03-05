@@ -24,7 +24,7 @@ import java.util.List;
 
 @Getter
 public class Problem {
-    private final List<String> fields = new ArrayList<>();
+    protected final List<String> fields = new ArrayList<>();
 
     public Problem(String section, String expression, String approver, String description) {
         fields.add(section);
@@ -42,12 +42,22 @@ public class Problem {
     public static class Warning extends Problem {
         public Warning(String section, String expression, String approver, String description) {
             super(section, expression, approver, description);
+            fields.add("⚠️");
         }
     }
 
     public static class Error extends Problem {
         public Error(String section, String expression, String approver, String description) {
             super(section, expression, approver, description);
+            fields.add("❌");
         }
     }
+
+    public static class Fatal extends Problem {
+        public Fatal(String section, String expression, String approver, String description) {
+            super(section, expression, approver, description);
+            fields.add("⛔\uFE0F");
+        }
+    }
+
 }

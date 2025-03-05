@@ -18,10 +18,15 @@
 package nl.basjes.maven.enforcer.codeowners;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.regex.Pattern;
+
+import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.Level.ERROR;
+import static nl.basjes.maven.enforcer.codeowners.GitlabConfiguration.Level.WARNING;
 
 @Getter
 @NoArgsConstructor
@@ -33,13 +38,56 @@ public class GitlabConfiguration {
 
     private boolean showAllApprovers = false;
 
-    public static enum FailLevel {
+    public enum FailLevel {
         NEVER,
+        FATAL,
         ERROR,
         WARNING
     }
 
+    public enum Level {
+        INFO,
+        WARNING,
+        ERROR
+    }
+
+    @Getter @Setter
     private FailLevel failLevel = FailLevel.ERROR;
+
+    private ProblemLevels problemLevels = new ProblemLevels();
+    public static class ProblemLevels {
+        public Level roleNoUsers             = WARNING;
+        public Level userUnknownEmail        = WARNING;
+        public Level userDisabled            = WARNING;
+        public Level userDoesNotExist        = WARNING;
+        public Level userTooLowPermissions   = WARNING;
+        public Level groupTooLowPermissions  = WARNING;
+        public Level userNotProjectMember    = ERROR;
+        public Level groupNotProjectMember   = ERROR;
+        public Level noValidApprovers        = ERROR;
+
+        @Override
+        public String toString() {
+            return "Configured ProblemLevels: \n" +
+                "- roleNoUsers            = " + roleNoUsers + "\n" +
+                "- userUnknownEmail       = " + userUnknownEmail + "\n" +
+                "- userDisabled           = " + userDisabled + "\n" +
+                "- userDoesNotExist       = " + userDoesNotExist + "\n" +
+                "- userTooLowPermissions  = " + userTooLowPermissions + "\n" +
+                "- groupTooLowPermissions = " + groupTooLowPermissions + "\n" +
+                "- userNotProjectMember   = " + userNotProjectMember + "\n" +
+                "- groupNotProjectMember  = " + groupNotProjectMember + "\n" +
+                "- noValidApprovers       = " + noValidApprovers + "\n";
+        }
+    }
+
+    public GitlabConfiguration(ServerUrl serverUrl, ProjectId projectId, AccessToken accessToken, boolean showAllApprovers, FailLevel failLevel) {
+        this(serverUrl, projectId, accessToken, showAllApprovers, failLevel, new ProblemLevels());
+    }
+
+    public GitlabConfiguration(ServerUrl serverUrl, ProjectId projectId, AccessToken accessToken) {
+        this(serverUrl, projectId, accessToken, true, FailLevel.ERROR, new ProblemLevels());
+    }
 
     public Boolean isValid() {
         return serverUrl.isValid() && projectId.isValid() && accessToken.isValid();
