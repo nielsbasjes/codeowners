@@ -40,7 +40,9 @@ import org.gitlab4j.api.models.User;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -147,15 +149,15 @@ public class GitlabProjectMembers implements AutoCloseable {
 
     public void verifyAllCodeowners(EnforcerLogger log, CodeOwners codeOwners) throws EnforcerRuleException {
         log.info("Fetching all project members from Gitlab (can easily take >15 seconds on a many user project)");
-        Map<String, Member>      allProjectMembers    = getAllProjectMembers().stream().collect(Collectors.toMap(Member::getUsername, Function.identity()));
+        Map<String, Member>      allProjectMembers    = getAllProjectMembers().stream().filter(distinctByKey(Member::getUsername)).collect(Collectors.toMap(Member::getUsername, Function.identity()));
         log.info("-- Received project members: " + allProjectMembers.size());
 
         log.info("Fetching all direct project members from Gitlab (can easily take >15 seconds on a many user project)");
-        Map<String, Member>      directProjectMembers = getDirectProjectMembers().stream().collect(Collectors.toMap(Member::getUsername, Function.identity()));
+        Map<String, Member>      directProjectMembers = getDirectProjectMembers().stream().filter(distinctByKey(Member::getUsername)).collect(Collectors.toMap(Member::getUsername, Function.identity()));
         log.info("-- Received direct project members: " + directProjectMembers.size());
 
         log.info("Fetching shared groups from Gitlab");
-        Map<String, SharedGroup> sharedGroups         = getSharedGroups().stream().collect(Collectors.toMap(SharedGroup::getGroupFullPath, Function.identity()));
+        Map<String, SharedGroup> sharedGroups         = getSharedGroups().stream().filter(distinctByKey(SharedGroup::getGroupId)).collect(Collectors.toMap(SharedGroup::getGroupFullPath, Function.identity()));
         log.info("-- Received shared groups: " + sharedGroups.size());
 
         log.info("Verifying CODEOWNERS with actual user permissions...");
@@ -342,5 +344,12 @@ public class GitlabProjectMembers implements AutoCloseable {
             }
             throw new EnforcerRuleException("Found " + results.getNumberOfWarnings() + " warnings and " + results.getNumberOfErrors() + " errors of the CODEOWNERS file in relation to the Gitlab project.");
         }
+    }
+
+    private static <T> Predicate<T> distinctByKey(
+        Function<? super T, ?> keyExtractor) {
+
+        Map<Object, Boolean> seen = new ConcurrentHashMap<>();
+        return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }
 }
