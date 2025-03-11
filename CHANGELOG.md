@@ -3,6 +3,10 @@ This is intended as an overview of the major changes
 
 NEXT VERSION
 ===
+...
+
+v.1.11.2
+===
 - Fix for strange duplicate users returned by Gitlab (provided by https://github.com/cvuik)
 
 v1.11.1
