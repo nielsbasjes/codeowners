@@ -24,7 +24,7 @@ You can set this to get output on all approvers.
 
 ```xml
 <gitlab>
-    <showAllApprovers>true</showAllApprovers>
+  <showAllApprovers>true</showAllApprovers>
 </gitlab>
 ```
 
@@ -39,9 +39,9 @@ In this example it is expected that the environment variable `CHECK_USERS_TOKEN`
 
 ```xml
 <gitlab>
-    <accessToken>
-        <environmentVariableName>CHECK_USERS_TOKEN</environmentVariableName>
-    </accessToken>
+  <accessToken>
+    <environmentVariableName>CHECK_USERS_TOKEN</environmentVariableName>
+  </accessToken>
 </gitlab>
 ```
 
@@ -52,67 +52,95 @@ For some projects it is not wanted to fail if there is a problem with the CODEOW
 Normally this rule will fail if an Error level situation is found.
 
 You can change when to fail in relation to the Gitlab users and groups:
-- **NEVER**:   Never fail, even under configuration errors that will never be correct (i.e. FATAL).
+- **NEVER**:   **Never fail**, even under configuration errors that will never be correct (i.e. `FATAL`).
 - **FATAL**:   Only fail if there is a Fatal problem (configuration error).
 - **ERROR**:   Only fail if there is an Error or Fatal problem. (this is the default setting)
 - **WARNING**: Fail if there is at least a single Warning, Error or Fatal.
 
 ```xml
 <gitlab>
-    <failLevel>FATAL</failLevel>
+  <failLevel>FATAL</failLevel>
 </gitlab>
 ```
 
 You can also configure what level specific problems are.
+You can specify either `INFO`, `WARNING`, `ERROR` or `FATAL`.
 
-Note that specifying a non-existent role (i.e. @@something) is always of level FATAL because it is a configuration error.
+Note that specifying a non-existent role (i.e. `@@something`) is always of level `FATAL` because it is a configuration error.
 
 The available settings with the default value in the example
-- roleNoUsers:
-  - There are no users in the mentioned role (i.e. @@developer, @@maintainer or @owner).
-    ```xml
-    <roleNoUsers>WARNING</roleNoUsers>
+- There are no users in the mentioned role (i.e. @@developer, @@maintainer or @owner).
+  ```xml
+  <gitlab>
+    <problemLevels>
+      <roleNoUsers>WARNING</roleNoUsers>
+  ```
+- A user was specified by email, but it was not their public email so it is impossible to verify if this user actually exists.
+  There are 2 settings here; what level of problem is this, and if it happens should we assume the users exists and has enough permissions to approve?
+  ```xml
+  <gitlab>
+    <assumeUncheckableEmailExistsAndCanApprove>true</assumeUncheckableEmailExistsAndCanApprove>
+    <problemLevels>
+      <userUnknownEmail>WARNING</userUnknownEmail>
+    </problemLevels>
+  </gitlab>
     ```
-- userUnknownEmail
-  - A user was specified by email, but it was not their public email so it is impossible to verify if this user actually exists.
-    ```xml
-    <userUnknownEmail>WARNING</userUnknownEmail>
-    ```
-- userDisabled
-  - The user was found and their account was disabled (either locked and/or not active).
-    ```xml
-    <userDisabled>WARNING</userDisabled>
-    ```
-- approverDoesNotExist
-  - The mentioned approver does not exist; unknown if this was intended as a group or a user.
-    ```xml
-    <approverDoesNotExist>WARNING</approverDoesNotExist>
-    ```
-- userTooLowPermissions
-  - The mentioned user exists but does not have enough permissions to actually do any approving.
-    ```xml
-    <userTooLowPermissions>WARNING</userTooLowPermissions>
-    ```
-- groupTooLowPermissions
-  - The mentioned group exists but does not have enough permissions to actually do any approving.
-    ```xml
-    <groupTooLowPermissions>WARNING</groupTooLowPermissions>
-    ```
-- userNotProjectMember
-  - The mentioned user exists but is not a member in this project.
-    ```xml
-    <userNotProjectMember>ERROR</userNotProjectMember>
-    ```
-- groupNotProjectMember
-  - The mentioned group exists but is not a member in this project.
-    ```xml
-    <groupNotProjectMember>ERROR</groupNotProjectMember>
-    ```
-- noValidApprovers
-  - After removing all users and groups that cannot approve there are no approvers left for the mentioned rule.
-    ```xml
-    <noValidApprovers>ERROR</noValidApprovers>
-    ```
+- The user was found and their account was disabled (either locked and/or not active).
+  ```xml
+  <gitlab>
+    <problemLevels>
+      <userDisabled>WARNING</userDisabled>
+    </problemLevels>
+  </gitlab>
+  ```
+- The mentioned approver does not exist; unknown if this was intended as a group or a user.
+  ```xml
+  <gitlab>
+    <problemLevels>
+      <approverDoesNotExist>WARNING</approverDoesNotExist>
+    </problemLevels>
+  </gitlab>
+  ```
+- The mentioned user exists but does not have enough permissions to actually do any approving.
+  ```xml
+  <gitlab>
+    <problemLevels>
+      <userTooLowPermissions>WARNING</userTooLowPermissions>
+    </problemLevels>
+  </gitlab>
+  ```
+- The mentioned group exists but does not have enough permissions to actually do any approving.
+  ```xml
+  <gitlab>
+    <problemLevels>
+      <groupTooLowPermissions>WARNING</groupTooLowPermissions>
+    </problemLevels>
+  </gitlab>
+  ```
+- The mentioned user exists but is not a member in this project.
+  ```xml
+  <gitlab>
+    <problemLevels>
+      <userNotProjectMember>ERROR</userNotProjectMember>
+    </problemLevels>
+  </gitlab>
+  ```
+- The mentioned group exists but is not a member in this project.
+  ```xml
+  <gitlab>
+    <problemLevels>
+      <groupNotProjectMember>ERROR</groupNotProjectMember>
+    </problemLevels>
+  </gitlab>
+  ```
+- After removing all users and groups that cannot approve there are no approvers left for the mentioned rule.
+  ```xml
+  <gitlab>
+    <problemLevels>
+      <noValidApprovers>ERROR</noValidApprovers>
+    </problemLevels>
+  </gitlab>
+  ```
 
 
 ## Gitlab server url
@@ -121,19 +149,28 @@ The Gitlab server url can be configured directly or retrieved from an environmen
 - Directly configured:
     ```xml
     <gitlab>
-        <serverUrl>
-            <url>https://gitlab.example.nl</url>
-        </serverUrl>
+      <serverUrl>
+        <url>https://gitlab.example.nl</url>
+      </serverUrl>
     </gitlab>
     ```
 - Retrieved from a configured environment variable. In this example it is expected that the environment variable `MY_ENVIRONMENT_VARIABLE` contains something like `https://gitlab.example.nl`.
     ```xml
     <gitlab>
-        <serverUrl>
-            <environmentVariableName>MY_ENVIRONMENT_VARIABLE</environmentVariableName>
-        </serverUrl>
+      <serverUrl>
+        <environmentVariableName>MY_ENVIRONMENT_VARIABLE</environmentVariableName>
+      </serverUrl>
     </gitlab>
     ```
+
+Effectively the default config for this is
+```xml
+<gitlab>
+  <serverUrl>
+    <environmentVariableName>CI_SERVER_URL</environmentVariableName>
+  </serverUrl>
+</gitlab>
+```
 
 ## Gitlab project id
 The Gitlab project id can be configured directly or retrieved from an environment variable.
@@ -141,124 +178,138 @@ The Gitlab project id can be configured directly or retrieved from an environmen
 - Directly configured:
     ```xml
     <gitlab>
-        <projectId>
-            <id>group/project</id>
-        </projectId>
+      <projectId>
+        <id>group/project</id>
+      </projectId>
     </gitlab>
     ```
 - Retrieved from a configured environment variable. In this example it is expected that the environment variable `MY_ENVIRONMENT_VARIABLE` contains something like `group/project`.
     ```xml
     <gitlab>
-        <projectId>
-            <environmentVariableName>MY_ENVIRONMENT_VARIABLE</environmentVariableName>
-        </projectId>
+      <projectId>
+        <environmentVariableName>MY_ENVIRONMENT_VARIABLE</environmentVariableName>
+      </projectId>
     </gitlab>
     ```
+
+Effectively the default config for this is
+```xml
+<gitlab>
+  <projectId>
+    <environmentVariableName>CI_PROJECT_ID</environmentVariableName>
+  </projectId>
+</gitlab>
+```
 
 
 ## Example (Normal usage)
 In one of my projects it looks like this:
 
-    <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-enforcer-plugin</artifactId>
-      <version>3.4.1</version>
-      <dependencies>
-        <dependency>
-          <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
-          <artifactId>codeowners-enforcer-rules</artifactId>
-          <version>1.11.1</version>
-        </dependency>
-      </dependencies>
-      <executions>
-        <execution>
-          <id>Ensure the CODEOWNERS is correct</id>
-          <phase>verify</phase>
-          <goals>
-            <goal>enforce</goal>
-          </goals>
-          <inherited>false</inherited>
-          <configuration>
-            <rules>
-              <codeOwners>
-                <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
-                <codeOwnersFile>${maven.multiModuleProjectDirectory}/CODEOWNERS</codeOwnersFile>
-                <allFilesMustHaveCodeOwner>true</allFilesMustHaveCodeOwner>
-                <!-- <verbose>true</verbose> -->
-                <!-- <showApprovers>true</showApprovers> -->
-                <gitlab>
-                    <accessToken>
-                        <environmentVariableName>CHECK_USERS_TOKEN</environmentVariableName>
-                    </accessToken>
-                </gitlab>
-              </codeOwners>
-            </rules>
-          </configuration>
-        </execution>
-      </executions>
-    </plugin>
+```xml
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-enforcer-plugin</artifactId>
+  <version>3.4.1</version>
+  <dependencies>
+    <dependency>
+      <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
+      <artifactId>codeowners-enforcer-rules</artifactId>
+      <version>1.11.1</version>
+    </dependency>
+  </dependencies>
+  <executions>
+    <execution>
+      <id>Ensure the CODEOWNERS is correct</id>
+      <phase>verify</phase>
+      <goals>
+        <goal>enforce</goal>
+      </goals>
+      <inherited>false</inherited>
+      <configuration>
+        <rules>
+          <codeOwners>
+            <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
+            <codeOwnersFile>${maven.multiModuleProjectDirectory}/CODEOWNERS</codeOwnersFile>
+            <allFilesMustHaveCodeOwner>true</allFilesMustHaveCodeOwner>
+            <!-- <verbose>true</verbose> -->
+            <!-- <showApprovers>true</showApprovers> -->
+            <gitlab>
+              <accessToken>
+                <environmentVariableName>CHECK_USERS_TOKEN</environmentVariableName>
+              </accessToken>
+            </gitlab>
+          </codeOwners>
+        </rules>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+```
 
 ## Example (All options example)
 
-    <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-enforcer-plugin</artifactId>
-      <version>3.4.1</version>
-      <dependencies>
-        <dependency>
-          <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
-          <artifactId>codeowners-enforcer-rules</artifactId>
-          <version>1.11.1</version>
-        </dependency>
-      </dependencies>
-      <executions>
-        <execution>
-          <id>Ensure the CODEOWNERS is correct</id>
-          <phase>verify</phase>
-          <goals>
-            <goal>enforce</goal>
-          </goals>
-          <inherited>false</inherited>
-          <configuration>
-            <rules>
-              <codeOwners>
-                <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
-                <codeOwnersFile>${maven.multiModuleProjectDirectory}/CODEOWNERS</codeOwnersFile>
-                <allFilesMustHaveCodeOwner>true</allFilesMustHaveCodeOwner>
-                <!-- <verbose>true</verbose> -->
-                <!-- <showApprovers>true</showApprovers> -->
-                <gitlab>
-                    <accessToken>
-                        <environmentVariableName>CHECK_USERS_TOKEN</environmentVariableName>
-                    </accessToken>
-                    <serverUrl>
-                        <environmentVariableName>CI_SERVER_URL</environmentVariableName>
-                    </serverUrl>
-                    <projectId>
-                        <environmentVariableName>CI_PROJECT_ID</environmentVariableName>
-                    </projectId>
+```xml
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-enforcer-plugin</artifactId>
+  <version>3.4.1</version>
+  <dependencies>
+    <dependency>
+      <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
+      <artifactId>codeowners-enforcer-rules</artifactId>
+      <version>1.11.1</version>
+    </dependency>
+  </dependencies>
+  <executions>
+    <execution>
+      <id>Ensure the CODEOWNERS is correct</id>
+      <phase>verify</phase>
+      <goals>
+        <goal>enforce</goal>
+      </goals>
+      <inherited>false</inherited>
+      <configuration>
+        <rules>
+          <codeOwners>
+            <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
+            <codeOwnersFile>${maven.multiModuleProjectDirectory}/CODEOWNERS</codeOwnersFile>
+            <allFilesMustHaveCodeOwner>true</allFilesMustHaveCodeOwner>
+            <!-- <verbose>true</verbose> -->
+            <!-- <showApprovers>true</showApprovers> -->
+            <gitlab>
+              <accessToken>
+                <environmentVariableName>CHECK_USERS_TOKEN</environmentVariableName>
+              </accessToken>
+              <serverUrl>
+                <environmentVariableName>CI_SERVER_URL</environmentVariableName>
+              </serverUrl>
+              <projectId>
+                <environmentVariableName>CI_PROJECT_ID</environmentVariableName>
+              </projectId>
+              <showAllApprovers>true</showAllApprovers>
 
-                    <showAllApprovers>true</showAllApprovers>
+              <failLevel>FATAL</failLevel>
 
-                    <failLevel>FATAL</failLevel>
-
-                    <roleNoUsers>WARNING</roleNoUsers>
-                    <userUnknownEmail>WARNING</userUnknownEmail>
-                    <userDisabled>WARNING</userDisabled>
-                    <approverDoesNotExist>WARNING</approverDoesNotExist>
-                    <userTooLowPermissions>WARNING</userTooLowPermissions>
-                    <groupTooLowPermissions>WARNING</groupTooLowPermissions>
-                    <userNotProjectMember>ERROR</userNotProjectMember>
-                    <groupNotProjectMember>ERROR</groupNotProjectMember>
-                    <noValidApprovers>ERROR</noValidApprovers>
-                </gitlab>
-              </codeOwners>
-            </rules>
-          </configuration>
-        </execution>
-      </executions>
-    </plugin>
-
+              <assumeUncheckableEmailExistsAndCanApprove>true</assumeUncheckableEmailExistsAndCanApprove>
+              <problemLevels>
+                <roleNoUsers>WARNING</roleNoUsers>
+                <userUnknownEmail>WARNING</userUnknownEmail>
+                <userDisabled>WARNING</userDisabled>
+                <approverDoesNotExist>WARNING</approverDoesNotExist>
+                <userTooLowPermissions>WARNING</userTooLowPermissions>
+                <groupTooLowPermissions>WARNING</groupTooLowPermissions>
+                <userNotProjectMember>ERROR</userNotProjectMember>
+                <groupNotProjectMember>ERROR</groupNotProjectMember>
+                <noValidApprovers>FATAL</noValidApprovers>
+              </problemLevels>
+            </gitlab>
+          </codeOwners>
+        </rules>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+```
 
 # License
 

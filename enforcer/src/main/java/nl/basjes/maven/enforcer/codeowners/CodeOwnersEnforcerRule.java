@@ -77,8 +77,8 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
          boolean runGitlabMembersCheck = false;
         if (gitlab != null) {
             if (gitlab.isDefaultCIConfigRunningOutsideCI()) {
-                getLog().info("Found Gitlab CI config that only works within Gitlab CI.");
-                getLog().info("Skipping Gitlab Project Members check because this is not GitlabCI.");
+                getLog().warn("Found Gitlab CI config that only works within Gitlab CI.");
+                getLog().warn("Skipping Gitlab Project Members check because this is not GitlabCI.");
                 getLog().info("Found GitLab configuration:\n" + gitlab);
             } else {
                 if (gitlab.isValid()) {
