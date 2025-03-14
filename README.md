@@ -15,10 +15,10 @@ Reality: The syntax of these files can be tricky, and it is quite easy to write 
 
 # What is this
 1) A Java library to read a CODEOWNERS file.
-2) A Java library to read a/all .gitignore file(s) in directory.
+2) A Java library to read a/all .gitignore file(s) in directory tree.
 3) An extra rule for the Maven Enforcer plugin to check the CODEOWNERS against
    1) the actual project files. (See Usage below)
-   2) the actual users, groups and roles in Gitlab. (BETA) (See Usage below)
+   2) the actual users, groups and roles in Gitlab. (BETA) (See [README-gitlab.md](README-gitlab.md))
 
 The intended goal is to make the build fail if the codeowners file does not cover all files and directories in the project.
 
@@ -57,44 +57,46 @@ Checking this page for all the information: [README-gitlab.md](README-gitlab.md)
 ## Example
 In one of my projects it looks like this:
 
-    <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-enforcer-plugin</artifactId>
-      <version>3.4.1</version>
-      <dependencies>
-        <dependency>
-          <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
-          <artifactId>codeowners-enforcer-rules</artifactId>
-          <version>1.11.1</version>
-        </dependency>
-      </dependencies>
-      <executions>
-        <execution>
-          <id>Ensure the CODEOWNERS is correct</id>
-          <phase>verify</phase>
-          <goals>
-            <goal>enforce</goal>
-          </goals>
-          <inherited>false</inherited>
-          <configuration>
-            <rules>
-              <codeOwners>
-                <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
-                <codeOwnersFile>${maven.multiModuleProjectDirectory}/CODEOWNERS</codeOwnersFile>
-                <allFilesMustHaveCodeOwner>true</allFilesMustHaveCodeOwner>
-                <!-- <verbose>true</verbose> -->
-                <!-- <showApprovers>true</showApprovers> -->
-                <gitlab>
-                    <accessToken>
-                        <environmentVariableName>CHECK_USERS_TOKEN</environmentVariableName>
-                    </accessToken>
-                </gitlab>
-              </codeOwners>
-            </rules>
-          </configuration>
-        </execution>
-      </executions>
-    </plugin>
+```xml
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-enforcer-plugin</artifactId>
+  <version>3.4.1</version>
+  <dependencies>
+    <dependency>
+      <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
+      <artifactId>codeowners-enforcer-rules</artifactId>
+      <version>1.11.1</version>
+    </dependency>
+  </dependencies>
+  <executions>
+    <execution>
+      <id>Ensure the CODEOWNERS is correct</id>
+      <phase>verify</phase>
+      <goals>
+        <goal>enforce</goal>
+      </goals>
+      <inherited>false</inherited>
+      <configuration>
+        <rules>
+          <codeOwners>
+            <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
+            <codeOwnersFile>${maven.multiModuleProjectDirectory}/CODEOWNERS</codeOwnersFile>
+            <allFilesMustHaveCodeOwner>true</allFilesMustHaveCodeOwner>
+            <!-- <verbose>true</verbose> -->
+            <!-- <showApprovers>true</showApprovers> -->
+            <gitlab>
+              <accessToken>
+                <environmentVariableName>CHECK_USERS_TOKEN</environmentVariableName>
+              </accessToken>
+            </gitlab>
+          </codeOwners>
+        </rules>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+```
 
 # GitIgnore library
 
