@@ -4,7 +4,7 @@ This is intended as an overview of the major changes
 
 NEXT VERSION
 ===
-- ...
+- Fix a test in the Windows build.
 
 v1.11.3
 ===
