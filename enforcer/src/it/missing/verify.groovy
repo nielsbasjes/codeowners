@@ -20,7 +20,7 @@ assert file.exists()
 
 String text = file.getText( "utf-8" )
 
-assert text.contains("[ERROR] --> src/main/README.txt");
+assert text.contains("[ERROR] --> src/main/README.txt") || text.contains("[ERROR] --> src\\main\\README.txt");
 
 assert text.contains("| \${baseDir}/                     | [@integrationtest]  |");
 assert text.contains("| \${baseDir}/.gitlab/             | [@integrationtest]  |");
