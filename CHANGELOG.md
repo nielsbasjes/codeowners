@@ -1,12 +1,17 @@
 
 This is intended as an overview of the major changes
 
+
 NEXT VERSION
+===
+- ...
+
+v1.11.3
 ===
 - Improve readability of the all approvers list and the logging.
 - Make level configurable per type of problem.
 
-v.1.11.2
+v1.11.2
 ===
 - Fix for strange duplicate users returned by Gitlab (provided by https://github.com/cvuik)
 
@@ -14,7 +19,6 @@ v1.11.1
 ===
 - Make problem level at which to fail configurable for the Gitlab rule.
 - Automatically skip if not in Gitlab CI
-
 
 v1.11.0
 ===
