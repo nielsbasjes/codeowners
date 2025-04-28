@@ -45,7 +45,6 @@
 
     <maven-artifact-plugin.version>3.6.0</maven-artifact-plugin.version>
     <maven-clean-plugin.version>3.4.1</maven-clean-plugin.version>
-    <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
     <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
     <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
     <maven-failsafe-plugin.version>3.1.0</maven-failsafe-plugin.version>
@@ -218,11 +217,18 @@
             </executions>
           </plugin>
 
+          <!-- https://central.sonatype.org/publish/publish-portal-maven/ -->
           <plugin>
-            <!-- explicitly define maven-deploy-plugin after other to force exec order -->
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <version>${maven-deploy-plugin.version}</version>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.7.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
+<!--              <autoPublish>true</autoPublish>-->
+<!--              <waitUntil>published</waitUntil>-->
+              <waitUntil>validated</waitUntil>
+            </configuration>
           </plugin>
 
         </plugins>
@@ -272,24 +278,6 @@
       </build>
     </profile>
 
-    <profile>
-      <id>deployToSonatype</id>
-      <distributionManagement>
-        <repository>
-          <id>Sonatype</id>
-          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-        <snapshotRepository>
-          <id>SonatypeSnapshots</id>
-          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-      </distributionManagement>
-      <properties>
-        <altReleaseDeploymentRepository>sonatype::https://oss.sonatype.org/service/local/staging/deploy/maven2/</altReleaseDeploymentRepository>
-        <altSnapshotDeploymentRepository>sonatype::https://oss.sonatype.org/content/repositories/snapshots/</altSnapshotDeploymentRepository>
-      </properties>
-    </profile>
-
   </profiles>
 
 
@@ -317,6 +305,11 @@
           <version>${maven-toolchains-plugin.version}</version>
         </plugin>
 
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-artifact-plugin</artifactId>
+          <version>${maven-artifact-plugin.version}</version>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -618,7 +611,7 @@
 
           <preparationProfiles>packageForRelease</preparationProfiles>
           <preparationGoals>clean verify</preparationGoals>
-          <releaseProfiles>packageForRelease,release,deployToSonatype</releaseProfiles>
+          <releaseProfiles>packageForRelease,release</releaseProfiles>
           <pushChanges>false</pushChanges>
           <remoteTagging>false</remoteTagging>
         </configuration>
