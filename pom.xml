@@ -60,7 +60,7 @@
     <maven-toolchains-plugin.version>3.2.0</maven-toolchains-plugin.version>
 
     <apache-rat-plugin.version>0.16.1</apache-rat-plugin.version>
-    <git-commit-id-maven-plugin.version>9.0.1</git-commit-id-maven-plugin.version>
+    <git-commit-id-maven-plugin.version>9.0.2</git-commit-id-maven-plugin.version>
     <cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
 
     <antlr.version>4.13.2</antlr.version>
