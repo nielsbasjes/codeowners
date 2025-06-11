@@ -99,10 +99,10 @@ fi
 # ----------------------------------------------------------------------------------------------------
 # Forcing a manual gpg signing action to ensure the password is known
 (
-  cd /tmp
-  echo x > CodeOwners-release-$$.txt
-  gpg --clearsign CodeOwners-release-$$.txt
-  rm CodeOwners-release-$$.txt CodeOwners-release-$$.txt.asc
+  cd /tmp || die "Unable to enter /tmp"
+  echo x > ReleaseProcess-$$.txt
+  gpg --clearsign ReleaseProcess-$$.txt
+  rm ReleaseProcess-$$.txt ReleaseProcess-$$.txt.asc
 )
 
 info "GPG workaround: Starting"

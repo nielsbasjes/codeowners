@@ -117,7 +117,13 @@ trap killSigner EXIT
 trap killSigner SIGINT
 
 # ----------------------------------------------------------------------------------------------------
-
-## Prepare the release: Make releasable version and make tag.
-info "Deploying"
+info "Publishing SNAPSHOT"
 mvn clean deploy -PpackageForRelease
+snapshotPublishStatus=$?
+if [ ${snapshotPublishStatus} -ne 0 ];
+then
+    fail "Publishing SNAPSHOT failed."
+    exit ${snapshotPublishStatus}
+else
+    pass "Publishing SNAPSHOT Success."
+fi
