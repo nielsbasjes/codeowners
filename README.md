@@ -66,7 +66,7 @@ In one of my projects it looks like this:
     <dependency>
       <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
       <artifactId>codeowners-enforcer-rules</artifactId>
-      <version>1.11.3</version>
+      <version>1.12.0</version>
     </dependency>
   </dependencies>
   <executions>
