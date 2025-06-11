@@ -79,8 +79,10 @@ public class TestGitlabUsers {
             EnforcerTestLogger logger = new EnforcerTestLogger("testValidCodeOwners");
             gitlabProjectMembers.setShowAllApprovers(true);
             logger.info(gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners).toString());
+            logger.info(gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners).toProblemMessageGroupedString());
             gitlabProjectMembers.setShowAllApprovers(false);
             logger.info(gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners).toString());
+            logger.info(gitlabProjectMembers.verifyAllCodeowners(logger, codeOwners).toProblemMessageGroupedString());
         }
     }
 
@@ -303,19 +305,19 @@ public class TestGitlabUsers {
             new CodeOwners(
                 "[README Owners]\n" +
                 "README_niels.md @niels\n" + // INFO:  niels --> is member
-                "README_niels_private_email.md private@example.nl\n" + // WARNING: niels --> is member --> Cannot find --> Warning only
+                "README_niels_private_email.md private@example.nl private@dummy.example.nl\n" + // WARNING: niels --> is member --> Cannot find --> Warning only
                 "README_dummy.md @dummy\n" + // ERROR: dummy --> is NOT member --> Error
                 "README_badrole.md @@badrole\n" // ERROR: dummy --> is NOT member --> Error
             ),
-            new Problem.Info    ("README Owners", "README_niels.md",               "@niels",             "Valid approver: Member with username \"niels\" can approve (AccessLevel:50=OWNER)"),
-            new Problem.Warning ("README Owners", "README_niels_private_email.md", "private@example.nl", "Unable to verify email address: Assuming the user exists and can approve"),
-            new Problem.Error   ("README Owners", "README_dummy.md",               "@dummy",             "User exists but is not a member of with this project: Dummy User"),
-            new Problem.Error   ("README Owners", "README_dummy.md",               "",                   "NO Valid Approvers for rule"),
-            new Problem.Fatal   ("README Owners", "README_badrole.md",             "@@badrole",          "Illegal role was specified")
+            new Problem.Info    ("README Owners", "README_niels.md",               "@niels",                   "Valid approver: Member with username \"niels\" can approve (AccessLevel:50=OWNER)"),
+            new Problem.Warning ("README Owners", "README_niels_private_email.md", "private@example.nl",       "Unable to verify email address: Assuming the user exists and can approve"),
+            new Problem.Warning ("README Owners", "README_niels_private_email.md", "private@dummy.example.nl", "Unable to verify email address: Assuming the user exists and can approve"),
+            new Problem.Error   ("README Owners", "README_dummy.md",               "@dummy",                   "User exists but is not a member of with this project: Dummy User"),
+            new Problem.Error   ("README Owners", "README_dummy.md",               "",                         "NO Valid Approvers for rule"),
+            new Problem.Fatal   ("README Owners", "README_badrole.md",             "@@badrole",                "Illegal role was specified")
         );
         assertNotNull(enforcerRuleException);
     }
-
 
     @Test
     @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
@@ -496,6 +498,7 @@ public class TestGitlabUsers {
             }
             if (logResult) {
                 logger.info(problemTable.toString());
+                logger.info(problemTable.toProblemMessageGroupedString());
             }
             return enforcerRuleException;
         }

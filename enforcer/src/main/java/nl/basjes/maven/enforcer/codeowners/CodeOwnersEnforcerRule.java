@@ -158,6 +158,9 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
                 ProblemTable problemTable = gitlabProjectMembers.verifyAllCodeowners(getLog(), codeOwners);
                 if (gitlab.isShowAllApprovers() || problemTable.hasWarnings() || problemTable.hasErrors() || problemTable.hasFatalErrors()) {
                     getLog().info(problemTable.toString());
+                    getLog().info("============================");
+                    getLog().info("Summary per problem message:");
+                    getLog().info(problemTable.toProblemMessageGroupedString());
                 }
                 gitlabProjectMembers.failIfExceededFailLevel(problemTable);
             }

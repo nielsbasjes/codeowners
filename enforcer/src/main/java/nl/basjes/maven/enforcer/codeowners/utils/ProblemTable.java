@@ -21,7 +21,12 @@ import org.apache.maven.enforcer.rule.api.EnforcerLogger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import static nl.basjes.maven.enforcer.codeowners.utils.LogColor.BLACK_BACKGROUND_BRIGHT;
 import static nl.basjes.maven.enforcer.codeowners.utils.LogColor.BLUE_BOLD_BRIGHT;
@@ -176,5 +181,14 @@ public final class ProblemTable extends StringTable{
             problem.getApprover(),
             problem.getDescription(),
             problem.getMarker());
+    }
+
+    public String toProblemMessageGroupedString() {
+        Map<String, Set<String>> problemMessageToUsersMap = new TreeMap<>();
+        problems.forEach(problem -> problemMessageToUsersMap.computeIfAbsent(problem.getDescription(), s -> new HashSet<>()).add(problem.getApprover()));
+        StringTable table = new StringTable();
+        table.withHeaders("Message", "Affected users");
+        problemMessageToUsersMap.forEach((message, users) -> table.addRow(message, users.stream().sorted().distinct().collect(Collectors.joining(", "))));
+        return "\n"+table;
     }
 }
