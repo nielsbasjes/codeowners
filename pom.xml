@@ -46,9 +46,9 @@
     <maven-artifact-plugin.version>3.6.0</maven-artifact-plugin.version>
     <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
     <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
-    <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
+    <maven-enforcer-plugin.version>3.6.0</maven-enforcer-plugin.version>
     <maven-failsafe-plugin.version>3.1.0</maven-failsafe-plugin.version>
-    <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
+    <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
     <maven-install-plugin.version>3.1.1</maven-install-plugin.version>
     <maven-invoker-plugin.version>3.9.1</maven-invoker-plugin.version>
     <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
