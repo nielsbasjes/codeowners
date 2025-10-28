@@ -238,7 +238,7 @@ class TestCodeOwnersGitlab {
         "# users. Everything else is ignored. For example, this code\n" +
         "# specifies the `@legal` and a user with email `janedoe@gitlab.com` as the\n" +
         "# owner for the LICENSE file:\n" +
-        "LICENSE @legal this_does_not_match janedoe@gitlab.com\n" +
+        "LICENSE @legal this_does_not_match janedoe@gitlab.com some.user@example.com\n" +
         "\n" +
         "# Use group names to match groups, and nested groups to specify\n" +
         "# them as owners for a file:\n" +
@@ -292,6 +292,7 @@ class TestCodeOwnersGitlab {
 
         assertOwners(codeOwners, "README.md", "@docs", "@docs-team", "@code","@multiple","@owners");
         assertOwners(codeOwners, "docs/README.md", "@docs","@docs-team","@root-docs");
+        assertOwners(codeOwners, "LICENSE", "@dev-team", "@legal", "janedoe@gitlab.com", "some.user@example.com");
     }
 
     @Test

@@ -42,7 +42,7 @@ CODEOWNERS @multiple @code @owners
 # users. Everything else is ignored. For example, this code
 # specifies the `@legal` and a user with email `janedoe@gitlab.com` as the
 # owner for the LICENSE file:
-LICENSE @legal this_does_not_match janedoe@gitlab.com
+LICENSE @legal this_does_not_match janedoe@gitlab.com some.user@example.com
 
 # Use group names to match groups, and nested groups to specify
 # them as owners for a file:
