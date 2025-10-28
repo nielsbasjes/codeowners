@@ -124,6 +124,18 @@ class TestCodeOwnersGitlab {
     }
 
     @Test
+    void gitlabUserOrderingDoesNotMatter() {
+        //Found a bug where ordering in the lexer matters, once it finds the first invalid thing, it does not continue
+        CodeOwners codeOwners = new CodeOwners("README @username user@example.com some.user@example.com invalid");
+        assertOwners(codeOwners, "README",             "@username", "user@example.com", "some.user@example.com");
+
+        //Should be ignoring invalid, but it isn't.
+        CodeOwners codeOwners2 = new CodeOwners("README @username invalid user@example.com some.user@example.com");
+        assertOwners(codeOwners2, "README",             "@username", "user@example.com", "some.user@example.com");
+    }
+
+
+    @Test
     void gitlabSectionsDefaults() {
         CodeOwners codeOwners = new CodeOwners(
             "[Documentation] @docs-team\n" +
