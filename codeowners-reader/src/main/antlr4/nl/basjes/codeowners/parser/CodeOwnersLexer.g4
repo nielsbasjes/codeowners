@@ -49,7 +49,7 @@ OPTIONAL    : '^';
 BLOCKOPEN   : '[' SPACE* -> channel(HIDDEN), pushMode(SECTION_MODE);
 
 COMMENT
-    : '#' ~[\n\r]* EOL -> skip
+    : '#' ~[\n\r]*
     ;
 
 SPACES
@@ -57,21 +57,23 @@ SPACES
     ;
 
 USERID
-    : '@'  [a-zA-Z0-9/._-]+ EOL?               // A username or groupname
-    | '@@' [a-zA-Z0-9_-]+ EOL?                 // A role name
-    | [a-zA-Z0-9_-]+ '@' [a-zA-Z0-9._-]+ EOL?  // An email address
+    : '@'  [a-zA-Z0-9/._-]+                   // A username or groupname
+    | '@@' [a-zA-Z0-9_-]+                      // A role name
+    | [a-zA-Z0-9._-]+ '@' [a-zA-Z0-9._-]+      // An email address
     ;
-
-NEWLINE
-    : EOL+ ->skip
-    ;
-
 
 FILEEXPRESSION
     : ('\\ '|'\\#'|[a-zA-Z0-9/*_.-])+
     ;
 
+NEWLINE
+    : EOL+
+    ;
+
+INVALID
+    : [a-zA-Z0-9_-]+ -> skip
+    ;
+
 mode SECTION_MODE;
-    SECTION_SPACES : SPACE+ -> skip;
-    BLOCKCLOSE      : SPACE* ']' -> channel(HIDDEN), type(BLOCKOPEN), popMode ;
-    SECTIONVALUE    : [0-9]+|[a-zA-Z]|~[\]]+;
+    BLOCKCLOSE      : ']' -> channel(HIDDEN), type(BLOCKOPEN), popMode ;
+    SECTIONVALUE    : ~[\]\r\n]+;

@@ -39,11 +39,12 @@ parser grammar CodeOwnersParser;
 options { tokenVocab=CodeOwnersLexer; }
 
 codeowners
-    : configLine+
+    : configLine* EOF
     ;
 
 configLine
-    : optional=OPTIONAL? section=SECTIONVALUE approvers=SECTIONVALUE? defaultApprovers=USERID* #section
-    | fileExpression=FILEEXPRESSION USERID* #approvalRule
-    | COMMENT? NEWLINE+ #comment
+    : optional=OPTIONAL? section=SECTIONVALUE approvers=SECTIONVALUE? defaultApprovers=USERID* NEWLINE? #section
+    | fileExpression=FILEEXPRESSION (USERID|FILEEXPRESSION)* NEWLINE? #approvalRule
+    | COMMENT NEWLINE? #comment
+    | NEWLINE #emptyLine
     ;
