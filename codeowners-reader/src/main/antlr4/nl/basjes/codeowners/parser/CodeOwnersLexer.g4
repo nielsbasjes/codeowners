@@ -56,10 +56,20 @@ SPACES
     : SPACE+ -> skip
     ;
 
+fragment EMAIL_LOCAL_PART_CHAR
+    : [a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]
+    ;
+
 USERID
     : '@'  [a-zA-Z0-9/._-]+ EOL?               // A username or groupname
     | '@@' [a-zA-Z0-9_-]+ EOL?                 // A role name
-    | [a-zA-Z0-9_-]+ '@' [a-zA-Z0-9._-]+ EOL?  // An email address
+    // An email address (https://en.wikipedia.org/wiki/Email_address#Local-part)
+    // This is slightly broader than the official definition because it also
+    // allows illegal cases like .foo.@example.nl and foo...foo@example.nl
+    // Email addresses with an IP address are not supported.
+    | ('('EMAIL_LOCAL_PART_CHAR+')')?     EMAIL_LOCAL_PART_CHAR+     ('('EMAIL_LOCAL_PART_CHAR+')')? '@' [a-zA-Z0-9._-]+ EOL?
+    // A quoted email address. Very unusual but officially possible
+    | ('('EMAIL_LOCAL_PART_CHAR+')')? '"' EMAIL_LOCAL_PART_CHAR+ '"' ('('EMAIL_LOCAL_PART_CHAR+')')? '@' [a-zA-Z0-9._-]+ EOL?
     ;
 
 NEWLINE
