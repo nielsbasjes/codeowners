@@ -5,6 +5,7 @@ This is intended as an overview of the major changes
 NEXT VERSION
 ===
 - Fix a test in the Windows build.
+- Allow email addresses much closer to the official specs.
 
 v1.11.3
 ===

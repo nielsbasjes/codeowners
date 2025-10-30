@@ -161,6 +161,8 @@ class CodeOwnersLoader extends CodeOwnersParserBaseVisitor<Void> {
         List<String> approvers = ctx.USERID().stream()
                 .map(ParseTree::getText)
                 .map(String::trim)
+                .map(approver  -> approver.replaceAll("^\\([a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+\\)", ""))
+                .map(approver  -> approver.replaceAll("\\([a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+\\)@", "@"))
                 .distinct()
                 .collect(Collectors.toList());
         currentSection.addApprovalRule(new ApprovalRule(filePattern, approvers));
