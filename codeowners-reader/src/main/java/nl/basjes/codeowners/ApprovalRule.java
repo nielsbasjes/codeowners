@@ -46,6 +46,10 @@ public class ApprovalRule {
             .replace("?", ".")   // Single character match
 
             // The Globstar "foo/**/bar" must also match "foo/bar"
+            // Process trailing /** before middle /** to handle them correctly:
+            // 1. Trailing: "foo/**" matches "foo/" and its contents, but NOT "foo" or "foobar"
+            .replaceAll("/\\*\\*$", "/.*")
+            // 2. Middle: "foo/**/bar" matches both "foo/bar" and "foo/anything/bar"
             .replace("/**", "(/.*)?")
 
             // The wildcard "foo/*/bar" must match exactly 1 subdir "foo/something/bar"
