@@ -279,6 +279,7 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
 
     private String pathToLoggingString(Path path) {
         String filename = standardizeFilename(path.toString()) + (path.toFile().isDirectory()?"/":"");
+        filename = filename.replaceAll("/+", "/");
         if (filename.startsWith("/")) {
             return "${baseDir}" + filename;
         }
