@@ -4,8 +4,17 @@ This is intended as an overview of the major changes
 
 NEXT VERSION
 ===
-- Fix a test in the Windows build.
+- Fix matching of dirname/** globstar patterns (provided by https://github.com/eyepiz-nflx )
+- Build now requires Java 25 LTS
+
+v1.12.1
+===
 - Allow email addresses much closer to the official specs.
+
+v1.12.0
+===
+- Output an aggregate table with all users affected by a specific message.
+- Fix a test in the Windows build.
 
 v1.11.3
 ===
