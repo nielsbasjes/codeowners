@@ -363,8 +363,8 @@
                   <!-- https://issues.apache.org/jira/browse/MNG-6581    -->
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>[21,22)</version>
-                  <message>To ensure the build being reproducible the code MUST be built with Java JDK 21 (detected: JDK ${java.version}).</message>
+                  <version>[25,26)</version>
+                  <message>To ensure the build being reproducible the code MUST be built with Java JDK 26 (detected: JDK ${java.version}).</message>
                 </requireJavaVersion>
                 <banDuplicateClasses>
                   <scopes>
