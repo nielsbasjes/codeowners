@@ -1,0 +1,17 @@
+{
+  "priority": 2,
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/v4/projects/niels%2Fproject/members/all?per_page=96&page=1"
+  },
+  "response": {
+    "transformers": [
+      "response-template"
+    ],
+    "status": 401,
+    "headers": {
+      "Content-Type": "application/json;charset=UTF-8"
+    },
+    "bodyFileName": "gitlab/InvalidToken.json"
+  }
+}

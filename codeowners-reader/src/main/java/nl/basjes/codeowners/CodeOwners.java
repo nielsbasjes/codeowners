@@ -114,7 +114,11 @@ public class CodeOwners {
     private List<String> getAllApprovers(String filename, boolean onlyMandatory) {
         if (verbose) {
             LOG.info("# vvvvvvvvvvvvvvvvvvvvvvvvvvv");
-            LOG.info("Checking: {}", filename);
+            if (onlyMandatory) {
+                LOG.info("Getting mandatory approvers: {}", filename);
+            } else {
+                LOG.info("Getting all approvers: {}", filename);
+            }
         }
 
         String matchFileName = filename.replace("\\", CODEOWNERS_PATH_SEPARATOR);

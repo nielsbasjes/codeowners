@@ -19,7 +19,6 @@ package nl.basjes.gitignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -46,7 +45,14 @@ public final class Utils {
     }
 
     public static List<Path> findAllNonIgnored(GitIgnoreFileSet gitIgnoreFileSet, Path baseDir) {
-        return findAllNonIgnored(gitIgnoreFileSet, baseDir, 128);
+        boolean wasProjectRelative = gitIgnoreFileSet.isAssumeQueriesAreProjectRelative();
+        // Because all files will be forced to be project relative we must change the gitIgnores matching.
+        gitIgnoreFileSet.assumeQueriesAreProjectRelative();
+//        gitIgnoreFileSet.assumeQueriesIncludeProjectBaseDir();
+        List<Path> allNonIgnored = findAllNonIgnored(gitIgnoreFileSet, baseDir, baseDir, 128);
+
+        gitIgnoreFileSet.setAssumeProjectRelativeQueries(wasProjectRelative);
+        return allNonIgnored;
     }
 
     /**
@@ -55,7 +61,7 @@ public final class Utils {
      * @param maxRecursionDepth A limiter to avoid going infinitely deep.
      * @return List of the found Paths.
      */
-    private static List<Path> findAllNonIgnored(GitIgnoreFileSet gitIgnoreFileSet, Path current, int maxRecursionDepth) {
+    private static List<Path> findAllNonIgnored(GitIgnoreFileSet gitIgnoreFileSet, Path current, Path baseDir, int maxRecursionDepth) {
         List<Path> found = new ArrayList<>();
         List<Path> subDirs = new ArrayList<>();
 
@@ -64,12 +70,7 @@ public final class Utils {
             return emptyList(); // It must be a directory
         }
 
-        String dirPath = current.toFile().getPath();
-        if (!dirPath.endsWith(File.separator)) {
-            dirPath = dirPath + File.separatorChar;
-        }
-
-        if (gitIgnoreFileSet.ignoreFile(dirPath)) {
+        if (gitIgnoreFileSet.ignoreFile(baseDir.relativize(current).toString())) {
             LOG.debug("Locate GI: Ignored  {}", current);
             return emptyList(); // Is ignored
         }
@@ -80,10 +81,12 @@ public final class Utils {
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(current)) {
             for (Path path : stream) {
-                if (gitIgnoreFileSet.keepFile(path.toString())) {
-                    if (Files.isDirectory(path)) {
+                if (Files.isDirectory(path)) {
+                    if (gitIgnoreFileSet.keepFile(baseDir.relativize(path).toString()+"/")) {
                         subDirs.add(path);
-                    } else {
+                    }
+                } else {
+                    if (gitIgnoreFileSet.keepFile(baseDir.relativize(path).toString())) {
                         found.add(path);
                     }
                 }
@@ -97,7 +100,7 @@ public final class Utils {
         int nextMaxRecursionDepth = maxRecursionDepth-1;
         if (nextMaxRecursionDepth > 0) {
             for (Path subDir : subDirs) {
-                found.addAll(findAllNonIgnored(gitIgnoreFileSet, subDir, nextMaxRecursionDepth));
+                found.addAll(findAllNonIgnored(gitIgnoreFileSet, subDir, baseDir, nextMaxRecursionDepth));
             }
         }
         Collections.sort(found);

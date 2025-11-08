@@ -1,0 +1,80 @@
+[
+  {
+    "id": 50,
+    "username": "disabledowner",
+    "name": "disabled owner",
+    "state": "disabled",
+    "locked": false,
+    "avatar_url": "https://secure.gravatar.com/avatar/de730b26fb7020c3389b4c25e3583?s=80&d=identicon",
+    "web_url": "https://gitlab.example.nl/isowner",
+    "access_level": 50,
+    "created_at": "2025-02-07T15:53:31.515Z",
+    "expires_at": null,
+    "membership_state": "active"
+  },
+  {
+    "id": 40,
+    "username": "disabledmaintainer",
+    "name": "disabled maintainer",
+    "state": "disabled",
+    "locked": false,
+    "avatar_url": "https://secure.gravatar.com/avatar/de730b26fb7020c3389b4c25e3583?s=80&d=identicon",
+    "web_url": "https://gitlab.example.nl/ismaintainer",
+    "access_level": 40,
+    "created_at": "2025-02-07T15:53:31.515Z",
+    "expires_at": null,
+    "membership_state": "active"
+  },
+  {
+    "id": 30,
+    "username": "disableddeveloper",
+    "name": "disabled developer",
+    "state": "disabled",
+    "locked": false,
+    "avatar_url": "https://secure.gravatar.com/avatar/de730b26fb7020c3389b4c25e3583?s=80&d=identicon",
+    "web_url": "https://gitlab.example.nl/isdeveloper",
+    "access_level": 30,
+    "created_at": "2025-02-07T15:53:31.515Z",
+    "expires_at": null,
+    "membership_state": "active"
+  },
+  {
+    "id": 51,
+    "username": "lockedowner",
+    "name": "locked owner",
+    "state": "active",
+    "locked": true,
+    "avatar_url": "https://secure.gravatar.com/avatar/de730b26fb7020c3389b4c25e3583?s=80&d=identicon",
+    "web_url": "https://gitlab.example.nl/isowner",
+    "access_level": 50,
+    "created_at": "2025-02-07T15:53:31.515Z",
+    "expires_at": null,
+    "membership_state": "active"
+  },
+  {
+    "id": 41,
+    "username": "lockedmaintainer",
+    "name": "locked maintainer",
+    "state": "active",
+    "locked": true,
+    "avatar_url": "https://secure.gravatar.com/avatar/de730b26fb7020c3389b4c25e3583?s=80&d=identicon",
+    "web_url": "https://gitlab.example.nl/ismaintainer",
+    "access_level": 40,
+    "created_at": "2025-02-07T15:53:31.515Z",
+    "expires_at": null,
+    "membership_state": "active"
+  },
+  {
+    "id": 31,
+    "username": "lockeddeveloper",
+    "name": "locked developer",
+    "state": "active",
+    "locked": true,
+    "avatar_url": "https://secure.gravatar.com/avatar/de730b26fb7020c3389b4c25e3583?s=80&d=identicon",
+    "web_url": "https://gitlab.example.nl/isdeveloper",
+    "access_level": 30,
+    "created_at": "2025-02-07T15:53:31.515Z",
+    "expires_at": null,
+    "membership_state": "active"
+  }
+]

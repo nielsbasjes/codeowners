@@ -17,32 +17,25 @@
 
 package nl.basjes.maven.enforcer.codeowners;
 
-import nl.basjes.codeowners.CodeOwners;
-import nl.basjes.gitignore.GitIgnore;
-import nl.basjes.gitignore.GitIgnoreFileSet;
-import nl.basjes.maven.enforcer.codeowners.utils.ProblemTable;
-import nl.basjes.maven.enforcer.codeowners.utils.StringTable;
+import nl.basjes.codeowners.validator.CodeOwnersValidationException;
+import nl.basjes.codeowners.validator.CodeOwnersValidator;
+import nl.basjes.codeowners.validator.CodeOwnersValidator.DirectoryOwners;
+import nl.basjes.codeowners.validator.gitlab.GitlabConfiguration;
 import org.apache.maven.enforcer.rule.api.AbstractEnforcerRule;
 import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
 import org.apache.maven.project.MavenProject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static nl.basjes.gitignore.GitIgnore.standardizeFilename;
-import static nl.basjes.gitignore.Utils.findAllNonIgnored;
 
 @SuppressWarnings("unused") // Used by the enforcer-plugin that finds it via the @Named annotation
 @Named("codeOwners") // rule name - must start from lowercase character
 public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
 
+    private static final Logger log = LoggerFactory.getLogger(CodeOwnersEnforcerRule.class);
     private File baseDir;
 
     private File codeOwnersFile;
@@ -72,218 +65,36 @@ public class CodeOwnersEnforcerRule extends AbstractEnforcerRule {
         if (baseDir == null) {
             baseDir = project.getBasedir();
         }
-        getLog().debug("BaseDir=|"+baseDir+"|");
 
-         boolean runGitlabMembersCheck = false;
-        if (gitlab != null) {
-            if (gitlab.isDefaultCIConfigRunningOutsideCI()) {
-                getLog().warn("Found Gitlab CI config that only works within Gitlab CI.");
-                getLog().warn("Skipping Gitlab Project Members check because this is not GitlabCI.");
-                getLog().info("Found GitLab configuration:\n" + gitlab);
-            } else {
-                if (gitlab.isValid()) {
-                    runGitlabMembersCheck = true;
-                } else {
-                    throw new EnforcerRuleException("The GitLab configuration is not valid:" + gitlab);
-                }
+        DirectoryOwners directoryOwners;
+        boolean pass = true;
+        try {
+            CodeOwnersValidator validator =
+                new CodeOwnersValidator(gitlab, new EnforcerLoggerSlf4j(getLog()), verbose);
+
+            directoryOwners = validator.analyzeDirectory(baseDir, codeOwnersFile);
+
+            if (showApprovers) {
+                getLog().info("Approvers:\n" + directoryOwners.toTable());
             }
+
+        } catch (CodeOwnersValidationException e) {
+            throw new EnforcerRuleException(e.getMessage(), e);
         }
-
-        // Get the ignore rules
-        GitIgnoreFileSet gitIgnores = loadAllGitIgnoreFiles(baseDir);
-
-        // Get the codeowners
-        CodeOwners codeOwners = loadCodeOwners(baseDir, codeOwnersFile);
-
-        if (verbose) {
-            getLog().info("=================================\n");
-            getLog().info("All configured GitIgnore rules:\n" + gitIgnores);
-            getLog().info("=================================\n");
-            getLog().info("All configured CODEOWNER rules:\n" + codeOwners);
-            getLog().info("=================================\n");
-            if (gitlab == null) {
-                getLog().info("No GitLab configuration found");
-            } else {
-                getLog().info("Found GitLab configuration:\n" + gitlab);
-            }
-            getLog().info("=================================\n");
-        }
-
-        // Get a list of all files in the project and sort them
-        Path baseDirPath = baseDir.toPath();
-        List<Path> allNonIgnoredFilesAndDirectoriesInProject =
-            findAllNonIgnored(gitIgnores)
-                .stream()
-                .map(baseDirPath::relativize)
-                .sorted()
-                .collect(Collectors.toList());
-
-        // Because all files have been forced to be project relative we must change the gitIgnores matching.
-        gitIgnores.assumeQueriesAreProjectRelative();
-
-        if (showApprovers) {
-            // Run this listing without the verbose set to keep the output usable
-            codeOwners.setVerbose(false);
-            gitIgnores.setVerbose(false);
-            printApprovers(allNonIgnoredFilesAndDirectoriesInProject, codeOwners);
-        }
-
-        // Set everything to the requested verbosity
-        codeOwners.setVerbose(verbose);
-        gitIgnores.setVerbose(verbose);
 
         if (allFilesMustHaveCodeOwner || allExisingFilesMustHaveCodeOwner) {
-            List<String> allNonIgnoredFilesInProject = allNonIgnoredFilesAndDirectoriesInProject
-                .stream()
-                .filter(path -> path.toFile().isFile())
-                .map(Path::toString)
-                .collect(Collectors.toList());
-
-            allNonIgnoredFilesHaveApprovers(allNonIgnoredFilesInProject, codeOwners);
+            if (!directoryOwners.allExistingFilesHaveMandatoryCodeOwner()) {
+                pass = false;
+            }
         }
-
         if (allFilesMustHaveCodeOwner || allNewlyCreatedFilesMustHaveCodeOwner) {
-            List<String> newFileForEveryDirectory = allNonIgnoredFilesAndDirectoriesInProject
-                .stream()
-                .filter(path -> path.toFile().isDirectory())
-                .map(directoryName -> (directoryName + "/" + unlikelyFilename).replace("//", "/"))
-                .filter(gitIgnores::keepFile)
-                .collect(Collectors.toList());
-
-            allNonIgnoredFilesHaveApprovers(newFileForEveryDirectory, codeOwners);
-        }
-
-        if (runGitlabMembersCheck) {
-            try (GitlabProjectMembers gitlabProjectMembers = new GitlabProjectMembers(gitlab)) {
-                ProblemTable problemTable = gitlabProjectMembers.verifyAllCodeowners(getLog(), codeOwners);
-                if (gitlab.isShowAllApprovers() || problemTable.hasWarnings() || problemTable.hasErrors() || problemTable.hasFatalErrors()) {
-                    getLog().info(problemTable.toString());
-                    getLog().info("============================");
-                    getLog().info("Summary per problem message:");
-                    getLog().info(problemTable.toProblemMessageGroupedString());
-                }
-                gitlabProjectMembers.failIfExceededFailLevel(problemTable);
-            }
-        }
-    }
-
-    // ------------------------------------------
-
-    GitIgnoreFileSet loadAllGitIgnoreFiles(File baseDir) {
-        // Get the files that are ignored by the SCM
-        GitIgnoreFileSet gitIgnores = new GitIgnoreFileSet(this.baseDir, false)
-            .assumeQueriesIncludeProjectBaseDir();
-
-        gitIgnores.setVerbose(verbose);
-
-        // Start with the internal files that are used by common SCMs.
-        gitIgnores.add(new GitIgnore(
-            "/.git/\n" +
-            "/.hg/\n" +
-            ".svn/\n"
-        ));
-
-        // Load all available gitignore configs.
-        List<Path> loadedFiles = gitIgnores.addAllGitIgnoreFiles();
-        for (Path loadedFile : loadedFiles) {
-            getLog().info("Using GitIgnore : " + pathToLoggingString(baseDir.toPath().relativize(loadedFile)));
-        }
-
-        return gitIgnores;
-    }
-
-    // ------------------------------------------
-
-    CodeOwners loadCodeOwners(File baseDir, File codeOwnersFile) throws EnforcerRuleException {
-        List<String> commonCodeOwnersFiles = Arrays.asList(
-            "/CODEOWNERS",
-            "/.github/CODEOWNERS",
-            "/.gitlab/CODEOWNERS",
-            "/docs/CODEOWNERS"
-        );
-
-        if (this.codeOwnersFile == null) {
-            // If no file was specified we try the default locations
-            for (String codeOwnersFileName : commonCodeOwnersFiles) {
-                File tryingFile = new File(baseDir + codeOwnersFileName);
-                if (tryingFile.exists() && tryingFile.isFile()) {
-                    this.codeOwnersFile = tryingFile;
-                    break;
-                }
-            }
-        }
-
-        if (this.codeOwnersFile == null) {
-            throw new EnforcerRuleException("This project does NOT have a CODEOWNERS file");
-        }
-
-        getLog().info("Using CODEOWNERS: " + pathToLoggingString(baseDir.toPath().relativize(this.codeOwnersFile.toPath())));
-        try {
-            CodeOwners codeOwners = new CodeOwners(this.codeOwnersFile);
-            getLog().debug(codeOwners.toString());
-            return codeOwners;
-        } catch (IOException e) {
-            throw new EnforcerRuleException("Unable to read the CODEOWNERS: " + this.codeOwnersFile, e);
-        }
-    }
-
-    // ------------------------------------------
-
-    void allNonIgnoredFilesHaveApprovers(List<String> filenames, CodeOwners codeOwners) throws EnforcerRuleException {
-        boolean pass = true;
-        List<String> filesWithoutApprover = new ArrayList<>();
-
-        for (String filename : filenames) {
-            getLog().debug("Checking: ${baseDir}/" + filename);
-            List<String> approvers = codeOwners.getMandatoryApprovers(filename);
-            getLog().debug("- Approvers: " + approvers);
-            if (approvers.isEmpty()) {
-                getLog().error("No approvers for " + pathToLoggingString(filename));
-                filesWithoutApprover.add(filename);
+            if (!directoryOwners.allNewlyCreatedFilesHaveMandatoryCodeOwner()) {
                 pass = false;
             }
         }
         if (!pass) {
-            throw new EnforcerRuleException("Not all files had an approver: \n--> " +
-                String.join("\n--> ", filesWithoutApprover));
+            throw new EnforcerRuleException("The failed checks:\n" + directoryOwners.toTable());
         }
-    }
-
-    // ------------------------------------------
-
-    void printApprovers(List<Path> paths, CodeOwners codeOwners) {
-        StringTable table = new StringTable();
-        table.withHeaders("Path", "Mandatory Approvers");
-        for (Path path : paths) {
-            List<String> mandatoryApprovers = codeOwners.getMandatoryApprovers(path.toString());
-            if (mandatoryApprovers.isEmpty()) {
-                table.addRow(pathToLoggingString(path), mandatoryApprovers.toString(), "<-- NO APPROVERS!");
-            } else {
-                table.addRow(pathToLoggingString(path), mandatoryApprovers.toString());
-            }
-        }
-        getLog().info("\n" + table);
-    }
-
-    // ------------------------------------------
-
-    private String pathToLoggingString(String path) {
-        String filename = standardizeFilename(path);
-        if (filename.startsWith("/")) {
-            return "${baseDir}" + filename;
-        }
-        return filename;
-    }
-
-    // ------------------------------------------
-
-    private String pathToLoggingString(Path path) {
-        String filename = standardizeFilename(path.toString()) + (path.toFile().isDirectory()?"/":"");
-        filename = filename.replaceAll("/+", "/");
-        if (filename.startsWith("/")) {
-            return "${baseDir}" + filename;
-        }
-        return filename;
     }
 
     // ------------------------------------------
