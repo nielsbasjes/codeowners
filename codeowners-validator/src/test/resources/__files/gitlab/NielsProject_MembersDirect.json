@@ -1,0 +1,93 @@
+[
+  {
+    "id": 2,
+    "username": "niels",
+    "name": "Niels Basjes",
+    "state": "active",
+    "locked": false,
+    "avatar_url": "https://secure.gravatar.com/avatar/1a1e9443d32983849de0a7a64aaad3?s=80&d=identicon",
+    "web_url": "https://gitlab.example.nl/niels",
+    "access_level": 50,
+    "created_at": "2018-02-12T08:45:46.648Z",
+    "expires_at": null,
+    "membership_state": "active"
+  },
+  {
+    "id": 2,
+    "username": "niels",
+    "name": "Niels Basjes",
+    "state": "active",
+    "locked": false,
+    "avatar_url": "https://secure.gravatar.com/avatar/1a1e9443d32983849de0a7a64aaad3?s=80&d=identicon",
+    "web_url": "https://gitlab.example.nl/niels",
+    "access_level": 50,
+    "created_at": "2018-02-12T09:45:46.648Z",
+    "expires_at": null,
+    "membership_state": "active"
+  },
+  {
+    "id": 1,
+    "username": "root",
+    "name": "root",
+    "state": "active",
+    "locked": false,
+    "avatar_url": "https://secure.gravatar.com/avatar/de730b26fb7020c3389b4c25e3583?s=80&d=identicon",
+    "web_url": "https://gitlab.example.nl/root",
+    "access_level": 20,
+    "created_at": "2025-02-07T15:53:31.515Z",
+    "expires_at": null,
+    "membership_state": "active"
+  },
+  {
+    "id": 50,
+    "username": "isowner",
+    "name": "is owner",
+    "state": "active",
+    "locked": false,
+    "avatar_url": "https://secure.gravatar.com/avatar/de730b26fb7020c3389b4c25e3583?s=80&d=identicon",
+    "web_url": "https://gitlab.example.nl/isowner",
+    "access_level": 50,
+    "created_at": "2025-02-07T15:53:31.515Z",
+    "expires_at": null,
+    "membership_state": "active"
+  },
+  {
+    "id": 40,
+    "username": "ismaintainer",
+    "name": "is maintainer",
+    "state": "active",
+    "locked": false,
+    "avatar_url": "https://secure.gravatar.com/avatar/de730b26fb7020c3389b4c25e3583?s=80&d=identicon",
+    "web_url": "https://gitlab.example.nl/ismaintainer",
+    "access_level": 40,
+    "created_at": "2025-02-07T15:53:31.515Z",
+    "expires_at": null,
+    "membership_state": "active"
+  },
+  {
+    "id": 30,
+    "username": "isdeveloper",
+    "name": "is developer",
+    "state": "active",
+    "locked": false,
+    "avatar_url": "https://secure.gravatar.com/avatar/de730b26fb7020c3389b4c25e3583?s=80&d=identicon",
+    "web_url": "https://gitlab.example.nl/isdeveloper",
+    "access_level": 30,
+    "created_at": "2025-02-07T15:53:31.515Z",
+    "expires_at": null,
+    "membership_state": "active"
+  },
+  {
+    "id": 10,
+    "username": "isguest",
+    "name": "is isguest",
+    "state": "active",
+    "locked": false,
+    "avatar_url": "https://secure.gravatar.com/avatar/de710b26fb7020c3389b4c25e3583?s=80&d=identicon",
+    "web_url": "https://gitlab.example.nl/isguest",
+    "access_level": 10,
+    "created_at": "2025-02-07T15:53:31.515Z",
+    "expires_at": null,
+    "membership_state": "active"
+  }
+]

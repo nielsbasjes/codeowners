@@ -42,33 +42,8 @@
 
     <dependency>
       <groupId>nl.basjes.codeowners</groupId>
-      <artifactId>codeowners-reader</artifactId>
+      <artifactId>codeowners-validator</artifactId>
       <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>nl.basjes.gitignore</groupId>
-      <artifactId>gitignore-reader</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.gitlab4j</groupId>
-      <artifactId>gitlab4j-api</artifactId>
-      <version>6.2.0</version>
-      <exclusions>
-        <exclusion>
-          <!-- Because of dependency convergence problem -->
-          <groupId>jakarta.activation</groupId>
-          <artifactId>jakarta.activation-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>jakarta.activation</groupId>
-      <artifactId>jakarta.activation-api</artifactId>
-      <version>2.1.4</version>
     </dependency>
 
     <!-- Enforcer provided dependencies -->
@@ -146,16 +121,6 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.6.1</version>
-        <configuration>
-          <minimizeJar>true</minimizeJar>
-          <createDependencyReducedPom>false</createDependencyReducedPom>
-        </configuration>
       </plugin>
 
       <plugin>

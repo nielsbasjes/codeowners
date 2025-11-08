@@ -4,7 +4,8 @@ This is intended as an overview of the major changes
 
 NEXT VERSION
 ===
-- ...
+- Partial restructuring making the validation reusable in other situations
+- Added example commandline script (using Kotlin script)
 
 v1.12.2
 ===

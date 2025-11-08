@@ -66,7 +66,7 @@
     <antlr.version>4.13.2</antlr.version>
     <junit5.version>6.0.1</junit5.version>
     <slf4j.version>2.0.17</slf4j.version>
-
+    <logback.version>1.5.20</logback.version>
     <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
     <!-- See http://www.eclemma.org/jacoco/trunk/doc/prepare-agent-mojo.html-->
     <jacoco.surefireArgLine />
@@ -97,9 +97,10 @@
       </dependency>
 
       <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-simple</artifactId>
-        <version>${slf4j.version}</version>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>${logback.version}</version>
+        <scope>test</scope>
       </dependency>
 
     </dependencies>
@@ -108,6 +109,7 @@
   <modules>
     <module>codeowners-reader</module>
     <module>gitignore-reader</module>
+    <module>codeowners-validator</module>
     <module>enforcer</module>
   </modules>
 
@@ -483,6 +485,7 @@
             <!-- Test files that should not be 'polluted' -->
             <exclude>gitignore-reader/src/test/resources/testtree/</exclude>
             <exclude>enforcer/src/it/testtree/</exclude>
+            <exclude>codeowners-validator/src/test/resources/testdirectories/</exclude>
             <!-- Files that cannot be 'polluted' -->
             <exclude>.github/**</exclude>
             <exclude>**/*.json</exclude>

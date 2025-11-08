@@ -1,0 +1,28 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/v4/groups/49/members",
+    "headers": {
+      "PRIVATE-TOKEN": {
+        "equalTo": "gltst-validtoken"
+      }
+    }
+  },
+  "response": {
+    "transformers": [
+      "response-template"
+    ],
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json;charset=UTF-8",
+      "X-Next-Page": "",
+      "X-Page": "1",
+      "X-Per-Page": "20",
+      "X-Prev-Page": "",
+      "X-Total": "2",
+      "X-Total-Pages": "1"
+    },
+    "bodyFileName": "gitlab/ExtraUsers.json"
+  }
+}
