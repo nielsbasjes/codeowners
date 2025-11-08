@@ -4,6 +4,10 @@ This is intended as an overview of the major changes
 
 NEXT VERSION
 ===
+- ...
+
+v1.12.2
+===
 - Fix matching of dirname/** globstar patterns (provided by https://github.com/eyepiz-nflx )
 - Build now requires Java 25 LTS
 
