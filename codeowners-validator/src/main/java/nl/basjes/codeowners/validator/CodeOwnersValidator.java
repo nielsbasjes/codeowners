@@ -291,7 +291,7 @@ public class CodeOwnersValidator {
 
                 Path newFile = Path.of( path.toString(), UNLIKELY_FILENAME);
                 if (gitIgnores.keepFile(newFile.toString())) {
-                    Path newFileIndex = Path.of( path.toString(), "*");
+                    Path newFileIndex = Path.of( path.toString(), "x");
                     FileOwners newFileOwners = new FileOwners(newFileIndex, FileType.NEWLY_CREATED_FILE);
                     newFileOwners.addApprovers(codeOwners.getAllApprovers(newFile.toString()));
                     newFileOwners.addMandatoryApprovers(codeOwners.getMandatoryApprovers(newFile.toString()));
