@@ -466,40 +466,40 @@
         <configuration>
           <consoleOutput>true</consoleOutput>
           <excludeSubProjects>false</excludeSubProjects>
-          <excludes>
+          <inputExcludes>
             <!-- Build config files -->
-            <exclude>.mvn/jvm.config</exclude>
+            <inputExlude>.mvn/jvm.config</inputExlude>
             <!-- Version control files -->
-            <exclude>**/.git/**</exclude>
-            <exclude>**/.gitignore</exclude>
-            <exclude>**/.gitmodules</exclude>
+            <inputExlude>**/.git/**</inputExlude>
+            <inputExlude>**/.gitignore</inputExlude>
+            <inputExlude>**/.gitmodules</inputExlude>
             <!-- IDE settings and files -->
-            <exclude>**/.classpath</exclude>
-            <exclude>**/.project</exclude>
-            <exclude>**/.settings/**</exclude>
-            <exclude>**/.idea/**</exclude>
-            <exclude>**/*.iml</exclude>
-            <exclude>**/.run/**</exclude>
-            <exclude>**/*.patch</exclude>
-            <exclude>**/*.diff</exclude>
+            <inputExlude>**/.classpath</inputExlude>
+            <inputExlude>**/.project</inputExlude>
+            <inputExlude>**/.settings/**</inputExlude>
+            <inputExlude>**/.idea/**</inputExlude>
+            <inputExlude>**/*.iml</inputExlude>
+            <inputExlude>**/.run/**</inputExlude>
+            <inputExlude>**/*.patch</inputExlude>
+            <inputExlude>**/*.diff</inputExlude>
             <!-- Test files that should not be 'polluted' -->
-            <exclude>gitignore-reader/src/test/resources/testtree/</exclude>
-            <exclude>enforcer/src/it/testtree/</exclude>
-            <exclude>codeowners-validator/src/test/resources/testdirectories/</exclude>
+            <inputExlude>gitignore-reader/src/test/resources/testtree/</inputExlude>
+            <inputExlude>enforcer/src/it/testtree/</inputExlude>
+            <inputExlude>codeowners-validator/src/test/resources/testdirectories/</inputExlude>
             <!-- Files that cannot be 'polluted' -->
-            <exclude>.github/**</exclude>
-            <exclude>**/*.json</exclude>
-            <exclude>**/*.ndjson</exclude>
+            <inputExlude>.github/**</inputExlude>
+            <inputExlude>**/*.json</inputExlude>
+            <inputExlude>**/*.ndjson</inputExlude>
             <!-- Files generated during build and/or development -->
-            <exclude>**/target/**</exclude>
-            <exclude>**/gen/**</exclude>
-            <exclude>**/dependency-reduced-pom.xml</exclude>
+            <inputExlude>**/target/**</inputExlude>
+            <inputExlude>**/gen/**</inputExlude>
+            <inputExlude>**/dependency-reduced-pom.xml</inputExlude>
             <!-- Test scripts -->
-            <exclude>*.sh</exclude>
-            <exclude>**/_*/**</exclude>
-            <exclude>**/*_/**</exclude>
-            <exclude>**/gitignore-reader/src/test/resources/**</exclude>
-          </excludes>
+            <inputExlude>*.sh</inputExlude>
+            <inputExlude>**/_*/**</inputExlude>
+            <inputExlude>**/*_/**</inputExlude>
+            <inputExlude>**/gitignore-reader/src/test/resources/**</inputExlude>
+          </inputExcludes>
         </configuration>
       </plugin>
 
