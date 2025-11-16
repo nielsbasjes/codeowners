@@ -99,6 +99,51 @@ In one of my projects it looks like this:
 </plugin>
 ```
 
+# Commandline scripts
+As an example the `Codeowners-cli.main.kts` script is provided to show how you can use this library in a commandline context.
+This example does things like commandline argument handling and is quite flexible.
+
+If you want to go minimal you can go a lot simpler and smaller with for example something like this.
+On many systems you can simply give this any name (like `codeowners-check`) and make it an executable script.
+On some systems it must have a name that ends with `.main.kts`, if so then it  can be something like `codeowners-check.main.kts`.
+
+```kotlin
+#!/usr/bin/env -S kotlin -howtorun .main.kts
+
+@file:DependsOn("nl.basjes.codeowners:codeowners-validator:1.13.0")
+
+import nl.basjes.codeowners.validator.CodeOwnersValidator
+import nl.basjes.codeowners.validator.CodeOwnersValidator.DirectoryOwners
+import kotlin.io.path.Path
+import kotlin.system.exitProcess
+
+var directoryOwners: DirectoryOwners
+try {
+    val validator = CodeOwnersValidator(null, null, false)
+    directoryOwners = validator.analyzeDirectory(Path("").toAbsolutePath().toFile(), null)
+} catch (ex: Exception) {
+    println(ex.message)
+    exitProcess(1)
+}
+
+var pass = true
+
+if (!directoryOwners.allExistingFilesHaveMandatoryCodeOwner()) {
+    println("- Not all existing files have a code-owner. ❌")
+    pass = false
+}
+
+if (!directoryOwners.allNewlyCreatedFilesHaveMandatoryCodeOwner()) {
+    println("- Not all possibly newly created files have a code-owner. ❌")
+    pass = false
+}
+
+if (!pass) {
+    print ("The failed checks:\n" + directoryOwners.toTable())
+    exitProcess(1)
+}
+```
+
 # GitIgnore library
 
 ## Basic use
