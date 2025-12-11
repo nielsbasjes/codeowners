@@ -45,5 +45,6 @@ codeowners
 configLine
     : optional=OPTIONAL? section=SECTIONVALUE approvers=SECTIONVALUE? defaultApprovers=USERID* #section
     | fileExpression=FILEEXPRESSION USERID* #approvalRule
+    | EXCLUDE fileExpression=FILEEXPRESSION USERID* #excludeRule
     | COMMENT? NEWLINE+ #comment
     ;

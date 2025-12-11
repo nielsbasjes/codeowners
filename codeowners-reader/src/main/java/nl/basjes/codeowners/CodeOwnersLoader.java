@@ -21,6 +21,7 @@ import nl.basjes.codeowners.parser.CodeOwnersLexer;
 import nl.basjes.codeowners.parser.CodeOwnersParser;
 import nl.basjes.codeowners.parser.CodeOwnersParser.ApprovalRuleContext;
 import nl.basjes.codeowners.parser.CodeOwnersParser.CodeownersContext;
+import nl.basjes.codeowners.parser.CodeOwnersParser.ExcludeRuleContext;
 import nl.basjes.codeowners.parser.CodeOwnersParser.SectionContext;
 import nl.basjes.codeowners.parser.CodeOwnersParserBaseVisitor;
 import org.antlr.v4.runtime.CharStreams;
@@ -71,14 +72,14 @@ class CodeOwnersLoader extends CodeOwnersParserBaseVisitor<Void> {
 
     private void storeCurrentSection() {
         // Only if the previous Section had ANY rules do we keep it.
-        if (!currentSection.getApprovalRules().isEmpty()) {
+        if (!currentSection.getRules().isEmpty()) {
             List<String> existingSectionsWithSameName = sections.values().stream().map(Section::getName).filter(name -> name.equalsIgnoreCase(currentSection.getName())).collect(Collectors.toList());
             if (existingSectionsWithSameName.isEmpty()) {
                 sections.put(currentSection.getName(), currentSection);
             } else {
                 Section existingSection = sections.get(existingSectionsWithSameName.get(0));
                 currentSection.getDefaultApprovers().forEach(existingSection::addDefaultApprover);
-                currentSection.getApprovalRules().forEach(existingSection::addApprovalRule);
+                currentSection.getRules().forEach(existingSection::addRule);
                 if (currentSection.isOptional() != existingSection.isOptional()) {
                     // You cannot MIX these two, it is bad.
                     LOG.error("Merging two sections with a different Optional flag is BAD. Section [{}] has optional={} and Section [{}] has optional={}.",
@@ -112,8 +113,8 @@ class CodeOwnersLoader extends CodeOwnersParserBaseVisitor<Void> {
 
             // Having in the same section the same file pattern multiple times is bad.
             List<String> duplicates = section
-                .getApprovalRules().stream()
-                .collect(Collectors.groupingBy(ApprovalRule::getFileExpression, Collectors.counting()))
+                .getRules().stream()
+                .collect(Collectors.groupingBy(Rule::getFileExpression, Collectors.counting()))
                 .entrySet().stream()
                 .filter(m -> m.getValue() > 1)
                 .map(Map.Entry::getKey)
@@ -165,7 +166,20 @@ class CodeOwnersLoader extends CodeOwnersParserBaseVisitor<Void> {
                 .map(approver  -> approver.replaceAll("\\([a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+\\)@", "@"))
                 .distinct()
                 .collect(Collectors.toList());
-        currentSection.addApprovalRule(new ApprovalRule(filePattern, approvers));
+        currentSection.addRule(new ApprovalRule(filePattern, approvers));
+        return null;
+    }
+
+
+    /**
+     * Internal parser method, do not use
+     * @param ctx the parse tree
+     * @return Nothing
+     */
+    @Override
+    public Void visitExcludeRule(ExcludeRuleContext ctx) {
+        String filePattern = ctx.fileExpression.getText();
+        currentSection.addRule(new ExcludeRule(filePattern));
         return null;
     }
 

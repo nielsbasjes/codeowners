@@ -29,7 +29,7 @@ public class Section {
     private final String name;
     private int minimalNumberOfApprovers = 0;
     private final List<String> defaultApprovers = new ArrayList<>();
-    private final List<ApprovalRule> approvalRules = new ArrayList<>();
+    private final List<Rule> rules = new ArrayList<>();
 
     public Section(String name) {
         this.name = name;
@@ -42,13 +42,13 @@ public class Section {
         }
     }
 
-    void addApprovalRule(ApprovalRule rule) {
-        approvalRules.add(rule);
+    void addRule(Rule rule) {
+        rules.add(rule);
     }
 
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
-        approvalRules.forEach(rule -> rule.setVerbose(verbose));
+        rules.forEach(rule -> rule.setVerbose(verbose));
     }
 
     public String getName() {
@@ -59,8 +59,8 @@ public class Section {
         return defaultApprovers;
     }
 
-    public List<ApprovalRule> getApprovalRules() {
-        return approvalRules;
+    public List<Rule> getRules() {
+        return rules;
     }
 
     public boolean isOptional() {
@@ -89,19 +89,32 @@ public class Section {
             LOG.info("# Section [{}]", getName());
         }
         List<String> approvers = new ArrayList<>();
-        for (ApprovalRule approvalRule : approvalRules) {
-            List<String> ruleApprovers = approvalRule.getApprovers(filename);
-            if (ruleApprovers != null) {
-                // GitHub: Order is important; the last matching pattern takes the most precedence.
-                // Gitlab: When a file or directory matches multiple entries in the CODEOWNERS file, the users from last pattern matching the file or directory are used.
+        for (Rule rule : rules) {
+            if (!rule.matches(filename)) {
+                continue;
+            }
+
+            if (rule instanceof ExcludeRule) {
+                // Gitlab: After a pattern is excluded, it cannot be included again in the same section.
                 approvers.clear();
-                if (ruleApprovers.isEmpty()) {
-                    if (verbose) {
-                        LOG.info("-- MATCH WITHOUT APPROVERS --> Using Default approvers {}", defaultApprovers);
+                break;
+            }
+
+            if (rule instanceof ApprovalRule) {
+                ApprovalRule approvalRule = (ApprovalRule) rule;
+                List<String> ruleApprovers = approvalRule.getApprovers();
+                if (ruleApprovers != null) {
+                    // GitHub: Order is important; the last matching pattern takes the most precedence.
+                    // Gitlab: When a file or directory matches multiple entries in the CODEOWNERS file, the users from last pattern matching the file or directory are used.
+                    approvers.clear();
+                    if (ruleApprovers.isEmpty()) {
+                        if (verbose) {
+                            LOG.info("-- MATCH WITHOUT APPROVERS --> Using Default approvers {}", defaultApprovers);
+                        }
+                        approvers.addAll(defaultApprovers);
+                    } else {
+                        approvers.addAll(ruleApprovers);
                     }
-                    approvers.addAll(defaultApprovers);
-                } else {
-                    approvers.addAll(ruleApprovers);
                 }
             }
         }
@@ -126,8 +139,8 @@ public class Section {
             result.append(' ').append(String.join(" ", defaultApprovers));
         }
         result.append('\n');
-        for (ApprovalRule approvalRule : approvalRules) {
-            result.append(approvalRule).append('\n');
+        for (Rule rule : rules) {
+            result.append(rule).append('\n');
         }
         return result.toString();
     }

@@ -164,8 +164,8 @@ public class CodeOwners {
             Section firstSection = sections.values().iterator().next();
             if (firstSection.isDefaultSection()) {
                 // If ONLY the default section then no section header
-                for (ApprovalRule approvalRule : firstSection.getApprovalRules()) {
-                    result.append(approvalRule).append('\n');
+                for (Rule rule : firstSection.getRules()) {
+                    result.append(rule).append('\n');
                 }
                 return result.toString();
             }

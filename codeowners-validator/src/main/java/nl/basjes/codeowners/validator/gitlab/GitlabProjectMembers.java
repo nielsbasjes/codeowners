@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 import nl.basjes.codeowners.ApprovalRule;
 import nl.basjes.codeowners.CodeOwners;
+import nl.basjes.codeowners.Rule;
 import nl.basjes.codeowners.Section;
 import nl.basjes.codeowners.validator.CodeOwnersValidationException;
 import nl.basjes.codeowners.validator.gitlab.GitlabConfiguration.FailLevel;
@@ -204,7 +205,12 @@ public class GitlabProjectMembers implements AutoCloseable {
         ProblemTable results = new ProblemTable();
 
         for (Section definedSection : codeOwners.getAllDefinedSections()) {
-            for (ApprovalRule approvalRule : definedSection.getApprovalRules()) {
+            for (Rule rule : definedSection.getRules()) {
+                // Only check the rules that provide approvers.
+                if (!(rule instanceof ApprovalRule)) {
+                    continue;
+                }
+                ApprovalRule approvalRule = (ApprovalRule) rule;
                 boolean ruleHasValidApprovers = false;
                 for (String rawApprover : approvalRule.getApprovers()) {
                     String approver = rawApprover;

@@ -397,4 +397,78 @@ class TestCodeOwnersGitlab {
             codeOwners.toString());
     }
 
+
+    // https://docs.gitlab.com/user/project/codeowners/reference/#exclusion-patterns
+    @Test
+    void gitlabExclusionExample() {
+        CodeOwners codeOwners = new CodeOwners(
+            "# All files require approval from @username\n" +
+            "* @username\n" +
+            "\n" +
+            "# Except pom.xml which needs no approval\n" +
+            "!pom.xml\n" +
+            "\n" +
+            "[Ruby]\n" +
+            "# All ruby files require approval from @ruby-team\n" +
+            "*.rb @ruby-team\n" +
+            "\n" +
+            "# Except Ruby files in the config directory\n" +
+            "!/config/**/*.rb"
+        );
+
+        codeOwners.setVerbose(true);
+        assertOwners(codeOwners, "README.md", "@username");
+        assertOwners(codeOwners, "pom.xml");
+        assertOwners(codeOwners, "something.rb", "@username", "@ruby-team");
+        assertOwners(codeOwners, "/somedir/something.rb", "@username", "@ruby-team");
+        assertOwners(codeOwners, "/config/something.rb", "@username");
+    }
+
+    @Test
+    void gitlabExclusionInOrder() {
+        CodeOwners codeOwners = new CodeOwners(
+            "* @default-owner\n" +
+            "!*.rb                      # Excludes all Ruby files.\n" +
+            "/special/*.rb @ruby-owner  # This won't take effect as *.rb is already excluded."
+        );
+
+        codeOwners.setVerbose(true);
+        assertOwners(codeOwners, "README.md", "@default-owner");
+        assertOwners(codeOwners, "something.rb");
+        assertOwners(codeOwners, "/special/something.rb"); // << NOT @ruby-owner
+    }
+
+    @Test
+    void gitlabExclusionNoReincludeWithinSection() {
+        CodeOwners codeOwners = new CodeOwners(
+            "[Ruby]\n" +
+            "*.rb @ruby-team           # All Ruby files need Ruby team approval.\n" +
+            "!/config/**/*.rb          # Ruby files in config don't need Ruby team approval.\n" +
+            "/config/routes.rb @ops    # This won't take effect as config Ruby files are excluded."
+        );
+
+        codeOwners.setVerbose(true);
+        assertOwners(codeOwners, "something.rb",  "@ruby-team");
+        assertOwners(codeOwners, "/config/something.rb");
+        assertOwners(codeOwners, "/config/subdir/something.rb");
+        assertOwners(codeOwners, "/config/routes.rb"); // << NOT @ops
+    }
+
+    @Test
+    void gitlabExclusionMultipleSections() {
+        CodeOwners codeOwners = new CodeOwners(
+            "[Ruby]\n" +
+            "*.rb @ruby-team\n" +
+            "!/config/**/*.rb        # Config Ruby files don't need Ruby team approval.\n" +
+            "\n" +
+            "[Config]\n" +
+            "/config/ @ops-team      # Config files still require ops-team approval."
+        );
+
+        codeOwners.setVerbose(true);
+        assertOwners(codeOwners, "something.rb",  "@ruby-team");
+        assertOwners(codeOwners, "/config/something.rb", "@ops-team");
+        assertOwners(codeOwners, "/config/something.conf", "@ops-team");
+    }
+
 }

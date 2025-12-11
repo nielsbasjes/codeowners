@@ -25,6 +25,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -54,8 +55,10 @@ class TestCodeOwnersGetters {
 
         Set<Section> allDefinedSections = codeOwners.getAllDefinedSections();
         assertEquals(4, allDefinedSections.size());
+        Rule rule0;
+        Rule rule1;
         for (Section section : allDefinedSections) {
-            List<ApprovalRule> approvalRules;
+            List<Rule> rules;
             switch (section.getName()) {
                 case "One":
                     assertFalse(section.isOptional());
@@ -63,16 +66,19 @@ class TestCodeOwnersGetters {
                     assertEquals(1, section.getDefaultApprovers().size());
                     assertEquals("@docs-team", section.getDefaultApprovers().get(0));
 
-                    approvalRules = section.getApprovalRules();
-                    assertEquals(2, approvalRules.size());
+                    rules = section.getRules();
+                    assertEquals(2, rules.size());
 
-                    assertEquals("docs/",                                       approvalRules.get(0).getFileExpression());
-                    assertEquals("(/.*)?/docs/",                                approvalRules.get(0).getFilePattern().pattern());
-                    assertEquals(Collections.emptyList(),                       approvalRules.get(0).getApprovers());
+                    rule0 = rules.get(0);
+                    assertEquals("docs/",                                       rule0.getFileExpression());
+                    assertEquals("(/.*)?/docs/",                                rule0.getFilePattern().pattern());
+                    assertInstanceOf(ApprovalRule.class, rule0);
+                    assertEquals(Collections.emptyList(),                       ((ApprovalRule) rule0).getApprovers());
 
-                    assertEquals("*.md",                                        approvalRules.get(1).getFileExpression());
-                    assertEquals(".*\\.md(/|$)",                                approvalRules.get(1).getFilePattern().pattern());
-                    assertEquals(Collections.emptyList(),                       approvalRules.get(1).getApprovers());
+                    rule1 = rules.get(1);
+                    assertEquals("*.md",                                        rule1.getFileExpression());
+                    assertEquals(".*\\.md(/|$)",                                rule1.getFilePattern().pattern());
+                    assertEquals(Collections.emptyList(),                       ((ApprovalRule) rule1).getApprovers());
                     break;
 
                 case "Two":
@@ -81,16 +87,18 @@ class TestCodeOwnersGetters {
                     assertEquals(1, section.getDefaultApprovers().size());
                     assertEquals("@database-team", section.getDefaultApprovers().get(0));
 
-                    approvalRules = section.getApprovalRules();
-                    assertEquals(2, approvalRules.size());
+                    rules = section.getRules();
+                    assertEquals(2, rules.size());
 
-                    assertEquals("model/db/",                                   approvalRules.get(0).getFileExpression());
-                    assertEquals("(/.*)?/model/db/",                            approvalRules.get(0).getFilePattern().pattern());
-                    assertEquals(Collections.emptyList(),                       approvalRules.get(0).getApprovers());
+                    rule0 = rules.get(0);
+                    assertEquals("model/db/",                                   rule0.getFileExpression());
+                    assertEquals("(/.*)?/model/db/",                            rule0.getFilePattern().pattern());
+                    assertEquals(Collections.emptyList(),                       ((ApprovalRule)rule0).getApprovers());
 
-                    assertEquals("config/db/database-setup.md",                 approvalRules.get(1).getFileExpression());
-                    assertEquals("(/.*)?/config/db/database-setup\\.md(/|$)",   approvalRules.get(1).getFilePattern().pattern());
-                    assertEquals(Collections.singletonList("@docs-team"),       approvalRules.get(1).getApprovers());
+                    rule1 = rules.get(1);
+                    assertEquals("config/db/database-setup.md",                 rule1.getFileExpression());
+                    assertEquals("(/.*)?/config/db/database-setup\\.md(/|$)",   rule1.getFilePattern().pattern());
+                    assertEquals(Collections.singletonList("@docs-team"),       ((ApprovalRule)rule1).getApprovers());
                     break;
 
                 case "Three":
@@ -98,16 +106,18 @@ class TestCodeOwnersGetters {
                     assertEquals(0, section.getMinimalNumberOfApprovers());
                     assertEquals(0, section.getDefaultApprovers().size());
 
-                    approvalRules = section.getApprovalRules();
-                    assertEquals(2, approvalRules.size());
+                    rules = section.getRules();
+                    assertEquals(2, rules.size());
 
-                    assertEquals("three1/",                                     approvalRules.get(0).getFileExpression());
-                    assertEquals("(/.*)?/three1/",                              approvalRules.get(0).getFilePattern().pattern());
-                    assertEquals(Collections.emptyList(),                       approvalRules.get(0).getApprovers());
+                    rule0 = rules.get(0);
+                    assertEquals("three1/",                                     rule0.getFileExpression());
+                    assertEquals("(/.*)?/three1/",                              rule0.getFilePattern().pattern());
+                    assertEquals(Collections.emptyList(),                       ((ApprovalRule)rule0).getApprovers());
 
-                    assertEquals("three2/",                                     approvalRules.get(1).getFileExpression());
-                    assertEquals("(/.*)?/three2/",                              approvalRules.get(1).getFilePattern().pattern());
-                    assertEquals(Collections.singletonList("@docs-team"),       approvalRules.get(1).getApprovers());
+                    rule1 = rules.get(1);
+                    assertEquals("three2/",                                     rule1.getFileExpression());
+                    assertEquals("(/.*)?/three2/",                              rule1.getFilePattern().pattern());
+                    assertEquals(Collections.singletonList("@docs-team"),       ((ApprovalRule)rule1).getApprovers());
                     break;
 
                 case "Four":
@@ -115,12 +125,13 @@ class TestCodeOwnersGetters {
                     assertEquals(0, section.getMinimalNumberOfApprovers());
                     assertEquals(0, section.getDefaultApprovers().size());
 
-                    approvalRules = section.getApprovalRules();
-                    assertEquals(1, approvalRules.size());
+                    rules = section.getRules();
+                    assertEquals(1, rules.size());
 
-                    assertEquals("four/",                                       approvalRules.get(0).getFileExpression());
-                    assertEquals("(/.*)?/four/",                                approvalRules.get(0).getFilePattern().pattern());
-                    assertEquals(Collections.emptyList(),                       approvalRules.get(0).getApprovers());
+                    rule0 = rules.get(0);
+                    assertEquals("four/",                                       rule0.getFileExpression());
+                    assertEquals("(/.*)?/four/",                                rule0.getFilePattern().pattern());
+                    assertEquals(Collections.emptyList(),                       ((ApprovalRule)rule0).getApprovers());
                     break;
 
                 default:

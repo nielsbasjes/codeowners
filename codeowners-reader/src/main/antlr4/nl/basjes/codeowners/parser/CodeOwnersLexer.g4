@@ -44,7 +44,7 @@ fragment SPACE
      : (' '| '\u2002' | '\u0220' |'\t'|'+')
      ;
 
-
+EXCLUDE     : '!';
 OPTIONAL    : '^';
 BLOCKOPEN   : '[' SPACE* -> channel(HIDDEN), pushMode(SECTION_MODE);
 

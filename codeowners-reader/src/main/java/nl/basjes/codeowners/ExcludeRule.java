@@ -17,22 +17,10 @@
 
 package nl.basjes.codeowners;
 
-import java.util.List;
+public class ExcludeRule extends Rule {
 
-public class ApprovalRule extends Rule {
-    protected final List<String> approvers;
-
-    public ApprovalRule(String fileExpression, List<String> approvers) {
+    public ExcludeRule(String fileExpression) {
         super(fileExpression);
-        this.approvers = approvers;
-    }
-
-    /**
-     * @return All approvers (in the same order as they are in the file) that will be returned IF
-     * the file pattern matches.
-     */
-    public List<String> getApprovers() {
-        return approvers;
     }
 
     @Override
@@ -41,6 +29,6 @@ public class ApprovalRule extends Rule {
         if (verbose) {
             result.append("# Regex used for the next rule:   ").append(filePattern).append('\n');
         }
-        return result.append(fileExpression).append(" ").append(String.join(" ", approvers)).toString();
+        return result.append("!").append(fileExpression).toString();
     }
 }
