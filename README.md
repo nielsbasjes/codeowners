@@ -67,7 +67,7 @@ In one of my projects it looks like this:
     <dependency>
       <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
       <artifactId>codeowners-enforcer-rules</artifactId>
-      <version>1.13.0</version>
+      <version>1.14.0</version>
     </dependency>
   </dependencies>
   <executions>
@@ -110,7 +110,7 @@ On some systems it must have a name that ends with `.main.kts`, if so then it  c
 ```kotlin
 #!/usr/bin/env -S kotlin -howtorun .main.kts
 
-@file:DependsOn("nl.basjes.codeowners:codeowners-validator:1.13.0")
+@file:DependsOn("nl.basjes.codeowners:codeowners-validator:1.14.0")
 
 import nl.basjes.codeowners.validator.CodeOwnersValidator
 import nl.basjes.codeowners.validator.CodeOwnersValidator.DirectoryOwners

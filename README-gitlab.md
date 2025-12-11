@@ -214,7 +214,7 @@ In one of my projects it looks like this:
     <dependency>
       <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
       <artifactId>codeowners-enforcer-rules</artifactId>
-      <version>1.13.0</version>
+      <version>1.14.0</version>
     </dependency>
   </dependencies>
   <executions>
@@ -257,7 +257,7 @@ In one of my projects it looks like this:
     <dependency>
       <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
       <artifactId>codeowners-enforcer-rules</artifactId>
-      <version>1.13.0</version>
+      <version>1.14.0</version>
     </dependency>
   </dependencies>
   <executions>

@@ -4,6 +4,10 @@ This is intended as an overview of the major changes
 
 NEXT VERSION
 ===
+- ...
+
+v.1.14.0
+===
 - Support for the Gitlab Exclusion rules for the codeowners
 
 v.1.13.0
