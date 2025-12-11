@@ -17,10 +17,10 @@
 //  limitations under the License.
 //
 
-// On Ubuntu 24,04 do this first:
+// On Ubuntu 24.04 do this first:
 // sudo snap install kotlin --classic
 
-@file:DependsOn("nl.basjes.codeowners:codeowners-validator:1.13.0")
+@file:DependsOn("nl.basjes.codeowners:codeowners-validator:1.14.0")
 
 import nl.basjes.codeowners.validator.CodeOwnersValidator
 import nl.basjes.codeowners.validator.CodeOwnersValidator.DirectoryOwners

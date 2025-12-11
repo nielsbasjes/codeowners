@@ -17,11 +17,11 @@
 //  limitations under the License.
 //
 
-// On Ubuntu 24,04 do this first:
+// On Ubuntu 24.04 do this first:
 // sudo snap install kotlin --classic
 
 @file:DependsOn("com.github.ajalt.clikt:clikt-jvm:5.0.3")
-@file:DependsOn("nl.basjes.codeowners:codeowners-validator:1.13.0")
+@file:DependsOn("nl.basjes.codeowners:codeowners-validator:1.14.0")
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.main
