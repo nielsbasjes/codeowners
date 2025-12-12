@@ -471,4 +471,51 @@ class TestCodeOwnersGitlab {
         assertOwners(codeOwners, "/config/something.conf", "@ops-team");
     }
 
+    @Test
+    void gitlabExclusionRealUsecase() {
+        CodeOwners codeOwners = new CodeOwners(
+            "[Code Quality][3] @quality\n" +
+            "*\n" +
+            "\n" +
+            "[Change Management Process][1] @changemanagement\n" +
+            "!/docs/\n" +
+            "!*.md\n" +
+            "!*.example\n" +
+            "!.gitignore\n" +
+            "!.prettierignore\n" +
+            "*"
+        );
+
+        codeOwners.setVerbose(true);
+        assertOwners(codeOwners, "README.md",             "@quality"); // Not for *.md
+        assertOwners(codeOwners, "docs/README.md",        "@quality"); // Not for *.md
+        assertOwners(codeOwners, "subdir/README.md",      "@quality"); // Not for *.md
+        assertOwners(codeOwners, "Something.rb",          "@quality", "@changemanagement");
+        assertOwners(codeOwners, "docs/Something.rb",     "@quality"); // Not in /docs/
+        assertOwners(codeOwners, "subdir/Something.rb",   "@quality", "@changemanagement");
+        assertOwners(codeOwners, "Foo.gitignore",         "@quality", "@changemanagement");
+        assertOwners(codeOwners, ".gitignore",            "@quality"); // Not .gitignore
+        assertOwners(codeOwners, "docs/Foo.gitignore",    "@quality"); // Not in /docs/
+        assertOwners(codeOwners, "docs/.gitignore",       "@quality"); // Not in /docs/ AND Not .gitignore
+        assertOwners(codeOwners, "subdir/Foo.gitignore",  "@quality", "@changemanagement");
+        assertOwners(codeOwners, "subdir/.gitignore",     "@quality"); // Not .gitignore
+    }
+
+
+    @Test
+    void gitlabFileMatchingBugReproduction() {
+        // The bug: The second line also matches "foo.gitignore"
+        CodeOwners codeOwners = new CodeOwners(
+            "*.gitignore @one\n" +
+            ".gitignore @two\n"
+        );
+        codeOwners.setVerbose(true);
+        assertOwners(codeOwners, ".gitignore", "@two"); // Last match in a section is used
+        assertOwners(codeOwners, "foo.gitignore", "@one");
+        assertOwners(codeOwners, "/.gitignore", "@two"); // Last match in a section is used
+        assertOwners(codeOwners, "/foo.gitignore", "@one");
+        assertOwners(codeOwners, "/subdir/.gitignore", "@two");
+        assertOwners(codeOwners, "/subdir/foo.gitignore", "@one");
+    }
+
 }

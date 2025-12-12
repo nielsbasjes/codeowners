@@ -33,7 +33,7 @@ public class Rule {
             .replace("\\ ", " ") // The escaped spaces must become spaces again.
 
             // If a path does not start with a /, the path is treated as if it starts with a globstar. README.md is treated the same way as /**/README.md
-            .replaceAll("^([^/*.])", "/**/$1")
+            .replaceAll("^([^/*])", "/**/$1")
             // "/foo" --> End can be a filename (so we pin to the end) or a directory name (so we expect another / )
             .replaceAll("([^/*])$", "$1(/|\\$)")
 
