@@ -4,6 +4,10 @@ This is intended as an overview of the major changes
 
 NEXT VERSION
 ===
+ - ...
+
+v.1.14.1
+===
 - Fixed matching bug ".gitignore" also matched "foo.gitignore"
 
 v.1.14.0
