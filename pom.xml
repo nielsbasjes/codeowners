@@ -64,7 +64,7 @@
     <cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
 
     <antlr.version>4.13.2</antlr.version>
-    <junit5.version>6.0.1</junit5.version>
+    <junit5.version>6.0.2</junit5.version>
     <slf4j.version>2.0.17</slf4j.version>
     <logback.version>1.5.24</logback.version>
     <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
