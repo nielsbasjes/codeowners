@@ -20,7 +20,7 @@
 // On Ubuntu 24.04 do this first:
 // sudo snap install kotlin --classic
 
-@file:DependsOn("com.github.ajalt.clikt:clikt-jvm:5.0.3")
+@file:DependsOn("com.github.ajalt.clikt:clikt-jvm:5.1.0")
 @file:DependsOn("nl.basjes.codeowners:codeowners-validator:1.14.1")
 
 import com.github.ajalt.clikt.core.CliktCommand
