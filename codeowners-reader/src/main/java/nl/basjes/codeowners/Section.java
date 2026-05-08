@@ -100,22 +100,19 @@ public class Section {
                 break;
             }
 
-            if (rule instanceof ApprovalRule) {
-                ApprovalRule approvalRule = (ApprovalRule) rule;
-                List<String> ruleApprovers = approvalRule.getApprovers();
-                if (ruleApprovers != null) {
-                    // GitHub: Order is important; the last matching pattern takes the most precedence.
-                    // Gitlab: When a file or directory matches multiple entries in the CODEOWNERS file, the users from last pattern matching the file or directory are used.
-                    approvers.clear();
-                    if (ruleApprovers.isEmpty()) {
-                        if (verbose) {
-                            LOG.info("-- MATCH WITHOUT APPROVERS --> Using Default approvers {}", defaultApprovers);
-                        }
-                        approvers.addAll(defaultApprovers);
-                    } else {
-                        approvers.addAll(ruleApprovers);
-                    }
+            // Here: rule instanceof ApprovalRule
+            ApprovalRule approvalRule = (ApprovalRule) rule;
+            List<String> ruleApprovers = approvalRule.getApprovers();
+            // GitHub: Order is important; the last matching pattern takes the most precedence.
+            // Gitlab: When a file or directory matches multiple entries in the CODEOWNERS file, the users from last pattern matching the file or directory are used.
+            approvers.clear();
+            if (ruleApprovers.isEmpty()) {
+                if (verbose) {
+                    LOG.info("-- MATCH WITHOUT APPROVERS --> Using Default approvers {}", defaultApprovers);
                 }
+                approvers.addAll(defaultApprovers);
+            } else {
+                approvers.addAll(ruleApprovers);
             }
         }
         if (verbose) {

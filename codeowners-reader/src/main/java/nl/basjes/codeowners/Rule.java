@@ -19,7 +19,7 @@ package nl.basjes.codeowners;
 
 import java.util.regex.Pattern;
 
-public class Rule {
+public abstract class Rule {
     protected final String fileExpression;
     protected final Pattern filePattern;
     protected boolean verbose = false;
@@ -104,12 +104,4 @@ public class Rule {
         this.verbose = verbose;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder result = new StringBuilder();
-        if (verbose) {
-            result.append("# Regex used for the next rule:   ").append(filePattern).append('\n');
-        }
-        return result.toString();
-    }
 }
