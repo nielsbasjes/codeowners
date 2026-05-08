@@ -422,6 +422,12 @@ class TestCodeOwnersGitlab {
         assertOwners(codeOwners, "something.rb", "@username", "@ruby-team");
         assertOwners(codeOwners, "/somedir/something.rb", "@username", "@ruby-team");
         assertOwners(codeOwners, "/config/something.rb", "@username");
+
+        // Test the toString also
+        codeOwners.setVerbose(false);
+        LOG.info("CodeOwners were parsed as (non-verbose):\n{}", codeOwners);
+        codeOwners.setVerbose(true);
+        LOG.info("CodeOwners were parsed as (verbose):\n{}", codeOwners);
     }
 
     @Test
