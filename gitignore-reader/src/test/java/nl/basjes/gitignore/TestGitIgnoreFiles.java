@@ -18,6 +18,7 @@
 package nl.basjes.gitignore;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.condition.OS.WINDOWS;
 
 class TestGitIgnoreFiles {
 
@@ -431,6 +433,7 @@ class TestGitIgnoreFiles {
     }
 
     @Test
+    @DisabledOnOs(WINDOWS)
     void triggerIOErrorDirectory() {
         GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree).assumeQueriesIncludeProjectBaseDir();
 
