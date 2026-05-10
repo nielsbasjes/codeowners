@@ -31,6 +31,9 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
+    <kotlin.code.style>official</kotlin.code.style>
+    <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
+    <kotlin.version>2.3.20</kotlin.version>
 
     <!-- Needed to make the build reproducible https://reproducible-builds.org/ -->
     <project.build.outputTimestamp>2025-12-12T10:45:20Z</project.build.outputTimestamp>
@@ -249,6 +252,28 @@
   <build>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>org.jetbrains.kotlin</groupId>
+          <artifactId>kotlin-maven-plugin</artifactId>
+          <version>${kotlin.version}</version>
+          <extensions>true</extensions>
+          <executions>
+            <execution>
+              <id>compile</id>
+              <phase>compile</phase>
+              <goals>
+                <goal>compile</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>test-compile</id>
+              <phase>test-compile</phase>
+              <goals>
+                <goal>test-compile</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>

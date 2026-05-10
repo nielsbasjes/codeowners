@@ -106,7 +106,10 @@
   </dependencies>
 
   <build>
+    <sourceDirectory>src/main/kotlin</sourceDirectory>
+
     <plugins>
+
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -123,6 +126,10 @@
         </executions>
       </plugin>
 
+      <plugin>
+        <groupId>org.jetbrains.kotlin</groupId>
+        <artifactId>kotlin-maven-plugin</artifactId>
+      </plugin>
       <plugin>
         <!-- generate index of project components -->
         <groupId>org.eclipse.sisu</groupId>
