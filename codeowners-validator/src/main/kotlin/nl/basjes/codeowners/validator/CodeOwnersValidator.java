@@ -371,13 +371,9 @@ public class CodeOwnersValidator {
         if (verbose) {
             log.info("Using CODEOWNERS: " + pathToLoggingString(baseDir.toPath().relativize(codeOwnersFile.toPath())));
         }
-        try {
-            CodeOwners codeOwners = new CodeOwners(codeOwnersFile);
-            log.debug(codeOwners.toString());
-            return codeOwners;
-        } catch (IOException e) {
-            throw new CodeOwnersValidationException("Unable to read the CODEOWNERS: " + codeOwnersFile, e);
-        }
+        CodeOwners codeOwners = new CodeOwners(codeOwnersFile);
+        log.debug(codeOwners.toString());
+        return codeOwners;
     }
 
     // ------------------------------------------

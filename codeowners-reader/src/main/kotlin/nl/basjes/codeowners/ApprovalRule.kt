@@ -14,21 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package nl.basjes.codeowners
 
-package nl.basjes.codeowners;
+class ApprovalRule(
+    fileExpression: String,
+    /**
+     * @return All approvers (in the same order as they are in the file) that will be returned IF
+     * the file pattern matches.
+     */
+    @JvmField val approvers: MutableList<String>
+) : Rule(fileExpression) {
+    fun getApprovers() = approvers
 
-public class ExcludeRule extends Rule {
-
-    public ExcludeRule(String fileExpression) {
-        super(fileExpression);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder result = new StringBuilder();
+    override fun toString(): String {
+        val result = StringBuilder()
         if (verbose) {
-            result.append("# Regex used for the next rule:   ").append(filePattern).append('\n');
+            result.append("# Regex used for the next rule:   ").append(filePattern).append('\n')
         }
-        return result.append("!").append(fileExpression).toString();
+        return result.append(fileExpression).append(" ").append(approvers.joinToString(separator = " ")).toString()
     }
 }

@@ -32,7 +32,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.build.outputEncoding>UTF-8</project.build.outputEncoding>
     <kotlin.code.style>official</kotlin.code.style>
-    <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
+
+    <jvm.version>11</jvm.version>
+
+    <kotlin.compiler.jvmTarget>${jvm.version}</kotlin.compiler.jvmTarget>
     <kotlin.version>2.3.20</kotlin.version>
 
     <!-- Needed to make the build reproducible https://reproducible-builds.org/ -->
@@ -42,9 +45,9 @@
     <maven.minimal.version>3.9.2</maven.minimal.version>
     <enforcer-api.version>3.6.2</enforcer-api.version>
 
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
-    <maven.compiler.release>8</maven.compiler.release>
+    <maven.compiler.source>${jvm.version}</maven.compiler.source>
+    <maven.compiler.target>${jvm.version}</maven.compiler.target>
+    <maven.compiler.release>${jvm.version}</maven.compiler.release>
 
     <maven-artifact-plugin.version>3.6.1</maven-artifact-plugin.version>
     <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
