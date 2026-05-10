@@ -371,7 +371,7 @@
                 </requireMavenVersion>
                 <requireJavaVersion>
                   <version>[25,26)</version>
-                  <message>To ensure the build being reproducible the code MUST be built with Java JDK 26 (detected: JDK ${java.version}).</message>
+                  <message>To ensure the build being reproducible the code MUST be built with Java JDK 25 (detected: JDK ${java.version}).</message>
                 </requireJavaVersion>
                 <banDuplicateClasses>
                   <scopes>
