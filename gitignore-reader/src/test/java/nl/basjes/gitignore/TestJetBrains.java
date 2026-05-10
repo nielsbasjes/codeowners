@@ -82,6 +82,48 @@ class TestJetBrains {
     }
 
     @Test
+    void testIncorrectExtensionsRange() {
+        GitIgnore gitIgnore = new GitIgnore("coverage*[.json,]"); // << This becomes a normal regex ...
+        // This actually means: starts with "coverage" and ends with any of those characters ".json,"
+        assertIgnore(gitIgnore, "coverage.json");
+        assertIgnore(gitIgnore, "coverage-001.json");
+        assertIgnore(gitIgnore, "dir1/coverage-001.json");
+        assertIgnore(gitIgnore, "dir2/coverage-001.json");
+        assertNotIgnore(gitIgnore, "foo_coverage-001.json");
+
+        // Yes, this bad expression actually matches this garbage also
+        assertIgnore(gitIgnore, "coverage.....jsnosnosjjjnn");
+        assertIgnore(gitIgnore, "coverage-001.....jsnosnosjjjnn");
+        assertIgnore(gitIgnore, "dir1/coverage-001.....jsnosnosjjjnn");
+        assertIgnore(gitIgnore, "dir2/coverage-001.....jsnosnosjjjnn");
+        assertNotIgnore(gitIgnore, "foo_coverage-001.....jsnosnosjjjnn");
+
+        assertNotIgnore(gitIgnore, "coverage.xml");
+        assertNotIgnore(gitIgnore, "coverage-001.xml");
+        assertNotIgnore(gitIgnore, "dir1/coverage-001.xml");
+        assertNotIgnore(gitIgnore, "dir2/coverage-001.xml");
+        assertNotIgnore(gitIgnore, "foo_coverage-001.xml");
+
+        assertIgnore(gitIgnore, "coverage.xml,");
+        assertIgnore(gitIgnore, "coverage-001.xml,");
+        assertIgnore(gitIgnore, "dir1/coverage-001.xml,");
+        assertIgnore(gitIgnore, "dir2/coverage-001.xml,");
+        assertNotIgnore(gitIgnore, "foo_coverage-001.xml,");
+
+        assertIgnore(gitIgnore, "coverage.info");
+        assertIgnore(gitIgnore, "coverage-001.info");
+        assertIgnore(gitIgnore, "dir1/coverage-001.info");
+        assertIgnore(gitIgnore, "dir2/coverage-001.info");
+        assertNotIgnore(gitIgnore, "foo_coverage-001.info");
+
+        assertIgnore(gitIgnore, "coverage.j");
+        assertNotIgnore(gitIgnore, "coverage.x");
+        assertNotIgnore(gitIgnore, "coverage.i");
+        assertIgnore(gitIgnore, "coverage.,");
+        assertIgnore(gitIgnore, "coverage.");
+    }
+
+    @Test
     void testSpecialCharactersTilde() {
         GitIgnore gitIgnore = new GitIgnore(
             "foo*\n" +
@@ -176,6 +218,11 @@ class TestJetBrains {
     @Test
     void testBadExpression() {
         assertThrows(PatternSyntaxException.class, () -> new GitIgnore("["));
+    }
+
+    @Test
+    void testBadNegateExpression() {
+        assertThrows(PatternSyntaxException.class, () -> new GitIgnore("!["));
     }
 
 }

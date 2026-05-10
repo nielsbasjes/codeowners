@@ -99,6 +99,7 @@ public class GitIgnore {
                 }
             }
         } catch (IOException io) {
+            // Effectively unreachable code: Reading using a StringReader from a non-null in memory String cannot fail.
             LOG.error("Got an IOException while reading the gitignore file content: {}", io.toString());
         }
 
@@ -159,7 +160,7 @@ public class GitIgnore {
             if (mustBeIgnored == null) {
                 LOG.info("Conclusion: Not matched: Not ignored");
             } else {
-                if (TRUE.equals(mustBeIgnored)) {
+                if (mustBeIgnored) {
                     LOG.info("Conclusion: Must be ignored");
                 } else {
                     LOG.info("Conclusion: Must NOT be ignored");

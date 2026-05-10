@@ -171,7 +171,6 @@ public class GitIgnoreFileSet implements FileFilter {
         return addAllGitIgnoreFiles(projectBaseDir.toPath(), 128, includeGlobalGitignore);
     }
 
-
     /**
      * add the global gitignore file (from `$XDG_CONFIG_HOME/git/ignore`, or, if `$XDG_CONFIG_HOME` is either not set or empty, `$HOME/.config/git/ignore`)
      *

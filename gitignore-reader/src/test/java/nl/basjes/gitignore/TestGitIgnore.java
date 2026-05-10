@@ -33,6 +33,7 @@ import static nl.basjes.gitignore.TestUtils.assertNullMatch;
 import static nl.basjes.gitignore.TestUtils.verifyGeneratedRegex;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class TestGitIgnore {
@@ -139,7 +140,7 @@ class TestGitIgnore {
     // ------------------------------------------
 
     @Test
-    void testdefaultAnyDirectory() {
+    void testDefaultAnyDirectory() {
         // By default, patterns match files in any directory
         GitIgnore gitIgnore = new GitIgnore("debug.log");
         assertIgnore(gitIgnore, "debug.log");
@@ -584,6 +585,41 @@ class TestGitIgnore {
         assertIgnore(gitIgnore,    "foo_bar");
         assertIgnore(gitIgnore,    "foo.bar");
         assertNotIgnore(gitIgnore, "foo/bar");
+    }
+
+    @Test
+    void testEmptyIgnoreRules() {
+        GitIgnore gitIgnore = new GitIgnore("");
+        assertNotIgnore(gitIgnore, "debug.log");
+        assertNotIgnore(gitIgnore, "logs/debug.log");
+    }
+
+    @Test
+    void testNullIgnoreRules() {
+        GitIgnore gitIgnore = new GitIgnore((String)null);
+        assertNotIgnore(gitIgnore, "debug.log");
+        assertNotIgnore(gitIgnore, "logs/debug.log");
+    }
+
+    @Test
+    void testBaseDirNull() {
+        IgnoreRule rule = new IgnoreRule(null, false, "debug.log", true);
+        assertTrue(rule.isIgnoredFile("debug.log"));
+        assertTrue(rule.isIgnoredFile("logs/debug.log"));
+    }
+
+    @Test
+    void testBaseDirEmpty() {
+        IgnoreRule rule = new IgnoreRule("", false, "debug.log", true);
+        assertTrue(rule.isIgnoredFile("debug.log"));
+        assertTrue(rule.isIgnoredFile("logs/debug.log"));
+    }
+
+    @Test
+    void testBaseDirRoot() {
+        IgnoreRule rule = new IgnoreRule("/", false, "debug.log", true);
+        assertTrue(rule.isIgnoredFile("debug.log"));
+        assertTrue(rule.isIgnoredFile("logs/debug.log"));
     }
 
 }

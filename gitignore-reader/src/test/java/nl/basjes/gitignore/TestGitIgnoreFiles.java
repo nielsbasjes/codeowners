@@ -97,13 +97,13 @@ class TestGitIgnoreFiles {
             .stream()
             .map(Path::toString)
             .map(GitIgnore::standardizeFilename) // Needed for testing on Windows.
-            .map(path -> path.replaceAll("^\\Q/"+testTreeDir+"\\E", "/").replaceAll("//", "/"))
+            .map(path -> path.replaceAll("^\\Q/"+testTreeDir+"\\E", "/").replace("//", "/"))
             .sorted()
             .collect(Collectors.toList());
     }
 
     private String stripTestTreeBaseDir(Path input) {
-        return standardizeFilename(input.toString()).replaceAll("^\\Q/"+testTreeDir+"\\E", "/").replaceAll("//", "/");
+        return standardizeFilename(input.toString()).replaceAll("^\\Q/"+testTreeDir+"\\E", "/").replace("//", "/");
     }
 
     static final String testTreeDir = "src/test/resources/testtree";
@@ -407,5 +407,50 @@ class TestGitIgnoreFiles {
         assertEquals(expectedKeepFiles, stripTestTreeBaseDir(allNonIgnored));
     }
 
+    @Test
+    void triggerNotExist() {
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree).assumeQueriesIncludeProjectBaseDir();
+        List<Path> allNonIgnored = findAllNonIgnored(gitIgnoreFileSet, new File("/no-such-file-really").toPath());
+        assertTrue(allNonIgnored.isEmpty());
+    }
+
+    @Test
+    void triggerNotADirectory() {
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree).assumeQueriesIncludeProjectBaseDir();
+        List<Path> allNonIgnored = findAllNonIgnored(gitIgnoreFileSet, new File(gitIgnoreFileSet.getProjectBaseDir().toPath() + "/README.md").toPath());
+        assertTrue(allNonIgnored.isEmpty());
+    }
+
+    @Test
+    void triggerEverythingIsIgnored() {
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree).assumeQueriesIncludeProjectBaseDir();
+        GitIgnore gitIgnore = new GitIgnore("*");
+        gitIgnoreFileSet.add(gitIgnore);
+        List<Path> allNonIgnored = findAllNonIgnored(gitIgnoreFileSet);
+        assertTrue(allNonIgnored.isEmpty());
+    }
+
+    @Test
+    void triggerIOErrorDirectory() {
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree).assumeQueriesIncludeProjectBaseDir();
+
+        File testDir = new File(gitIgnoreFileSet.getProjectBaseDir().toPath() + "/dir5");
+        assertTrue(testDir.isDirectory());
+        assertTrue(testDir.canExecute());
+        assertTrue(testDir.canRead());
+        List<Path> allNonIgnored = findAllNonIgnored(gitIgnoreFileSet);
+        assertTrue(allNonIgnored.contains(testDir.toPath()), "The list " + allNonIgnored + " is missing " + testDir);
+
+        try {
+            assertTrue(testDir.setExecutable(false, false));
+            assertTrue(testDir.setReadable(false, false));
+            List<Path> allNonIgnored2 = findAllNonIgnored(gitIgnoreFileSet);
+            assertFalse(allNonIgnored2.contains(testDir.toPath()), "The list " + allNonIgnored + " SHOULD NOT contain " + testDir);
+        }
+        finally {
+            assertTrue(testDir.setExecutable(true, false));
+            assertTrue(testDir.setReadable(true, false));
+        }
+    }
 
 }
