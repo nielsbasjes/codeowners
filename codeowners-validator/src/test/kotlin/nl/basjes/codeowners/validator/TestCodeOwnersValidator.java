@@ -93,7 +93,7 @@ public class TestCodeOwnersValidator {
         assertIgnored(directoryOwners, "src/main/README.txt");
     }
 
-        @Test
+    @Test
     void testMissing() throws CodeOwnersValidationException {
         DirectoryOwners directoryOwners = analyze("missing", false);
 
@@ -108,25 +108,25 @@ public class TestCodeOwnersValidator {
         assertMandatoryApprovers(directoryOwners, "src/main/README.txt"   ); // <-- NO APPROVERS!
     }
 
-        @Test
+    @Test
     void testOutSideGitlab() throws CodeOwnersValidationException {
-            DirectoryOwners directoryOwners = analyze("OutsideGitlab", false);
+        DirectoryOwners directoryOwners = analyze("OutsideGitlab", false);
 
-            assertMandatoryApprovers(directoryOwners, "",                     "@integrationtest"  );
-            assertMandatoryApprovers(directoryOwners, ".gitlab/",             "@integrationtest"  );
-            assertMandatoryApprovers(directoryOwners, ".gitlab/CODEOWNERS",   "@nielsbasjes"      );
-            assertMandatoryApprovers(directoryOwners, "pom.xml",              "@integrationtest"  );
-            assertMandatoryApprovers(directoryOwners, "src/",                 "@integrationtest"  );
-            assertMandatoryApprovers(directoryOwners, "src/main/"             ); // <-- NO APPROVERS!
-            assertMandatoryApprovers(directoryOwners, "src/main/README.java"  ); // <-- NO APPROVERS!
-            assertMandatoryApprovers(directoryOwners, "src/main/README.md",   "@username"         );
-            assertMandatoryApprovers(directoryOwners, "src/main/README.txt"  ); // <-- NO APPROVERS!
+        assertMandatoryApprovers(directoryOwners, "",                     "@integrationtest"  );
+        assertMandatoryApprovers(directoryOwners, ".gitlab/",             "@integrationtest"  );
+        assertMandatoryApprovers(directoryOwners, ".gitlab/CODEOWNERS",   "@nielsbasjes"      );
+        assertMandatoryApprovers(directoryOwners, "pom.xml",              "@integrationtest"  );
+        assertMandatoryApprovers(directoryOwners, "src/",                 "@integrationtest"  );
+        assertMandatoryApprovers(directoryOwners, "src/main/"             ); // <-- NO APPROVERS!
+        assertMandatoryApprovers(directoryOwners, "src/main/README.java"  ); // <-- NO APPROVERS!
+        assertMandatoryApprovers(directoryOwners, "src/main/README.md",   "@username"         );
+        assertMandatoryApprovers(directoryOwners, "src/main/README.txt"  ); // <-- NO APPROVERS!
 
 //        assert text.contains("[ERROR] Unable to load projectId from Gitlab: GitlabConfiguration: {");
 //        assert text.contains("[ERROR]   ServerUrl='http://localhost:0' found via gitlab.serverUrl.url is valid.");
 //        assert text.contains("[ERROR]   ProjectId='niels/project' found via gitlab.projectId.id is valid.");
 //        assert text.contains("[ERROR]   AccessToken= 'gltst-*****ue' found via environment variable CHECK_USERS_TOKEN is valid.");
-        }
+    }
 
     @Test
     void testTestTree() throws CodeOwnersValidationException {
