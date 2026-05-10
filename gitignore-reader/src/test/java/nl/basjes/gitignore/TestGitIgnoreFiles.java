@@ -39,6 +39,7 @@ import static nl.basjes.gitignore.GitIgnore.standardizeFilename;
 import static nl.basjes.gitignore.Utils.findAllNonIgnored;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.condition.OS.WINDOWS;
@@ -151,10 +152,13 @@ class TestGitIgnoreFiles {
         URL dirWithGitIgnoreURL = this.getClass()
             .getClassLoader()
             .getResource("xdg_config_home");
+        assertNotNull(dirWithGitIgnoreURL);
         String dirWithGitIgnore = dirWithGitIgnoreURL.getFile();
+
         URL dirWithConfigGitIgnoreURL = this.getClass()
             .getClassLoader()
             .getResource("home");
+        assertNotNull(dirWithConfigGitIgnoreURL);
         String dirWithConfigGitIgnore = dirWithConfigGitIgnoreURL.getFile();
 
         assertNull(GitIgnoreFileSet.getGlobalGitIgnore(dirWithConfigGitIgnore, ""));
