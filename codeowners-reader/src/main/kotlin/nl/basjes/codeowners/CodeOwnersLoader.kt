@@ -21,10 +21,8 @@ import nl.basjes.codeowners.parser.CodeOwnersParser
 import nl.basjes.codeowners.parser.CodeOwnersParserBaseVisitor
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
-import org.antlr.v4.runtime.tree.TerminalNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.function.Consumer
 import java.util.stream.Collectors
 
 internal class CodeOwnersLoader(codeownersContent: String) : CodeOwnersParserBaseVisitor<Void?>() {

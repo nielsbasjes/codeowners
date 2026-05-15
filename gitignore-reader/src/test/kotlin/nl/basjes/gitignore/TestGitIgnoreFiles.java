@@ -423,7 +423,7 @@ class TestGitIgnoreFiles {
     @Test
     void triggerNotADirectory() {
         GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree).assumeQueriesIncludeProjectBaseDir();
-        List<Path> allNonIgnored = findAllNonIgnored(gitIgnoreFileSet, new File(gitIgnoreFileSet.getProjectBaseDir().toPath() + "/README.md").toPath());
+        List<Path> allNonIgnored = findAllNonIgnored(gitIgnoreFileSet, new File(gitIgnoreFileSet.projectBaseDir.toPath() + "/README.md").toPath());
         assertTrue(allNonIgnored.isEmpty());
     }
 
@@ -441,7 +441,7 @@ class TestGitIgnoreFiles {
     void triggerIOErrorDirectory() {
         GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree).assumeQueriesIncludeProjectBaseDir();
 
-        File testDir = new File(gitIgnoreFileSet.getProjectBaseDir().toPath() + "/dir5");
+        File testDir = new File(gitIgnoreFileSet.projectBaseDir.toPath() + "/dir5");
         assertTrue(testDir.isDirectory());
         assertTrue(testDir.canExecute());
         assertTrue(testDir.canRead());

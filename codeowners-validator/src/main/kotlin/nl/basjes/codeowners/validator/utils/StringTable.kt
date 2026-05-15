@@ -16,7 +16,6 @@
  */
 package nl.basjes.codeowners.validator.utils
 
-import java.util.*
 import kotlin.math.max
 
 open class StringTable {

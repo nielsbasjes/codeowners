@@ -22,10 +22,8 @@ class ApprovalRule(
      * @return All approvers (in the same order as they are in the file) that will be returned IF
      * the file pattern matches.
      */
-    @JvmField val approvers: MutableList<String>
+    val approvers: MutableList<String>
 ) : Rule(fileExpression) {
-    fun getApprovers() = approvers
-
     override fun toString(): String {
         val verbose =
             if (verbose)

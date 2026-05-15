@@ -157,7 +157,7 @@ class TestCodeOwnersGitlab {
         assertOwners(codeOwners, "/something/README.md",        "@docs-team2");
         assertOwners(codeOwners, "README.md",                   "@docs-team2");
         assertOwners(codeOwners, "MatchWildCard.txt",           "@default-user1", "@default-user2");
-        assertTrue(codeOwners.hasStructuralProblems());
+        assertTrue(codeOwners.getHasStructuralProblems());
     }
 
     @Test
@@ -175,7 +175,7 @@ class TestCodeOwnersGitlab {
         assertOwners(codeOwners, "/something/README.md",        "@docs-team2");
         assertOwners(codeOwners, "README.md",                   "@docs-team2");
         assertOwners(codeOwners, "MatchWildCard.txt",           "@default-user1", "@default-user2");
-        assertFalse(codeOwners.hasStructuralProblems());
+        assertFalse(codeOwners.getHasStructuralProblems());
     }
 
     @Test
@@ -196,7 +196,7 @@ class TestCodeOwnersGitlab {
         assertOwners(codeOwners, "/something/README.md",        "@docs-team2");
         assertOwners(codeOwners, "README.md",                   "@docs-team2");
         assertOwners(codeOwners, "MatchWildCard.txt",           "@default-user1", "@default-user2");
-        assertTrue(codeOwners.hasStructuralProblems());
+        assertTrue(codeOwners.getHasStructuralProblems());
 
         assertEquals(
             "# CODEOWNERS file:\n" +

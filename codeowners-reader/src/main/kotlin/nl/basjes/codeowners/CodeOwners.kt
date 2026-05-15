@@ -22,7 +22,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.util.function.Consumer
 import java.util.stream.Collectors
 
 internal val LOG: Logger = LoggerFactory.getLogger(CodeOwners::class.java)
@@ -34,14 +33,11 @@ class CodeOwners(codeownersContent: String) {
     // Map name of Section to Sections
     private val sections: MutableMap<String, Section>
 
-    private var hasStructuralProblems = false
-
     /**
      * @return true if any kind of (even minor) problem is found.
      */
-    fun hasStructuralProblems(): Boolean {
-        return hasStructuralProblems
-    }
+    var hasStructuralProblems = false
+        private set
 
     /**
      * Construct the CodeOwners with the provided rules string
@@ -153,13 +149,11 @@ class CodeOwners(codeownersContent: String) {
         }
         return result.toString()
     }
+}
 
-    companion object {
-        private const val CODEOWNERS_PATH_SEPARATOR = "/"
+private const val CODEOWNERS_PATH_SEPARATOR = "/"
 
-        @Throws(IOException::class)
-        private fun readFileToString(file: File): String {
-            return String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
-        }
-    }
+@Throws(IOException::class)
+private fun readFileToString(file: File): String {
+    return String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
 }

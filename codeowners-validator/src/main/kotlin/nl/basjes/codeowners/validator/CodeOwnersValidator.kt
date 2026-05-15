@@ -29,13 +29,6 @@ import java.io.File
 import java.nio.file.Path
 import java.util.*
 import java.util.stream.Collectors
-import kotlin.Boolean
-import kotlin.Throws
-import kotlin.text.StringBuilder
-import kotlin.text.replace
-import kotlin.text.startsWith
-import kotlin.text.toRegex
-import kotlin.use
 
 class CodeOwnersValidator(
     private val gitlab: GitlabConfiguration?,

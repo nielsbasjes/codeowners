@@ -33,6 +33,7 @@ import static nl.basjes.gitignore.TestUtils.assertNullMatch;
 import static nl.basjes.gitignore.TestUtils.verifyGeneratedRegex;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -453,8 +454,8 @@ class TestGitIgnore {
         assertNotIgnore(gitIgnore, "important/debug.log");
 
         // Verify the created ignore rules.
-        assertEquals(3, gitIgnore.getIgnoreRules().size());
-        for (IgnoreRule ignoreRule : gitIgnore.getIgnoreRules()) {
+        assertEquals(3, gitIgnore.getIgnoreRules$gitignore_reader().size());
+        for (IgnoreRule ignoreRule : gitIgnore.getIgnoreRules$gitignore_reader()) {
             switch (ignoreRule.getIgnoreExpression()) {
                 case "*.log":
                     assertEquals("^/?.*\\.log(/|$)", ignoreRule.getIgnorePattern().pattern());
@@ -494,8 +495,8 @@ class TestGitIgnore {
 
 
     private void verifyBaseDir(GitIgnore gitIgnore, String baseDir, String matchingFilename) {
-        assertEquals(baseDir, gitIgnore.getProjectRelativeBaseDir(), "Wrong basedir in GitIgnore");
-        for (IgnoreRule ignoreRule : gitIgnore.getIgnoreRules()) {
+        assertEquals(baseDir, gitIgnore.projectRelativeBaseDir, "Wrong basedir in GitIgnore");
+        for (IgnoreRule ignoreRule : gitIgnore.getIgnoreRules$gitignore_reader()) {
             assertEquals(baseDir, ignoreRule.getIgnoreBasedir(), "Wrong basedir in rule");
         }
         assertEquals(TRUE, gitIgnore.isIgnoredFile(matchingFilename), "The filename " + matchingFilename + " should have matched("+gitIgnore+").");
@@ -596,30 +597,35 @@ class TestGitIgnore {
 
     @Test
     void testNullIgnoreRules() {
-        GitIgnore gitIgnore = new GitIgnore((String)null);
-        assertNotIgnore(gitIgnore, "debug.log");
-        assertNotIgnore(gitIgnore, "logs/debug.log");
+        assertThrows(NullPointerException.class, () -> {
+            new GitIgnore((String)null); // Deliberately passing a null value which should fail.
+        });
     }
 
     @Test
     void testBaseDirNull() {
         IgnoreRule rule = new IgnoreRule(null, false, "debug.log", true);
-        assertTrue(rule.isIgnoredFile("debug.log"));
-        assertTrue(rule.isIgnoredFile("logs/debug.log"));
+        assertTrueAndNotNull(rule.isIgnoredFile("debug.log"));
+        assertTrueAndNotNull(rule.isIgnoredFile("logs/debug.log"));
     }
 
     @Test
     void testBaseDirEmpty() {
         IgnoreRule rule = new IgnoreRule("", false, "debug.log", true);
-        assertTrue(rule.isIgnoredFile("debug.log"));
-        assertTrue(rule.isIgnoredFile("logs/debug.log"));
+        assertTrueAndNotNull(rule.isIgnoredFile("debug.log"));
+        assertTrueAndNotNull(rule.isIgnoredFile("logs/debug.log"));
     }
 
     @Test
     void testBaseDirRoot() {
         IgnoreRule rule = new IgnoreRule("/", false, "debug.log", true);
-        assertTrue(rule.isIgnoredFile("debug.log"));
-        assertTrue(rule.isIgnoredFile("logs/debug.log"));
+        assertTrueAndNotNull(rule.isIgnoredFile("debug.log"));
+        assertTrueAndNotNull(rule.isIgnoredFile("logs/debug.log"));
+    }
+
+    private void assertTrueAndNotNull(Boolean condition) {
+        assertNotNull(condition);
+        assertTrue(condition);
     }
 
 }

@@ -28,9 +28,6 @@ import org.gitlab4j.api.GitLabApi
 import org.gitlab4j.api.GitLabApiException
 import org.gitlab4j.api.models.*
 import org.slf4j.Logger
-import kotlin.Any
-import kotlin.Throws
-import kotlin.require
 
 class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
     private val projectId: ProjectId

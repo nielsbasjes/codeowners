@@ -1,0 +1,428 @@
+/*
+ * CodeOwners Tools
+ * Copyright (C) 2023-2025 Niels Basjes
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an AS IS BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package nl.basjes.gitignore
+
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.BufferedReader
+import java.io.File
+import java.io.IOException
+import java.io.StringReader
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.util.function.Consumer
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
+
+/**
+ * A class that holds a single .gitignore file
+ */
+class GitIgnore @JvmOverloads constructor(
+    projectRelativeBaseDir: String,
+    gitIgnoreContent: String?,
+    verbose: Boolean = false
+) {
+    @JvmField
+    val projectRelativeBaseDir: String
+
+    internal val ignoreRules: MutableList<IgnoreRule> = mutableListOf()
+    private var verbose = false
+
+    // Load the gitignore from a file
+    constructor(file: File) : this("", file)
+
+    constructor(projectRelativeBaseDir: String, file: File) : this(projectRelativeBaseDir, readFileToString(file))
+
+    constructor(gitIgnoreContent: String) : this("", gitIgnoreContent)
+
+    constructor(gitIgnoreContent: String, verbose: Boolean) : this("", gitIgnoreContent, verbose)
+
+    init {
+        this.verbose = verbose
+        this.projectRelativeBaseDir = standardizeFilename(projectRelativeBaseDir + GITIGNORE_PATH_SEPARATOR)
+
+        if (gitIgnoreContent != null) {
+            val reader = BufferedReader(StringReader(gitIgnoreContent))
+            var line: String?
+            try {
+                while ((reader.readLine().also { line = it }) != null) {
+                    line = line!!.trim { it <= ' ' }
+                    if (line.isEmpty()) {
+                        continue
+                    }
+                    if (line.startsWith("#")) {
+                        continue
+                    }
+                    if (line.startsWith("!")) {
+                        ignoreRules.add(IgnoreRule(this.projectRelativeBaseDir, true, line.substring(1), verbose))
+                    } else {
+                        ignoreRules.add(IgnoreRule(this.projectRelativeBaseDir, false, line, verbose))
+                    }
+                }
+            } catch (io: IOException) {
+                // Effectively unreachable code: Reading using a StringReader from a non-null in memory String cannot fail.
+                LOG.error("Got an IOException while reading the gitignore file content: {}", io.toString())
+            }
+        }
+    }
+
+    /**
+     * Checks if the file matches the stored expressions.
+     * @param filename The filename to be checked (which is a project relative filename).
+     * @return NULL: not matched, True: must be ignored, False: it must be UNignored
+     */
+    fun isIgnoredFile(filename: String): Boolean? {
+        if (verbose) {
+            LOG.info("# vvvvvvvvvvvvvvvvvvvvvvvvvvv")
+            LOG.info("Checking: {}", filename)
+        }
+        val matchFileName: String = standardizeFilename(filename)
+
+        if (verbose) {
+            LOG.info("Matching: {}", matchFileName)
+        }
+
+        // If a file is NOT matched at all then there is no verdict.
+        var mustBeIgnored: Boolean? = null
+
+        if (!matchFileName.startsWith(projectRelativeBaseDir)) {
+            if (verbose) {
+                LOG.info("# Not in my baseDir: {}", projectRelativeBaseDir)
+            }
+        } else {
+            for (ignoreRule in ignoreRules) {
+                val ruleVerdict = ignoreRule.isIgnoredFile(matchFileName) ?: continue
+                mustBeIgnored = ruleVerdict
+
+                // Handling the "bug" in git that results in unexpected ignores
+                if (ruleVerdict && ignoreRule.isDirectoryMatch) {
+                    // From: https://www.atlassian.com/git/tutorials/saving-changes/gitignore
+                    // These rules
+                    //    logs/
+                    //    !logs/important.log
+                    // ignore these files
+                    //    logs/debug.log
+                    //    logs/important.log
+                    // Documentation:
+                    //    Wait a minute! Shouldn't logs/important.log be negated in the example on the left
+                    //    Nope! Due to a performance-related quirk in Git, you can not negate a file that
+                    //    is ignored due to a pattern matching a directory
+
+                    // So if there was a directory match rule that ignores this file then that one always wins.
+
+                    break
+                }
+            }
+        }
+
+        if (verbose) {
+            if (mustBeIgnored == null) {
+                LOG.info("Conclusion: Not matched: Not ignored")
+            } else {
+                if (mustBeIgnored) {
+                    LOG.info("Conclusion: Must be ignored")
+                } else {
+                    LOG.info("Conclusion: Must NOT be ignored")
+                }
+            }
+        }
+        return mustBeIgnored
+    }
+
+    /**
+     * Checks if the file matches the stored expressions.
+     * This is NOT suitable for combining multiple sets of rules!
+     * @param filename The filename to be checked (which is a project relative filename).
+     * @return true: must be ignored, false: it must be not be ignored
+     */
+    fun ignoreFile(filename: String): Boolean {
+        return isIgnoredFile(filename) ?: false
+    }
+
+    /**
+     * Checks if the file matches the stored expressions.
+     * This is NOT suitable for combining multiple sets of rules!
+     * @param filename The filename to be checked (which is a project relative filename).
+     * @return true: must be kept, false: it must be ignored
+     */
+    fun keepFile(filename: String): Boolean {
+        return !ignoreFile(filename)
+    }
+
+    fun setVerbose(verbose: Boolean) {
+        this.verbose = verbose
+        ignoreRules.forEach(Consumer { rule: IgnoreRule? -> rule!!.setVerbose(verbose) })
+    }
+
+    override fun toString(): String {
+        val result = StringBuilder()
+        result.append("# GitIgnore content in ").append(projectRelativeBaseDir).append("\n")
+
+        for (ignoreRule in ignoreRules) {
+            result.append(ignoreRule).append('\n')
+        }
+        return result.toString()
+    }
+
+    // Internal, package private for testing purposes
+    internal class IgnoreRule(
+        projectRelativeBaseDir: String?,
+        negate: Boolean,
+        fileExpression: String,
+        private var verbose: Boolean
+    ) {
+        /**
+         * @return The directory in which this gitIgnore was located
+         */
+        val ignoreBasedir: String
+        private val negate: Boolean
+        private val fileExpression: String
+
+        /**
+         * There is a strange edgecase in git where a rule that matches an entire directory
+         * disables ignore rules in that same directory.
+         * @return Is this rule matching an entire directory tree?
+         */
+        val isDirectoryMatch: Boolean
+
+        /**
+         * @return The basedir and ignore expression combined into a regular expression.
+         */
+        val ignorePattern: Pattern
+
+        init {
+            val baseDirRegex: String?
+            if (projectRelativeBaseDir == null || "/" == projectRelativeBaseDir || projectRelativeBaseDir.trim { it <= ' ' }
+                    .isEmpty()) {
+                this.ignoreBasedir = "/"
+                baseDirRegex = "^/?" // The leading slash is optional
+            } else {
+                // Enforce the base dir starts and ends with a single '/'
+                this.ignoreBasedir =
+                    ("/" + projectRelativeBaseDir.trim { it <= ' ' } + "/").replace("/+".toRegex(), "/")
+                baseDirRegex = "^/?\\Q" + this.ignoreBasedir.substring(1) + "\\E"
+            }
+
+            this.negate = negate
+            this.fileExpression = fileExpression
+            this.isDirectoryMatch = !negate && fileExpression.endsWith("/")
+
+            var fileRegex = fileExpression
+                .trim { it <= ' ' }  // Clear leading and trailing spaces
+
+                .replace("^!".toRegex(), "") // Strip the negation at the start of the line (if any)
+
+                .replace("[!", "[^")
+            // Fix the 'not' range or 'not' set
+
+
+            val LITERAL_STAR_MARKER = "||>s<||"
+            val LITERAL_QUESTION_MARK = "||>q<||"
+
+            fileRegex = fileRegex
+                .replace(
+                    "\\*",
+                    LITERAL_STAR_MARKER
+                ) // Move the escaped * to something special that does not have a * in it
+                .replace(
+                    "\\?",
+                    LITERAL_QUESTION_MARK
+                ) // Move the escaped ? to something special that does not have a ? in it
+                .replace("?", "[^/]") // The character "?" matches any one character except "/".
+
+            if (fileExpression.contains("/") && !fileExpression.endsWith("/")) {
+                // Patterns specifying a file in a particular directory are relative to the repository root.
+                if (fileRegex.startsWith("/")) {
+                    fileRegex = fileRegex.substring(1)
+                }
+            } else {
+                // If there is a separator at the beginning or middle (or both) of the pattern,
+                // then the pattern is relative to the directory level of the particular .gitignore file itself.
+                // Otherwise, the pattern may also match at any level below the .gitignore level.
+                if (!Pattern.compile("./.").matcher(fileRegex).find()) {
+                    // If a path does not start with a /, the path is treated as if it starts with a globstar. README.md is treated the same way as /**/README.md
+                    fileRegex = fileRegex.replace("^([^/*])".toRegex(), "**/$1")
+                }
+            }
+
+            fileRegex = fileRegex
+                .replace("\\ ", " ") // The escaped spaces must become spaces again.
+                // Some characters do NOT have a special meaning
+
+                .replace("$", "\\$")
+                .replace("(", "\\(")
+                .replace(")", "\\)")
+
+            // Convert cases like
+            //     coverage*[.json, .xml, .info]
+            // into
+            //     coverage*(.json|.xml|.info)
+            if (fileRegex.contains("[") && fileRegex.contains(",")) {
+                var changed = false
+                while (true) {
+                    val newRegex = fileRegex.replace("\\[([^]]+) *, *([^]]+)]".toRegex(), "[$1|$2]")
+                    if (newRegex == fileRegex) {
+                        break
+                    }
+                    fileRegex = newRegex
+                    changed = true
+                }
+                if (changed) {
+                    fileRegex = fileRegex.replace("\\[([^]]+\\|[^]]+)]".toRegex(), "($1)")
+                }
+            }
+
+            fileRegex =
+                fileRegex // "/foo" --> End can be a filename (so we pin to the end) or a directory name (so we expect another / )
+                    .replace("([^/*])$".toRegex(), "$1(/|\\$)")
+
+                    .replace(".", "\\.") // Avoid bad wildcards
+                    .replace("\\.*", "\\.[^/]*") //  matching  /.* onto /.foo/bar.xml
+                    .replace("?", "[^/]") // Single character match
+                    // The Globstar "/**/bar" must also match "bar"
+
+                    .replace("^\\*\\*/".toRegex(), "(.*/)?") // The Globstar "foo/**/bar" must also match "foo/bar"
+                    .replace(
+                        "/**",
+                        "(/.*)?"
+                    ) // The wildcard "foo/*/bar" must match exactly 1 subdir "foo/something/bar"
+                    // and not "foo/bar", "foo//bar" or "foo/something/something/bar"
+
+                    .replace("/*/", "/[^/]+/")
+                    .replace("/*/", "/[^/]+/")
+
+                    .replace("**", ".*") // Convert to the Regex wildcards
+
+                    .replace("^\\*".toRegex(), ".*") // Match anything at the start
+
+                    .replace("^/".toRegex(), "^/") // If starts with / then pin to the start.
+
+                    .replace(
+                        "/\\*([^/]*)$".toRegex(),
+                        "/[^/]*$1\\$"
+                    ) // A trailing '/*something' means NO further subdirs should be matched
+
+                    .replace("/*", "/[^/]*") // "/foo/*\.js"  --> "/foo/.*\.js"
+
+                    .replace("([^.\\]])\\*".toRegex(), "$1[^/]*") // Match anything at the start
+
+                    .replace(LITERAL_STAR_MARKER, "\\Q*\\E") // Move the 'something special' to the literal *
+                    .replace(LITERAL_QUESTION_MARK, "\\Q?\\E") // Move the 'something special' to the literal ?
+
+                    .replace("/+".toRegex(), "/") // Remove duplication
+
+                    .replace("/\\E/", "/\\E") // Remove '/' duplication around a literal marker
+
+            val finalRegex = baseDirRegex + fileRegex
+            try {
+                this.ignorePattern = Pattern.compile(finalRegex)
+                if (verbose) {
+                    LOG.info("IgnoreRule for expression {}   -->   Regex {}", this.fileExpression, fileRegex)
+                }
+            } catch (pse: PatternSyntaxException) {
+                val errorMsg = "You either have an invalid gitignore rule (which you should fix) " +
+                        "or you have found an edge case that should be fixed. " +
+                        "In the latter case please file a bug report to https://github.com/nielsbasjes/codeowners/issues " +
+                        "indicating that the expression >>>" + (if (negate) "!" else "") + this.fileExpression + "<<< " +
+                        "was converted to regex >>>" + finalRegex + "<<< " +
+                        "which triggered the error: " + pse.message
+                throw PatternSyntaxException(errorMsg, finalRegex, pse.getIndex())
+            }
+        }
+
+        /**
+         * Checks if the file matches the stored expression.
+         * @param filename The filename to be checked
+         * @return NULL: not matched, True: must be ignored, False: it must be UNignored
+         */
+        fun isIgnoredFile(filename: String): Boolean? {
+            if (!ignorePattern.matcher(filename).find()) {
+                if (verbose) {
+                    LOG.info(
+                        "NO MATCH     |{}| ~ |{}| --> |{}|", fileExpression,
+                        this.ignorePattern, filename
+                    )
+                }
+                return null
+            }
+            if (negate) {
+                if (verbose) {
+                    LOG.info(
+                        "MATCH NEGATE |{}| ~ |{}| --> |{}|", fileExpression,
+                        this.ignorePattern, filename
+                    )
+                }
+                return false
+            } else {
+                if (verbose) {
+                    LOG.info(
+                        "MATCH IGNORE |{}| ~ |{}| --> |{}|", fileExpression,
+                        this.ignorePattern, filename
+                    )
+                }
+                return true
+            }
+        }
+
+        val ignoreExpression: String
+            /**
+             * @return The ignore expression as it was present in the .gitignore file
+             */
+            get() = (if (negate) "!" else "") + fileExpression
+
+        fun setVerbose(verbose: Boolean) {
+            this.verbose = verbose
+        }
+
+        override fun toString(): String {
+            return String.format(
+                "%-20s     # Used Regex: %s", (if (negate) "!" else "") + fileExpression,
+                this.ignorePattern
+            )
+        }
+    }
+
+    companion object {
+        // This is the separator dictated in the gitignore documentation (same as Linux/Unix)
+        private const val GITIGNORE_PATH_SEPARATOR = "/"
+
+        private val LOG: Logger = LoggerFactory.getLogger(GitIgnore::class.java)
+
+        @Throws(IOException::class)
+        private fun readFileToString(file: File): String {
+            return String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
+        }
+
+        fun separatorsToUnix(path: String): String {
+            return path.replace("\\", "/")
+        }
+
+        /**
+         * Converts filename to unix convention and ensures it starts with a /
+         * @param filename The filename to clean
+         * @return A standardized form.
+         */
+        @JvmStatic
+        fun standardizeFilename(filename: String): String {
+            var unixifiedName: String = separatorsToUnix(filename)
+            if (!unixifiedName.matches("^[a-zA-Z]:/.*".toRegex())) {
+                unixifiedName = GITIGNORE_PATH_SEPARATOR + unixifiedName
+            }
+            return unixifiedName.replace("/+".toRegex(), "/")
+        }
+    }
+}

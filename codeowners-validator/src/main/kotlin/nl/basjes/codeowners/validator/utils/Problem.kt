@@ -16,7 +16,7 @@
  */
 package nl.basjes.codeowners.validator.utils
 
-import java.util.Objects
+import java.util.*
 
 open class Problem @JvmOverloads constructor(
     private val section: String,

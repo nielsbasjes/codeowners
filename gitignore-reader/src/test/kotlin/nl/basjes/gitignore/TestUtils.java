@@ -70,7 +70,7 @@ public class TestUtils {
     private static void __assertNotIgnore(GitIgnore gitIgnore, String filename) {
         Boolean isIgnoredFile = gitIgnore.isIgnoredFile(filename);
         assertTrue(
-            isIgnoredFile == null || isIgnoredFile == Boolean.FALSE,
+            isIgnoredFile == null || !isIgnoredFile,
             "Filename \""+filename+"\" should NOT match but did.\n" + gitIgnore);
         assertFalse(gitIgnore.ignoreFile(filename),
             "Filename \""+filename+"\" should NOT match but did.\n" + gitIgnore);
@@ -81,7 +81,7 @@ public class TestUtils {
         String wFilename = windowsFileName(filename);
         Boolean wIsIgnoredFile = gitIgnore.isIgnoredFile(wFilename);
         assertTrue(
-            wIsIgnoredFile == null || wIsIgnoredFile == Boolean.FALSE,
+            wIsIgnoredFile == null || !wIsIgnoredFile,
             "Filename \""+wFilename+"\" should NOT match but did.\n" + gitIgnore);
         assertFalse(gitIgnore.ignoreFile(wFilename),
             "Filename \""+wFilename+"\" should NOT match but did.\n" + gitIgnore);
@@ -112,7 +112,7 @@ public class TestUtils {
 
     public static void verifyGeneratedRegex(String baseDir, String gitIgnoreContent, String expectedRegex) {
         GitIgnore gitIgnore = new GitIgnore(baseDir, gitIgnoreContent);
-        List<GitIgnore.IgnoreRule> ignoreRules = gitIgnore.getIgnoreRules();
+        List<GitIgnore.IgnoreRule> ignoreRules = gitIgnore.getIgnoreRules$gitignore_reader();
         assertEquals(1, ignoreRules.size());
         GitIgnore.IgnoreRule ignoreRule = ignoreRules.get(0);
         assertEquals(expectedRegex, ignoreRule.getIgnorePattern().pattern(), "Incorrect regex generated");

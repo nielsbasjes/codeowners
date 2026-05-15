@@ -18,7 +18,7 @@ package nl.basjes.codeowners.validator.gitlab
 
 import java.util.regex.Pattern
 
-class GitlabConfiguration(
+class GitlabConfiguration @JvmOverloads constructor(
     val serverUrl:ServerUrl = ServerUrl(),
     val projectId:ProjectId = ProjectId(),
     val accessToken:AccessToken = AccessToken(),
@@ -67,16 +67,6 @@ class GitlabConfiguration(
                     "- noValidApprovers       = " + noValidApprovers + "\n"
         }
     }
-
-    constructor(serverUrl: ServerUrl, projectId: ProjectId, accessToken: AccessToken) : this(
-        serverUrl,
-        projectId,
-        accessToken,
-        false,
-        true,
-        FailLevel.ERROR,
-        ProblemLevels()
-    )
 
     val isValid: Boolean
         get() = serverUrl.isValid() && projectId.isValid() && accessToken.isValid()
