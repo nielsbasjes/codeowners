@@ -16,11 +16,12 @@
  */
 package nl.basjes.codeowners.validator.utils;
 
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Slf4j
 public class TestStringTable {
+    Logger log = LoggerFactory.getLogger("TestStringTable");
 
     @Test
     void testStringTable() {

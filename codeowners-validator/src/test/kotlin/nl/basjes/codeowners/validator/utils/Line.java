@@ -17,11 +17,15 @@
 
 package nl.basjes.codeowners.validator.utils;
 
-import lombok.AllArgsConstructor;
 import org.slf4j.event.Level;
 
-@AllArgsConstructor
+
 public class Line {
+    public Line(Level level, String message) {
+        this.level = level;
+        this.message = message;
+    }
+
     public Level level;
     public String message;
 

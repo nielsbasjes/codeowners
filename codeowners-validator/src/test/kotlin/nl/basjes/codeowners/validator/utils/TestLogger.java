@@ -48,7 +48,7 @@ public class TestLogger extends AbstractLogger {
     @Override
     protected void handleNormalizedLoggingCall(Level level, Marker marker, String messagePattern, Object[] arguments, Throwable throwable) {
         FormattingTuple tuple = MessageFormatter.format(messagePattern, arguments, throwable);
-        loggedLines.add(new nl.basjes.codeowners.validator.utils.Line(level, tuple.getMessage()));
+        loggedLines.add(new Line(level, tuple.getMessage()));
 
         switch (level) {
             case ERROR:

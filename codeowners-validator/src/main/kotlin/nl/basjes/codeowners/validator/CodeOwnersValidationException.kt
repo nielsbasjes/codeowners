@@ -14,18 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package nl.basjes.codeowners.validator
 
-package nl.basjes.codeowners.validator;
+class CodeOwnersValidationException : Exception {
 
-public class CodeOwnersValidationException extends Exception {
-    public CodeOwnersValidationException() {
-    }
+    constructor(message: String?) : super(message)
 
-    public CodeOwnersValidationException(String message) {
-        super(message);
-    }
-
-    public CodeOwnersValidationException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    constructor(message: String?, cause: Throwable?) : super(message, cause)
 }

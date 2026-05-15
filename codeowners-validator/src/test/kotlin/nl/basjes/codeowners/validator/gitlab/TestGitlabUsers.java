@@ -18,7 +18,6 @@ package nl.basjes.codeowners.validator.gitlab;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import lombok.extern.slf4j.Slf4j;
 import nl.basjes.codeowners.CodeOwners;
 import nl.basjes.codeowners.validator.CodeOwnersValidationException;
 import nl.basjes.codeowners.validator.gitlab.GitlabConfiguration.AccessToken;
@@ -44,7 +43,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Slf4j
 @WireMockTest
 public class TestGitlabUsers {
 
@@ -265,7 +263,8 @@ public class TestGitlabUsers {
     @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
     @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
     public void testOwnerHandling(WireMockRuntimeInfo wmRuntimeInfo, TestInfo testInfo) throws CodeOwnersValidationException {
-        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN").setFailLevel(FATAL);
+        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN");
+        configuration.setFailLevel(FATAL);
 
         CodeOwnersValidationException exception = runCodeownersValidation(testInfo, configuration,
             new CodeOwners(
@@ -299,8 +298,8 @@ public class TestGitlabUsers {
             new ServerUrl(wmRuntimeInfo.getHttpBaseUrl(), null),
             new ProjectId(null, null),
             new AccessToken("FETCH_USER_ACCESS_TOKEN")
-        )
-            .setShowAllApprovers(true);
+        );
+        configuration.setShowAllApprovers(true);
         CodeOwnersValidationException exception = runCodeownersValidation(testInfo, configuration,
             true,
             new CodeOwners(
@@ -364,8 +363,8 @@ public class TestGitlabUsers {
             new ServerUrl(wmRuntimeInfo.getHttpBaseUrl(), null),
             new ProjectId(null, null),
             new AccessToken("FETCH_USER_ACCESS_TOKEN")
-        )
-        .setFailLevel(WARNING);
+        );
+        configuration.setFailLevel(WARNING);
 
         CodeOwnersValidationException exception;
         exception = runFailLevelTestInfo(testInfo, configuration);
@@ -502,9 +501,6 @@ public class TestGitlabUsers {
                 logger.info(problemTable.toProblemMessageGroupedString());
             }
             return exception;
-        }
-        catch (CodeOwnersValidationException e) {
-            return e;
         }
     }
 }

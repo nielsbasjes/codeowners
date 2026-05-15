@@ -27,10 +27,11 @@ class ApprovalRule(
     fun getApprovers() = approvers
 
     override fun toString(): String {
-        val result = StringBuilder()
-        if (verbose) {
-            result.append("# Regex used for the next rule:   ").append(filePattern).append('\n')
-        }
-        return result.append(fileExpression).append(" ").append(approvers.joinToString(separator = " ")).toString()
+        val verbose =
+            if (verbose)
+                "# Regex used for the next rule:   ${filePattern}\n"
+            else
+                ""
+        return "${verbose}${fileExpression} ${approvers.joinToString(separator = " ")}"
     }
 }

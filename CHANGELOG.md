@@ -4,7 +4,8 @@ This is intended as an overview of the major changes
 
 NEXT VERSION
 ===
- - ...
+ - Converted everything from Java to Kotlin to make the code cleaner and better for null safety.
+ - Chaining setters is no longer possible (simply to keep the code clean)
 
 v.1.14.1
 ===

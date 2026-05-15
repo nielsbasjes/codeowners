@@ -28,17 +28,11 @@ import java.util.stream.Collectors
 internal val LOG: Logger = LoggerFactory.getLogger(CodeOwners::class.java)
 
 class CodeOwners(codeownersContent: String) {
+
     private var verbose = false
 
     // Map name of Section to Sections
     private val sections: MutableMap<String, Section>
-
-    /**
-     * Construct the CodeOwners from a file
-     * @param file The file from which the rules must be read. Will NPE if file is null.
-     * @throws IOException In case of problems.
-     */
-    constructor(file: File) : this(readFileToString(file))
 
     private var hasStructuralProblems = false
 
@@ -50,11 +44,29 @@ class CodeOwners(codeownersContent: String) {
     }
 
     /**
+     * Construct the CodeOwners with the provided rules string
+     * The rules must be read.
+     */
+    init {
+        val codeOwnersLoader = CodeOwnersLoader(codeownersContent)
+        sections = codeOwnersLoader.sections
+        hasStructuralProblems = codeOwnersLoader.hasStructuralProblems()
+    }
+
+    /**
+     * Construct the CodeOwners from a file
+     * @param file The file from which the rules must be read. Will NPE if file is null.
+     * @throws IOException In case of problems.
+     */
+    constructor(file: File) : this(readFileToString(file))
+
+
+    /**
      * @param verbose True enables logging, False disables logging
      */
     fun setVerbose(verbose: Boolean) {
         this.verbose = verbose
-        sections.values.forEach{ it.setVerbose(verbose) }
+        sections.values.forEach { it.setVerbose(verbose) }
     }
 
     val allDefinedSections: MutableSet<Section>
@@ -70,20 +82,16 @@ class CodeOwners(codeownersContent: String) {
      * @param filename The filename for which the mandatory approvers are requested. This filename MUST be relative to the project base directory.
      * @return The list of mandatory approver usernames for this filename in the order (as good as possible) as they appear in the code owner rules.
      */
-    fun getMandatoryApprovers(filename: String): MutableList<String?> {
-        return getAllApprovers(filename, true)
-    }
+    fun getMandatoryApprovers(filename: String) = getAllApprovers(filename, true)
 
     /**
      * Get all approvers for a specific filename.
      * @param filename The filename for which the approvers are requested. This filename MUST be relative to the project base directory.
      * @return The list of approver usernames for this filename in the order (as good as possible) as they appear in the code owner rules.
      */
-    fun getAllApprovers(filename: String): MutableList<String?> {
-        return getAllApprovers(filename, false)
-    }
+    fun getAllApprovers(filename: String) = getAllApprovers(filename, false)
 
-    private fun getAllApprovers(filename: String, onlyMandatory: Boolean): MutableList<String?> {
+    private fun getAllApprovers(filename: String, onlyMandatory: Boolean): List<String> {
         if (verbose) {
             LOG.info("# vvvvvvvvvvvvvvvvvvvvvvvvvvv")
             if (onlyMandatory) {
@@ -123,18 +131,6 @@ class CodeOwners(codeownersContent: String) {
         return endResultApprovers
     }
 
-    private var currentSection: Section? = null
-
-    /**
-     * Construct the CodeOwners with the provided rules string
-     * @param codeownersContent The rules must be read. Will NPE if the content is null.
-     */
-    init {
-        val codeOwnersLoader = CodeOwnersLoader(codeownersContent)
-        sections = codeOwnersLoader.sections
-        hasStructuralProblems = codeOwnersLoader.hasStructuralProblems()
-    }
-
     override fun toString(): String {
         val result = StringBuilder()
         result.append("# CODEOWNERS file:\n")
@@ -160,8 +156,6 @@ class CodeOwners(codeownersContent: String) {
 
     companion object {
         private const val CODEOWNERS_PATH_SEPARATOR = "/"
-
-
 
         @Throws(IOException::class)
         private fun readFileToString(file: File): String {

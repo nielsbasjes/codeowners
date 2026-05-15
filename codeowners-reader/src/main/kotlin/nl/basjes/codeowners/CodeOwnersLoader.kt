@@ -35,9 +35,11 @@ internal class CodeOwnersLoader(codeownersContent: String) : CodeOwnersParserBas
         // Only if the previous Section had ANY rules do we keep it.
         if (!currentSection.rules.isEmpty()) {
             val existingSectionsWithSameName =
-                sections.values.stream().map { it.name }
-                    .filter { name: String? -> name.equals(currentSection.name, ignoreCase = true) }
-                    .collect(Collectors.toList())
+                sections
+                    .values
+                    .map { it.name }
+                    .filter { it.equals(currentSection.name, ignoreCase = true) }
+                    .toList()
 
             if (existingSectionsWithSameName.isEmpty()) {
                 sections[currentSection.name] = currentSection
@@ -46,7 +48,7 @@ internal class CodeOwnersLoader(codeownersContent: String) : CodeOwnersParserBas
                 requireNotNull(existingSection) { "This should never happen, we just checked that it must exist"}
                 currentSection
                     .defaultApprovers
-                    .forEach(Consumer { name -> existingSection.addDefaultApprover(name) })
+                    .forEach{ existingSection.addDefaultApprover(it) }
 
                 currentSection
                     .rules
@@ -134,13 +136,13 @@ internal class CodeOwnersLoader(codeownersContent: String) : CodeOwnersParserBas
      * @return Nothing
      */
     override fun visitSection(ctx: CodeOwnersParser.SectionContext): Void? {
-        val section = Section(ctx.section.getText().trim { it <= ' ' })
+        val section = Section(ctx.section.text.trim { it <= ' ' })
         section.isOptional = ctx.OPTIONAL() != null
         if (ctx.approvers != null) {
-            section.minimalNumberOfApprovers = ctx.approvers.getText().trim { it <= ' ' }.toInt()
+            section.minimalNumberOfApprovers = ctx.approvers.text.trim { it <= ' ' }.toInt()
         }
         for (user in ctx.USERID()) {
-            section.addDefaultApprover(user.getText())
+            section.addDefaultApprover(user.text)
         }
 
         // Only if the previous Section had ANY rules do we keep it.
@@ -155,18 +157,16 @@ internal class CodeOwnersLoader(codeownersContent: String) : CodeOwnersParserBas
      * @return Nothing
      */
     override fun visitApprovalRule(ctx: CodeOwnersParser.ApprovalRuleContext): Void? {
-        val filePattern = ctx.fileExpression.getText()
+        val filePattern = ctx.fileExpression.text
         val approvers = ctx.USERID().stream()
-            .map<String?> { obj: TerminalNode? -> obj!!.getText() }
-            .map<String?> { obj: String? -> obj!!.trim { it <= ' ' } }
-            .map<String?> { approver: String? ->
-                approver!!.replace(
+            .map { it.text }
+            .map { it.trim { it <= ' ' } }
+            .map { it.replace(
                     "^\\([a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+\\)".toRegex(),
                     ""
                 )
             }
-            .map<String?> { approver: String? ->
-                approver!!.replace(
+            .map { it.replace(
                     "\\([a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+\\)@".toRegex(),
                     "@"
                 )
