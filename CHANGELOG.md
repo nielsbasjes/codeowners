@@ -6,6 +6,7 @@ NEXT VERSION
 ===
  - Converted everything from Java to Kotlin to make the code cleaner and better for null safety.
  - Chaining setters is no longer possible (simply to keep the code clean)
+ - This is a major update because some of the getters and setters have changed.
 
 v.1.14.1
 ===
