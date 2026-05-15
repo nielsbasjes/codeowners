@@ -87,7 +87,7 @@ v1.5.0
 License
 =======
     CodeOwners Tools
-    Copyright (C) 2023-2025 Niels Basjes
+    Copyright (C) 2023-2026 Niels Basjes
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
