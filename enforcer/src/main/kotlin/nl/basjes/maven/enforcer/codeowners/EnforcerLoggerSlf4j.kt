@@ -134,7 +134,7 @@ class EnforcerLoggerSlf4j(private val logger: EnforcerLogger) : Logger {
     }
 
     override fun isInfoEnabled(): Boolean {
-        return logger.isInfoEnabled()
+        return logger.isInfoEnabled
     }
 
     override fun info(msg: String?) {
@@ -158,7 +158,7 @@ class EnforcerLoggerSlf4j(private val logger: EnforcerLogger) : Logger {
     }
 
     override fun isInfoEnabled(marker: Marker?): Boolean {
-        return logger.isInfoEnabled()
+        return logger.isInfoEnabled
     }
 
     override fun info(marker: Marker?, msg: String?) {
@@ -182,7 +182,7 @@ class EnforcerLoggerSlf4j(private val logger: EnforcerLogger) : Logger {
     }
 
     override fun isWarnEnabled(): Boolean {
-        return logger.isWarnEnabled()
+        return logger.isWarnEnabled
     }
 
     override fun warn(msg: String?) {
@@ -206,7 +206,7 @@ class EnforcerLoggerSlf4j(private val logger: EnforcerLogger) : Logger {
     }
 
     override fun isWarnEnabled(marker: Marker?): Boolean {
-        return logger.isWarnEnabled()
+        return logger.isWarnEnabled
     }
 
     override fun warn(marker: Marker?, msg: String?) {
@@ -230,7 +230,7 @@ class EnforcerLoggerSlf4j(private val logger: EnforcerLogger) : Logger {
     }
 
     override fun isErrorEnabled(): Boolean {
-        return logger.isErrorEnabled()
+        return logger.isErrorEnabled
     }
 
     override fun error(msg: String?) {
@@ -254,7 +254,7 @@ class EnforcerLoggerSlf4j(private val logger: EnforcerLogger) : Logger {
     }
 
     override fun isErrorEnabled(marker: Marker?): Boolean {
-        return logger.isErrorEnabled()
+        return logger.isErrorEnabled
     }
 
     override fun error(marker: Marker?, msg: String?) {

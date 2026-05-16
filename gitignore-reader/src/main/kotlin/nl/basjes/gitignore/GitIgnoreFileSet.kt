@@ -130,7 +130,7 @@ class GitIgnoreFileSet @JvmOverloads constructor(
      * @return List of the loaded gitIgnore files.
      */
     @JvmOverloads
-    fun addAllGitIgnoreFiles(includeGlobalGitignore: Boolean = true): MutableList<Path?> {
+    fun addAllGitIgnoreFiles(includeGlobalGitignore: Boolean = true): MutableList<Path> {
         return addAllGitIgnoreFiles(projectBaseDir.toPath(), 128, includeGlobalGitignore)
     }
 
@@ -168,8 +168,8 @@ class GitIgnoreFileSet @JvmOverloads constructor(
         current: Path,
         maxRecursionDepth: Int,
         includeGlobalGitignore: Boolean
-    ): MutableList<Path?> {
-        val loadedGitIgnoreFiles: MutableList<Path?> = ArrayList<Path?>()
+    ): MutableList<Path> {
+        val loadedGitIgnoreFiles: MutableList<Path> = mutableListOf()
         val subDirs: MutableList<Path> = ArrayList<Path>()
 
         if (!Files.isDirectory(current)) {
@@ -214,7 +214,7 @@ class GitIgnoreFileSet @JvmOverloads constructor(
             }
         } catch (e: IOException) {
             LOG.error("Unable to find .gitignore files in {} due to {}", projectBaseDir, e.toString())
-            return mutableListOf<Path?>()
+            return mutableListOf()
         }
 
         val nextMaxRecursionDepth = maxRecursionDepth - 1
@@ -295,7 +295,7 @@ class GitIgnoreFileSet @JvmOverloads constructor(
 
     private fun getProjectRelative(fileName: String): String {
         val standardizedFilename = standardizeFilename(fileName)
-        val projectBaseDirPath = standardizeFilename(projectBaseDir.getPath())
+        val projectBaseDirPath = standardizeFilename(projectBaseDir.path)
         if (standardizedFilename.startsWith(projectBaseDirPath)) {
             return standardizeFilename(fileName)
                 .replace(("^\\Q$projectBaseDirPath\\E").toRegex(), "/")
@@ -344,19 +344,19 @@ class GitIgnoreFileSet @JvmOverloads constructor(
         @JvmStatic
         fun getGlobalGitIgnore(xdgConfigHome: String?, home: String?): Path? {
             val ignorePath: Path?
-            if (xdgConfigHome != null && !xdgConfigHome.isEmpty()) {
-                ignorePath = File(xdgConfigHome).toPath().resolve("git").resolve("ignore")
+            ignorePath = if (!xdgConfigHome.isNullOrEmpty()) {
+                File(xdgConfigHome).toPath().resolve("git").resolve("ignore")
             } else {
-                if (home != null && !home.isEmpty()) {
-                    ignorePath = File(home).toPath().resolve(".config").resolve("git").resolve("ignore")
+                if (!home.isNullOrEmpty()) {
+                    File(home).toPath().resolve(".config").resolve("git").resolve("ignore")
                 } else {
                     return null
                 }
             }
-            if (Files.isRegularFile(ignorePath)) {
-                return ignorePath
+            return if (Files.isRegularFile(ignorePath)) {
+                ignorePath
             } else {
-                return null
+                null
             }
         }
     }

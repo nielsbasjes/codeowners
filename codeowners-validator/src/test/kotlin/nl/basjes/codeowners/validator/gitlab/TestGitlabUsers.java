@@ -114,6 +114,23 @@ public class TestGitlabUsers {
     @Test
     @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
     @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
+    public void testEmpty(WireMockRuntimeInfo wmRuntimeInfo, TestInfo testInfo) throws CodeOwnersValidationException {
+        GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN");
+        configuration.setFailLevel(WARNING);
+
+        CodeOwnersValidationException exception = runCodeownersValidation(testInfo, configuration,
+            new CodeOwners(
+                "[README Owners]\n"
+            )
+        );
+        if (exception != null) {
+            throw exception;
+        }
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "CI_PROJECT_ID",           value = "niels/project")
+    @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
     public void testSharedGroups(WireMockRuntimeInfo wmRuntimeInfo, TestInfo testInfo) throws CodeOwnersValidationException {
         GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN");
         configuration.setFailLevel(FATAL);

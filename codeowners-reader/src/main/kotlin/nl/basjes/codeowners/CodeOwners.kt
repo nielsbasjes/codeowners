@@ -54,8 +54,7 @@ class CodeOwners(codeownersContent: String) {
      * @param file The file from which the rules must be read. Will NPE if file is null.
      * @throws IOException In case of problems.
      */
-    constructor(file: File) : this(readFileToString(file))
-
+    constructor(file: File) : this(file.readText())
 
     /**
      * @param verbose True enables logging, False disables logging
@@ -152,8 +151,3 @@ class CodeOwners(codeownersContent: String) {
 }
 
 private const val CODEOWNERS_PATH_SEPARATOR = "/"
-
-@Throws(IOException::class)
-private fun readFileToString(file: File): String {
-    return String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8)
-}

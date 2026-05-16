@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 public class TestStringTable {
     Logger log = LoggerFactory.getLogger("TestStringTable");
 
@@ -35,5 +37,19 @@ public class TestStringTable {
             .addRow("111111",   "222222",   "3333",     "444444444")
             .addRow("11111111", "22222222", "333333",   "4444", "55"));
     }
+
+    @Test
+    void testStringTable1() {
+        StringTable table = new StringTable();
+        log.info("\n{}", table
+            .withHeaders(List.of("One", "Two", "Three"))
+            .addRow("1", "2", "3", "4")
+            .addRowSeparator()
+            .addRow("11",       "22")
+            .addRow("1111",     "2222",     "33")
+            .addRow("111111",   "222222",   "3333",     "444444444")
+            .addRow("11111111", "22222222", "333333",   "4444", "55"));
+    }
+
 
 }

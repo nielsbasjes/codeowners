@@ -18,6 +18,7 @@ package nl.basjes.codeowners.validator.utils;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -25,28 +26,33 @@ public class TestProblemTable {
 
     @Test
     void testProblemTable() {
-        ProblemTable table = new ProblemTable();
-        table.addProblem(new Problem("Section Unknown",   "Expression Unknown",   "Approver Unknown",   "Problem Unknown"));
-        table.addProblem(new Problem.Info    ("Section Info",    "Expression Info",    "Approver Info",    "Problem Info"));
-        table.addProblem(new Problem.Warning ("Section Warning", "Expression Warning", "Approver Warning", "Problem Warning"));
-        table.addProblem(new Problem.Error   ("Section Error",   "Expression Error",   "Approver Error",   "Problem Error"));
-        table.addProblem(new Problem.Fatal   ("Section Fatal",   "Expression Fatal",   "Approver Fatal",   "Problem Fatal"));
+        TestLogger logger = new TestLogger("testProblemTable");
 
-        assertTrue(table.contains(new Problem          ("Section Unknown",   "Expression Unknown",   "Approver Unknown",   "Problem Unknown")));
+        ProblemTable table = new ProblemTable();
+        table.addProblem(new Problem.Info      ("Section Info",    "Expression Info",    "Approver Info",    "Problem Info"));
+        table.toLogAsBlock(logger);
+        assertEquals(1, table.getNumberOfProblems());
+        table.addProblem(new Problem.Warning   ("Section Warning", "Expression Warning", "Approver Warning", "Problem Warning"));
+        table.toLogAsBlock(logger);
+        assertEquals(2, table.getNumberOfProblems());
+        table.addProblem(new Problem.Error     ("Section Error",   "Expression Error",   "Approver Error",   "Problem Error"));
+        table.toLogAsBlock(logger);
+        assertEquals(3, table.getNumberOfProblems());
+        table.addProblem(new Problem.Fatal     ("Section Fatal",   "Expression Fatal",   "Approver Fatal",   "Problem Fatal"));
+        table.toLogAsBlock(logger);
+        assertEquals(4, table.getNumberOfProblems());
+
         assertTrue(table.contains(new Problem.Info     ("Section Info",      "Expression Info",      "Approver Info",      "Problem Info")));
         assertTrue(table.contains(new Problem.Warning  ("Section Warning",   "Expression Warning",   "Approver Warning",   "Problem Warning")));
         assertTrue(table.contains(new Problem.Error    ("Section Error",     "Expression Error",     "Approver Error",     "Problem Error")));
         assertTrue(table.contains(new Problem.Fatal    ("Section Fatal",     "Expression Fatal",     "Approver Fatal",     "Problem Fatal")));
 
-        assertFalse(table.contains(new Problem         ("x Section Unknown", "x Expression Unknown", "x Approver Unknown", "x Problem Unknown")));
         assertFalse(table.contains(new Problem.Info    ("x Section Info",    "x Expression Info",    "x Approver Info",    "x Problem Info")));
         assertFalse(table.contains(new Problem.Warning ("x Section Warning", "x Expression Warning", "x Approver Warning", "x Problem Warning")));
         assertFalse(table.contains(new Problem.Error   ("x Section Error",   "x Expression Error",   "x Approver Error",   "x Problem Error")));
         assertFalse(table.contains(new Problem.Fatal   ("x Section Fatal",   "x Expression Fatal",   "x Approver Fatal",   "x Problem Fatal")));
 
-        TestLogger logger = new TestLogger("testProblemTable");
         table.toLog(logger);
-        logger.assertContainsInfo ("| Section Unknown | Expression Unknown | Approver Unknown | Problem Unknown |");
         logger.assertContainsInfo ("| Section Info    | Expression Info    | Approver Info    | Problem Info    |");
         logger.assertContainsWarn ("| Section Warning | Expression Warning | Approver Warning | Problem Warning |");
         logger.assertContainsError("| Section Error   | Expression Error   | Approver Error   | Problem Error   |");

@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class TestCodeOwnersValidator {
 
-    private static Logger log = LoggerFactory.getLogger(TestCodeOwnersValidator.class);
+    private static final Logger log = LoggerFactory.getLogger(TestCodeOwnersValidator.class);
 
     private DirectoryOwners analyze(String directoryName, boolean verbose) throws CodeOwnersValidationException {
         CodeOwnersValidator validator = new CodeOwnersValidator(null, null, verbose);
@@ -41,6 +41,7 @@ public class TestCodeOwnersValidator {
         DirectoryOwners directoryOwners = validator.analyzeDirectory(new File("src/test/resources/testdirectories/"+directoryName));
 
         log.info("\n{}", directoryOwners.toTable());
+        log.info("\n{}", directoryOwners.toJson());
         return directoryOwners;
     }
 

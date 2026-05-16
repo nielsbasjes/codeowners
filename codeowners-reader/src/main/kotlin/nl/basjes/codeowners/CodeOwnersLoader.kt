@@ -158,7 +158,7 @@ internal class CodeOwnersLoader(codeownersContent: String) : CodeOwnersParserBas
         val filePattern = ctx.fileExpression.text
         val approvers = ctx.USERID().stream()
             .map { it.text }
-            .map { it.trim { it <= ' ' } }
+            .map { it.trim { chr -> chr <= ' ' } }
             .map { it.replace(
                     "^\\([a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+\\)".toRegex(),
                     ""
@@ -182,7 +182,7 @@ internal class CodeOwnersLoader(codeownersContent: String) : CodeOwnersParserBas
      * @return Nothing
      */
     override fun visitExcludeRule(ctx: CodeOwnersParser.ExcludeRuleContext): Void? {
-        val filePattern = ctx.fileExpression.getText()
+        val filePattern = ctx.fileExpression.text
         currentSection.addRule(ExcludeRule(filePattern))
         return null
     }

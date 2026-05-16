@@ -33,7 +33,7 @@ import java.util.regex.PatternSyntaxException
  */
 class GitIgnore @JvmOverloads constructor(
     projectRelativeBaseDir: String,
-    gitIgnoreContent: String?,
+    gitIgnoreContent: String,
     verbose: Boolean = false
 ) {
     @JvmField
@@ -55,28 +55,26 @@ class GitIgnore @JvmOverloads constructor(
         this.verbose = verbose
         this.projectRelativeBaseDir = standardizeFilename(projectRelativeBaseDir + GITIGNORE_PATH_SEPARATOR)
 
-        if (gitIgnoreContent != null) {
-            val reader = BufferedReader(StringReader(gitIgnoreContent))
-            var line: String?
-            try {
-                while ((reader.readLine().also { line = it }) != null) {
-                    line = line!!.trim { it <= ' ' }
-                    if (line.isEmpty()) {
-                        continue
-                    }
-                    if (line.startsWith("#")) {
-                        continue
-                    }
-                    if (line.startsWith("!")) {
-                        ignoreRules.add(IgnoreRule(this.projectRelativeBaseDir, true, line.substring(1), verbose))
-                    } else {
-                        ignoreRules.add(IgnoreRule(this.projectRelativeBaseDir, false, line, verbose))
-                    }
+        val reader = BufferedReader(StringReader(gitIgnoreContent))
+        var line: String?
+        try {
+            while ((reader.readLine().also { line = it }) != null) {
+                line = line!!.trim { it <= ' ' }
+                if (line.isEmpty()) {
+                    continue
                 }
-            } catch (io: IOException) {
-                // Effectively unreachable code: Reading using a StringReader from a non-null in memory String cannot fail.
-                LOG.error("Got an IOException while reading the gitignore file content: {}", io.toString())
+                if (line.startsWith("#")) {
+                    continue
+                }
+                if (line.startsWith("!")) {
+                    ignoreRules.add(IgnoreRule(this.projectRelativeBaseDir, true, line.substring(1), verbose))
+                } else {
+                    ignoreRules.add(IgnoreRule(this.projectRelativeBaseDir, false, line, verbose))
+                }
             }
+        } catch (io: IOException) {
+            // Effectively unreachable code: Reading using a StringReader from a non-null in memory String cannot fail.
+            LOG.error("Got an IOException while reading the gitignore file content: {}", io.toString())
         }
     }
 
@@ -224,25 +222,22 @@ class GitIgnore @JvmOverloads constructor(
             var fileRegex = fileExpression
                 .trim { it <= ' ' }  // Clear leading and trailing spaces
 
-                .replace("^!".toRegex(), "") // Strip the negation at the start of the line (if any)
+                // Strip the negation at the start of the line (if any)
+                .replace("^!".toRegex(), "")
 
+                // Fix the 'not' range or 'not' set
                 .replace("[!", "[^")
-            // Fix the 'not' range or 'not' set
 
-
-            val LITERAL_STAR_MARKER = "||>s<||"
-            val LITERAL_QUESTION_MARK = "||>q<||"
+            val literalStarMarker = "||>s<||"
+            val literalQuestionMarker = "||>q<||"
 
             fileRegex = fileRegex
-                .replace(
-                    "\\*",
-                    LITERAL_STAR_MARKER
-                ) // Move the escaped * to something special that does not have a * in it
-                .replace(
-                    "\\?",
-                    LITERAL_QUESTION_MARK
-                ) // Move the escaped ? to something special that does not have a ? in it
-                .replace("?", "[^/]") // The character "?" matches any one character except "/".
+                // Move the escaped * to something special that does not have a * in it
+                .replace("\\*", literalStarMarker)
+                // Move the escaped ? to something special that does not have a ? in it
+                .replace("\\?", literalQuestionMarker)
+                // The character "?" matches any one character except "/".
+                .replace("?", "[^/]")
 
             if (fileExpression.contains("/") && !fileExpression.endsWith("/")) {
                 // Patterns specifying a file in a particular directory are relative to the repository root.
@@ -260,9 +255,10 @@ class GitIgnore @JvmOverloads constructor(
             }
 
             fileRegex = fileRegex
-                .replace("\\ ", " ") // The escaped spaces must become spaces again.
-                // Some characters do NOT have a special meaning
+                // The escaped spaces must become spaces again.
+                .replace("\\ ", " ")
 
+                // Some characters do NOT have a special meaning
                 .replace("$", "\\$")
                 .replace("(", "\\(")
                 .replace(")", "\\)")
@@ -287,41 +283,56 @@ class GitIgnore @JvmOverloads constructor(
             }
 
             fileRegex =
-                fileRegex // "/foo" --> End can be a filename (so we pin to the end) or a directory name (so we expect another / )
+                fileRegex
+                    // "/foo" --> End can be a filename (so we pin to the end) or a directory name (so we expect another / )
                     .replace("([^/*])$".toRegex(), "$1(/|\\$)")
 
-                    .replace(".", "\\.") // Avoid bad wildcards
-                    .replace("\\.*", "\\.[^/]*") //  matching  /.* onto /.foo/bar.xml
-                    .replace("?", "[^/]") // Single character match
-                    // The Globstar "/**/bar" must also match "bar"
+                    // Avoid bad wildcards
+                    .replace(".", "\\.")
 
-                    .replace("^\\*\\*/".toRegex(), "(.*/)?") // The Globstar "foo/**/bar" must also match "foo/bar"
+                    //  matching  /.* onto /.foo/bar.xml
+                    .replace("\\.*", "\\.[^/]*")
+
+                    // Single character match
+                    .replace("?", "[^/]")
+
+                    // The Globstar "/**/bar" must also match "bar"
+                    .replace("^\\*\\*/".toRegex(), "(.*/)?")
+
+                    // The Globstar "foo/**/bar" must also match "foo/bar"
                     .replace(
                         "/**",
                         "(/.*)?"
-                    ) // The wildcard "foo/*/bar" must match exactly 1 subdir "foo/something/bar"
+                    )
+
+                    // The wildcard "foo/*/bar" must match exactly 1 subdir "foo/something/bar"
                     // and not "foo/bar", "foo//bar" or "foo/something/something/bar"
-
                     .replace("/*/", "/[^/]+/")
                     .replace("/*/", "/[^/]+/")
 
-                    .replace("**", ".*") // Convert to the Regex wildcards
+                    // Convert to the Regex wildcards
+                    .replace("**", ".*")
 
-                    .replace("^\\*".toRegex(), ".*") // Match anything at the start
+                    // Match anything at the start
+                    .replace("^\\*".toRegex(), ".*")
 
-                    .replace("^/".toRegex(), "^/") // If starts with / then pin to the start.
+                    // If starts with / then pin to the start.
+                    .replace("^/".toRegex(), "^/")
 
-                    .replace(
-                        "/\\*([^/]*)$".toRegex(),
-                        "/[^/]*$1\\$"
-                    ) // A trailing '/*something' means NO further subdirs should be matched
+                    // A trailing '/*something' means NO further subdirs should be matched
+                    .replace("/\\*([^/]*)$".toRegex(), "/[^/]*$1\\$")
 
-                    .replace("/*", "/[^/]*") // "/foo/*\.js"  --> "/foo/.*\.js"
+                    // "/foo/*\.js"  --> "/foo/.*\.js"
+                    .replace("/*", "/[^/]*")
 
-                    .replace("([^.\\]])\\*".toRegex(), "$1[^/]*") // Match anything at the start
+                    // Match anything at the start
+                    .replace("([^.\\]])\\*".toRegex(), "$1[^/]*")
 
-                    .replace(LITERAL_STAR_MARKER, "\\Q*\\E") // Move the 'something special' to the literal *
-                    .replace(LITERAL_QUESTION_MARK, "\\Q?\\E") // Move the 'something special' to the literal ?
+                    // Move the 'something special' to the literal *
+                    .replace(literalStarMarker, "\\Q*\\E")
+
+                    // Move the 'something special' to the literal ?
+                    .replace(literalQuestionMarker, "\\Q?\\E")
 
                     .replace("/+".toRegex(), "/") // Remove duplication
 
@@ -334,13 +345,14 @@ class GitIgnore @JvmOverloads constructor(
                     LOG.info("IgnoreRule for expression {}   -->   Regex {}", this.fileExpression, fileRegex)
                 }
             } catch (pse: PatternSyntaxException) {
-                val errorMsg = "You either have an invalid gitignore rule (which you should fix) " +
-                        "or you have found an edge case that should be fixed. " +
-                        "In the latter case please file a bug report to https://github.com/nielsbasjes/codeowners/issues " +
-                        "indicating that the expression >>>" + (if (negate) "!" else "") + this.fileExpression + "<<< " +
-                        "was converted to regex >>>" + finalRegex + "<<< " +
-                        "which triggered the error: " + pse.message
-                throw PatternSyntaxException(errorMsg, finalRegex, pse.getIndex())
+                val errorMsg =
+                    "You either have an invalid gitignore rule (which you should fix) " +
+                            "or you have found an edge case that should be fixed. " +
+                            "In the latter case please file a bug report to https://github.com/nielsbasjes/codeowners/issues " +
+                            "indicating that the expression >>>" + (if (negate) "!" else "") + this.fileExpression + "<<< " +
+                            "was converted to regex >>>" + finalRegex + "<<< " +
+                            "which triggered the error: " + pse.message
+                throw PatternSyntaxException(errorMsg, finalRegex, pse.index)
             }
         }
 

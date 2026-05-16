@@ -35,52 +35,63 @@ abstract class Rule(
     init {
 
         val fileRegex = fileExpression
-            .trim { it <= ' ' }  // Clear leading and trailing spaces
 
-            .replace("\\ ", " ") // The escaped spaces must become spaces again.
+            // Clear leading and trailing spaces
+            .trim { it <= ' ' }
+
+            // The escaped spaces must become spaces again.
+            .replace("\\ ", " ")
+
             // If a path does not start with a /, the path is treated as if it starts with a globstar. README.md is treated the same way as /**/README.md
-
             .replace(
                 "^([^/*])".toRegex(),
                 "/**/$1"
-            ) // "/foo" --> End can be a filename (so we pin to the end) or a directory name (so we expect another / )
+            )
+
+            // "/foo" --> End can be a filename (so we pin to the end) or a directory name (so we expect another / )
             .replace("([^/*])$".toRegex(), "$1(/|\\$)")
 
-            .replace(".", "\\.") // Avoid bad wildcards
-            .replace("\\.*", "\\..*") //  matching  /.* onto /.foo/bar.xml
-            .replace("?", ".") // Single character match
+            // Avoid bad wildcards
+            .replace(".", "\\.")
+
+            //  matching  /.* onto /.foo/bar.xml
+            .replace("\\.*", "\\..*")
+
+            // Single character match
+            .replace("?", ".")
+
             // The Globstar "foo/**/bar" must also match "foo/bar"
             // Process trailing /** before middle /** to handle them correctly:
             // 1. Trailing: "foo/**" matches "foo/" and its contents, but NOT "foo" or "foobar"
+            .replace(                "/\\*\\*$".toRegex(),                "/.*"            )
+            // 2. Middle: "foo/**/bar" matches both "foo/bar" and "foo/anything/bar"
+            .replace("/**", "(/.*)?")
 
-            .replace(
-                "/\\*\\*$".toRegex(),
-                "/.*"
-            ) // 2. Middle: "foo/**/bar" matches both "foo/bar" and "foo/anything/bar"
-            .replace("/**", "(/.*)?") // The wildcard "foo/*/bar" must match exactly 1 subdir "foo/something/bar"
+            // The wildcard "foo/*/bar" must match exactly 1 subdir "foo/something/bar"
             // and not "foo/bar", "foo//bar" or "foo/something/something/bar"
-
             .replace("/*/", "/[^/]+/")
             .replace("/*/", "/[^/]+/")
 
-            .replace("**", ".*") // Convert to the Regex wildcards
+            // Convert to the Regex wildcards
+            .replace("**", ".*")
 
-            .replace("^\\*".toRegex(), ".*") // Match anything at the start
+            // Match anything at the start
+            .replace("^\\*".toRegex(), ".*")
 
-            .replace("^/".toRegex(), "^/") // If starts with / then pin to the start.
+            // If starts with / then pin to the start.
+            .replace("^/".toRegex(), "^/")
 
-            .replace(
-                "/\\*([^/]*)$".toRegex(),
-                "/[^/]*$1\\$"
-            ) // A trailing '/*something' means NO further subdirs should be matched
+            // A trailing '/*something' means NO further subdirs should be matched
+            .replace("/\\*([^/]*)$".toRegex(), "/[^/]*$1\\$")
 
-            .replace("/*", "/.*") // "/foo/*\.js"  --> "/foo/.*\.js"
+            // "/foo/*\.js"  --> "/foo/.*\.js"
+            .replace("/*", "/.*")
 
-            .replace("([^.\\]])\\*".toRegex(), "$1.*") // Match anything at the start
+            // Match anything at the start
+            .replace("([^.\\]])\\*".toRegex(), "$1.*")
 
+            // Remove duplication
             .replace("/+".toRegex(), "/")
-        // Remove duplication
-
 
         filePattern = Pattern.compile(fileRegex)
     }
@@ -91,11 +102,8 @@ abstract class Rule(
     fun matches(filename: String): Boolean {
         val matches = filePattern.matcher(filename).find()
         if (verbose) {
-            if (matches) {
-                LOG.info("MATCH     |{}| ~ |{}| --> {}", fileExpression, filePattern, filename)
-            } else {
-                LOG.info("NO MATCH  |{}| ~ |{}| --> {}", fileExpression, filePattern, filename)
-            }
+            val result = if(matches) "MATCH   " else "NO MATCH"
+            LOG.info("$result  |{}| ~ |{}| --> {}", fileExpression, filePattern, filename)
         }
         return matches
     }

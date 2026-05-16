@@ -1,6 +1,6 @@
 /*
- * Yet Another UserAgent Analyzer
- * Copyright (C) 2013-2025 Niels Basjes
+ * CodeOwners Tools
+ * Copyright (C) 2023-2026 Niels Basjes
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,15 @@
  */
 package nl.basjes.codeowners.validator.utils
 
+import nl.basjes.codeowners.validator.utils.LogColor.RESET
+import nl.basjes.codeowners.validator.utils.Problem.Error
 import nl.basjes.codeowners.validator.utils.Problem.Fatal
+import nl.basjes.codeowners.validator.utils.Problem.Info
+import nl.basjes.codeowners.validator.utils.Problem.ProblemColor.COLOR_INFO_TAG
+import nl.basjes.codeowners.validator.utils.Problem.ProblemColor.COLOR_INFO_TEXT
+import nl.basjes.codeowners.validator.utils.Problem.Tags.INFO_TAG
+import nl.basjes.codeowners.validator.utils.Problem.Warning
 import org.slf4j.Logger
-import java.util.*
-import java.util.function.Consumer
 import java.util.stream.Collectors
 
 class ProblemTable : StringTable() {
@@ -47,17 +52,18 @@ class ProblemTable : StringTable() {
         get() = theProblems.size
 
     val numberOfFatalErrors: Long
-        get() = theProblems.stream().filter { problem: Problem? -> problem is Fatal }
+        get() = theProblems.stream()
+            .filter { it is Fatal }
             .count()
 
     val numberOfErrors: Long
         get() = theProblems.stream()
-            .filter { problem: Problem? -> problem is Problem.Error }
+            .filter { it is Error }
             .count()
 
     val numberOfWarnings: Long
         get() = theProblems.stream()
-            .filter { problem: Problem? -> problem is Problem.Warning }
+            .filter { it is Warning }
             .count()
 
     fun contains(problem: Problem?): Boolean {
@@ -67,64 +73,20 @@ class ProblemTable : StringTable() {
     val isEmpty: Boolean
         get() = theProblems.isEmpty()
 
-    private fun addLineInfo(sb: StringBuilder, line: String) {
-        addLine(sb, LogColor.BLUE_BRIGHT, "INFO ", LogColor.RESET, line)
-    }
-
-    private fun addLineWarning(sb: StringBuilder, line: String) {
-        addLine(sb, LogColor.YELLOW_BRIGHT, "WARN ", LogColor.YELLOW_BRIGHT, line)
-    }
-
-    private fun addLineError(sb: StringBuilder, line: String) {
-        addLine(sb, LogColor.RED_BRIGHT, "ERROR", LogColor.RED_BRIGHT, line)
-    }
-
-    private fun addLineFatal(sb: StringBuilder, line: String) {
-        addLine(
-            sb,
-            LogColor.BLACK_BACKGROUND_BRIGHT.toString() + LogColor.RED_BOLD,
-            "FATAL",
-            LogColor.BLACK_BACKGROUND_BRIGHT.toString() + LogColor.RED_BOLD,
-            line
-        )
-    }
-
-    private fun addLineUnknown(sb: StringBuilder, line: String) {
-        addLine(sb, LogColor.BLUE_BOLD_BRIGHT, "?????", LogColor.BLUE_BOLD_BRIGHT, line)
-    }
-
-    private fun addLine(sb: StringBuilder, tagColor: Any?, tag: String, lineColor: Any?, line: String) {
-        sb.append("[${tagColor}${tag}${LogColor.RESET}] : ${lineColor}${line}")
-            .append(LogColor.RESET).append('\n')
-    }
-
     override fun toString(): String {
+        clearCaches();
         val buffer = StringBuilder("\n")
-        addLineInfo(buffer, writeSeparator())
-        addLineInfo(buffer, writeHeaders())
-        addLineInfo(buffer, writeSeparator())
-        for (problem in theProblems) {
-            if (problem is Problem.Info) {
-                addLineInfo(buffer, writeLine(problem))
-                continue
-            }
-            if (problem is Problem.Warning) {
-                addLineWarning(buffer, writeLine(problem))
-                continue
-            }
-            if (problem is Problem.Error) {
-                addLineError(buffer, writeLine(problem))
-                continue
-            }
-            if (problem is Fatal) {
-                addLineFatal(buffer, writeLine(problem))
-                continue
-            }
-            if (problem != null) {
-                addLineUnknown(buffer, writeLine(problem))
-            }
+        fun addLineInfo(line: String) {
+            buffer.append("$INFO_TAG : ${COLOR_INFO_TEXT}${line}${RESET}\n")
         }
-        addLineInfo(buffer, writeSeparator())
+
+        addLineInfo(writeSeparator())
+        addLineInfo(writeHeaders())
+        addLineInfo(writeSeparator())
+        for (problem in theProblems) {
+            buffer.append("${problem.tag} : ${writeLine(problem)}\n")
+        }
+        addLineInfo( writeSeparator())
 
         return buffer.toString()
     }
@@ -143,59 +105,58 @@ class ProblemTable : StringTable() {
 
 
     fun toLog(logger: Logger) {
+        clearCaches();
         logger.info(writeSeparator())
         logger.info(writeHeaders())
         logger.info(writeSeparator())
         for (problem in theProblems) {
             when(problem) {
-                is Problem.Info     -> logger.info(writeLine(problem))
-                is Problem.Warning  -> logger.warn(writeLine(problem))
-                is Problem.Error    -> logger.error(writeLine(problem))
-                is Problem.Fatal    -> logger.error(writeLine(problem))
-                else                -> logger.info(writeLine(problem))
+                is Info     -> logger.info(writeLine(problem))
+                is Warning  -> logger.warn(writeLine(problem))
+                is Error    -> logger.error(writeLine(problem))
+                is Fatal    -> logger.error(writeLine(problem))
             }
-
         }
         logger.info(writeSeparator())
     }
 
-    private fun writeLine(problem: Problem): String {
-        return writeLine(
+    private fun writeLine(problem: Problem) =
+        "${problem.messageColor}${writeLine(
             listOf(
-                problem.getSection(),
-                problem.getExpression(),
-                problem.getApprover(),
-                problem.getDescription(),
-                problem.getMarker()
+                problem.section,
+                problem.expression,
+                problem.approver,
+                problem.description,
+                problem.marker,
             )
-        )
-    }
+            )}${RESET}"
 
     fun addProblem(problem: Problem) {
         theProblems.add(problem)
         addRow(
-            problem.getSection(),
-            problem.getExpression(),
-            problem.getApprover(),
-            problem.getDescription(),
-            problem.getMarker()
+            problem.section,
+            problem.expression,
+            problem.approver,
+            problem.description,
+            problem.marker
         )
     }
 
     fun toProblemMessageGroupedString(): String {
-        val problemMessageToUsersMap: MutableMap<String, MutableSet<String>?> =
-            TreeMap<String, MutableSet<String>?>()
-        theProblems.forEach(Consumer { problem ->
+        val problemMessageToUsersMap: MutableMap<String, MutableSet<String>> = mutableMapOf()
+        theProblems.forEach {
             problemMessageToUsersMap
-                .computeIfAbsent(problem.getDescription()) { mutableSetOf() }!!
-                .add(problem.getApprover())
-        })
+                .computeIfAbsent(it.description) { mutableSetOf() }
+                .add(it.approver)
+        }
         val table = StringTable()
         table.withHeaders("Message", "Affected users")
-        problemMessageToUsersMap.forEach { (message: String, users: MutableSet<String>?) ->
+        problemMessageToUsersMap
+            .toSortedMap()
+            .forEach { (message, users) ->
             table.addRow(
                 message,
-                users!!.stream().sorted().distinct().collect(Collectors.joining(", "))
+                users.stream().sorted().distinct().collect(Collectors.joining(", "))
             )
         }
         return "\n" + table

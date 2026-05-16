@@ -46,7 +46,7 @@ class TestJetBrains {
 
     @Test
     void testCharacterRange() {
-        GitIgnore gitIgnore = new GitIgnore("*.sw[mnop]");
+        GitIgnore gitIgnore = new GitIgnore("*.sw[mnop]", true);
         assertIgnore(gitIgnore, "test.swm");
         assertIgnore(gitIgnore, "logs/test.swp");
         assertNotIgnore(gitIgnore, "test.swa");

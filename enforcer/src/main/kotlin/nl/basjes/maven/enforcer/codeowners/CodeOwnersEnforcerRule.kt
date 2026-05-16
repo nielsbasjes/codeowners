@@ -60,12 +60,12 @@ class CodeOwnersEnforcerRule @Inject constructor(private val project: MavenProje
         var pass = true
         try {
             val validator =
-                CodeOwnersValidator(gitlab, EnforcerLoggerSlf4j(getLog()), verbose)
+                CodeOwnersValidator(gitlab, EnforcerLoggerSlf4j(log), verbose)
 
             directoryOwners = validator.analyzeDirectory(baseDir!!, codeOwnersFile)
 
             if (showApprovers) {
-                getLog().info("Approvers:\n" + directoryOwners.toTable())
+                log.info("Approvers:\n" + directoryOwners.toTable())
             }
         } catch (e: CodeOwnersValidationException) {
             throw EnforcerRuleException(e.message, e)

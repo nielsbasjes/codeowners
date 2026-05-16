@@ -25,11 +25,11 @@ class ApprovalRule(
     val approvers: MutableList<String>
 ) : Rule(fileExpression) {
     override fun toString(): String {
-        val verbose =
+        val regexString =
             if (verbose)
                 "# Regex used for the next rule:   ${filePattern}\n"
             else
                 ""
-        return "${verbose}${fileExpression} ${approvers.joinToString(separator = " ")}"
+        return "${regexString}${fileExpression} ${approvers.joinToString(separator = " ")}"
     }
 }

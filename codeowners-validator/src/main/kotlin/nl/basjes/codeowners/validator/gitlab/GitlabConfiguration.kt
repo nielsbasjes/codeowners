@@ -44,27 +44,39 @@ class GitlabConfiguration @JvmOverloads constructor(
     }
 
     class ProblemLevels {
+        /** A predefined role (like @@owner) is used as codeowner but has no users. */
         var roleNoUsers: Level = Level.WARNING
+        /** A codeowner specified as an email is an unknown email address. */
         var userUnknownEmail: Level = Level.WARNING
+        /** The user account of codeowner is a disabled account */
         var userDisabled: Level = Level.WARNING
+        /** Approver does not exist in Gitlab (not as user and not as group) */
         var approverDoesNotExist: Level = Level.WARNING
+        /** User does not have sufficient permissions to approve */
         var userTooLowPermissions: Level = Level.WARNING
+        /** Shared group does not have sufficient permissions to approve */
         var groupTooLowPermissions: Level = Level.WARNING
+        /** User exists but is not a member of with this project */
         var userNotProjectMember: Level = Level.ERROR
+        /** Group exists and is not shared with this project */
         var groupNotProjectMember: Level = Level.ERROR
+        /** For a rule none of the available approvers are valid. This causes Gitlab to allow approval by ANYONE! */
         var noValidApprovers: Level = Level.ERROR
 
         override fun toString(): String {
-            return "Configured ProblemLevels: \n" +
-                    "- roleNoUsers            = " + roleNoUsers + "\n" +
-                    "- approverDoesNotExist   = " + approverDoesNotExist + "\n" +
-                    "- userUnknownEmail       = " + userUnknownEmail + "\n" +
-                    "- userDisabled           = " + userDisabled + "\n" +
-                    "- userTooLowPermissions  = " + userTooLowPermissions + "\n" +
-                    "- groupTooLowPermissions = " + groupTooLowPermissions + "\n" +
-                    "- userNotProjectMember   = " + userNotProjectMember + "\n" +
-                    "- groupNotProjectMember  = " + groupNotProjectMember + "\n" +
-                    "- noValidApprovers       = " + noValidApprovers + "\n"
+            return """
+                Configured ProblemLevels:
+                - Role No Users             = $roleNoUsers
+                - Approver Does Not Exist   = $approverDoesNotExist
+                - User Unknown Email        = $userUnknownEmail
+                - User Disabled             = $userDisabled
+                - User Too Low Permissions  = $userTooLowPermissions
+                - Group Too Low Permissions = $groupTooLowPermissions
+                - User Not Project Member   = $userNotProjectMember
+                - Group Not Project Member  = $groupNotProjectMember
+                - No Valid Approvers        = $noValidApprovers
+            """.trimIndent()
+
         }
     }
 
@@ -86,13 +98,16 @@ class GitlabConfiguration @JvmOverloads constructor(
         }
 
     override fun toString(): String {
-        return "GitlabConfiguration: {\n" +
-                "  " + serverUrl + "\n" +
-                "  " + projectId + "\n" +
-                "  " + accessToken + "\n" +
-                "  assumeUncheckableEmailExistsAndCanApprove = " + assumeUncheckableEmailExistsAndCanApprove + "\n" +
-                "  " + problemLevels + "\n" +
-                '}'
+        return """
+GitlabConfiguration: {
+  $serverUrl
+  $projectId
+  $accessToken
+  Assume Uncheckable Email Exists And Can Approve = $assumeUncheckableEmailExistsAndCanApprove
+  FailLevel: $failLevel
+${problemLevels.toString().prependIndent("  ")}
+}
+"""
     }
 
     abstract class EnvironmentValueLoader {
@@ -146,17 +161,19 @@ class GitlabConfiguration @JvmOverloads constructor(
 
             // Explicitly specified
             if (!directValue.isNullOrEmpty()) {
-                value = directValue.trim { it <= ' ' }
+                value = directValue.trim()
                 source = propertyId
                 loaded = true
-                valid = checkValidity(value!!)
+                valid = checkValidity(value)
                 return
             }
+
             // Get from environment
             var usedEnvVariableName = defaultEnvironmentVariableName
             if (!environmentVariableName.isNullOrEmpty()) {
                 usedEnvVariableName = environmentVariableName
             }
+
             if (usedEnvVariableName.isNullOrEmpty()) {
                 value = null
                 source = "invalid environment variable \"$usedEnvVariableName\""
@@ -165,8 +182,7 @@ class GitlabConfiguration @JvmOverloads constructor(
                 return
             }
 
-            value = System.getenv(usedEnvVariableName)
-            value = value?.trim { it <= ' ' }
+            value = System.getenv(usedEnvVariableName) ?.trim { it <= ' ' }
             source = "environment variable $usedEnvVariableName"
             loaded = true
             valid = checkValidity(value)
@@ -177,13 +193,10 @@ class GitlabConfiguration @JvmOverloads constructor(
         }
     }
 
-
-    class ServerUrl(
+    class ServerUrl @JvmOverloads constructor(
         private val url: String? = null,
         private val environmentVariableName: String? = null,
         ) : EnvironmentValueLoader() {
-
-        constructor() : this(null, null)
 
         override fun load() {
             load(url, "gitlab.serverUrl.url", environmentVariableName, CI_SERVER_VARIABLE)
@@ -210,12 +223,11 @@ class GitlabConfiguration @JvmOverloads constructor(
         }
     }
 
-    class ProjectId(
+    class ProjectId @JvmOverloads constructor(
         private val id: String? = null,
         private val environmentVariableName: String? = null,
     ) : EnvironmentValueLoader() {
 
-        constructor() : this(null, null)
         override fun load() {
             load(id, "gitlab.projectId.id", environmentVariableName, CI_PROJECT_VARIABLE)
         }
@@ -232,11 +244,9 @@ class GitlabConfiguration @JvmOverloads constructor(
         }
     }
 
-    class AccessToken(
+    class AccessToken @JvmOverloads constructor(
         private val environmentVariableName: String? = null
     ) : EnvironmentValueLoader() {
-
-        constructor() : this(null)
 
         override fun load() {
             load(null, "Not allowed", environmentVariableName, null)

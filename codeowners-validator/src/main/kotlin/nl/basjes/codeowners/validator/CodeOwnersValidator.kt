@@ -69,8 +69,6 @@ class CodeOwnersValidator(
     }
 
     class DirectoryOwners(
-        var baseDir: Path?, // Get the ignore rules
-        var gitIgnores: GitIgnoreFileSet?, // Get the codeowners
         var codeOwners: CodeOwners
     ) : TreeMap<Path, FileOwners>() {
         /**
@@ -221,7 +219,7 @@ class CodeOwnersValidator(
             log.info("=================================")
         }
 
-        val result = DirectoryOwners(baseDirPath, gitIgnores, codeOwners)
+        val result = DirectoryOwners(codeOwners)
 
         // Get a list of all files in the project and sort them
         val allNonIgnoredFilesAndDirectoriesInProject =
@@ -315,7 +313,7 @@ class CodeOwnersValidator(
     @Throws(CodeOwnersValidationException::class)
     fun loadCodeOwners(baseDir: File, codeOwnersFile: File?): CodeOwners {
         var codeOwnersFile = codeOwnersFile
-        val commonCodeOwnersFiles = mutableListOf<kotlin.String>(
+        val commonCodeOwnersFiles = mutableListOf(
             "/CODEOWNERS",
             "/.github/CODEOWNERS",
             "/.gitlab/CODEOWNERS",
@@ -326,7 +324,7 @@ class CodeOwnersValidator(
             // If no file was specified we try the default locations
             for (codeOwnersFileName in commonCodeOwnersFiles) {
                 val tryingFile = File(baseDir.toString() + codeOwnersFileName)
-                if (tryingFile.exists() && tryingFile.isFile()) {
+                if (tryingFile.exists() && tryingFile.isFile) {
                     codeOwnersFile = tryingFile
                     break
                 }
@@ -349,12 +347,12 @@ class CodeOwnersValidator(
         private const val UNLIKELY_FILENAME = "NewlyCreated_NiElSbAsJeSwRoTeThIs"
 
         // ------------------------------------------
-        fun pathToLoggingString(path: Path): kotlin.String {
+        fun pathToLoggingString(path: Path): String {
             var filename =
-                GitIgnore.standardizeFilename(path.toString()) + (if (path.toFile().isDirectory()) "/" else "")
+                GitIgnore.standardizeFilename(path.toString()) + (if (path.toFile().isDirectory) "/" else "")
             filename = filename.replace("/+".toRegex(), "/")
             if (filename.startsWith("/")) {
-                return "\${baseDir}" + filename
+                return $$"${baseDir}$$filename"
             }
             return filename
         } // ------------------------------------------

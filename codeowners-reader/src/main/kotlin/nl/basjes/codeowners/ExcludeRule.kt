@@ -18,11 +18,11 @@ package nl.basjes.codeowners
 
 class ExcludeRule(fileExpression: String) : Rule(fileExpression) {
     override fun toString(): String {
-        val verbose =
+        val regexString =
             if (verbose)
                 "# Regex used for the next rule:   ${filePattern}\n"
             else
                 ""
-        return "${verbose}!${fileExpression}"
+        return "${regexString}!${fileExpression}"
     }
 }

@@ -21,6 +21,8 @@ import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import nl.basjes.codeowners.validator.CodeOwnersValidationException;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static nl.basjes.codeowners.validator.gitlab.TestGitlabUsers.makeConfig;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -32,6 +34,8 @@ import static wiremock.org.hamcrest.core.StringContains.containsString;
 
 @WireMockTest
 public class TestGitlabConfiguration {
+
+    private static final Logger log = LoggerFactory.getLogger(TestGitlabConfiguration.class);
 
     @Test
 //    @SetEnvironmentVariable(key = "CI_SERVER_URL",           value = "foobar") // <<-- Is bad
@@ -100,7 +104,7 @@ public class TestGitlabConfiguration {
     @SetEnvironmentVariable(key = "FETCH_USER_ACCESS_TOKEN", value = "gltst-validtoken")
     public void testProjectIdDoesNotExist(WireMockRuntimeInfo wmRuntimeInfo) {
         GitlabConfiguration configuration = makeConfig(wmRuntimeInfo, null, "FETCH_USER_ACCESS_TOKEN");
-
+        log.info("Test with config:\n{}", configuration);
         CodeOwnersValidationException exception = assertThrows(CodeOwnersValidationException.class, () -> {
                 try (GitlabProjectMembers ignored = new GitlabProjectMembers(configuration)) {
                     fail("Should never get here:" + ignored);

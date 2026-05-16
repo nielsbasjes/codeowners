@@ -36,7 +36,7 @@ object Utils {
     fun findAllNonIgnored(
         gitIgnoreFileSet: GitIgnoreFileSet,
         baseDir: Path = gitIgnoreFileSet.projectBaseDir.toPath()
-    ): MutableList<Path?> {
+    ): MutableList<Path> {
         val wasProjectRelative = gitIgnoreFileSet.isAssumeQueriesAreProjectRelative
         // Because all files will be forced to be project relative we must change the gitIgnores matching.
         gitIgnoreFileSet.assumeQueriesAreProjectRelative()
@@ -58,18 +58,18 @@ object Utils {
         current: Path,
         baseDir: Path,
         maxRecursionDepth: Int
-    ): MutableList<Path?> {
-        val found: MutableList<Path?> = ArrayList<Path?>()
-        val subDirs: MutableList<Path> = ArrayList<Path>()
+    ): MutableList<Path> {
+        val found: MutableList<Path> = mutableListOf()
+        val subDirs: MutableList<Path> = mutableListOf()
 
         if (!Files.isDirectory(current)) {
             LOG.debug("Locate GI: Not DIR  {}", current)
-            return mutableListOf<Path?>() // It must be a directory
+            return mutableListOf() // It must be a directory
         }
 
         if (gitIgnoreFileSet.ignoreFile(baseDir.relativize(current).toString())) {
             LOG.debug("Locate GI: Ignored  {}", current)
-            return mutableListOf<Path?>() // Is ignored
+            return mutableListOf() // Is ignored
         }
 
         LOG.debug("Locate GI: Scan     {}", current)
@@ -92,7 +92,7 @@ object Utils {
             }
         } catch (e: IOException) {
             LOG.error("Unable to list the content of {} due to {}", current, e.toString())
-            return mutableListOf<Path?>()
+            return mutableListOf()
         }
 
         val nextMaxRecursionDepth = maxRecursionDepth - 1
@@ -101,7 +101,7 @@ object Utils {
                 found.addAll(findAllNonIgnored(gitIgnoreFileSet, subDir, baseDir, nextMaxRecursionDepth))
             }
         }
-        Collections.sort<Path?>(found)
+        found.sortBy { it }
         return found
     }
 }

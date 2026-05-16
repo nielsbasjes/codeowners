@@ -1,6 +1,6 @@
 /*
- * Yet Another UserAgent Analyzer
- * Copyright (C) 2013-2025 Niels Basjes
+ * CodeOwners Tools
+ * Copyright (C) 2023-2026 Niels Basjes
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,14 @@ open class StringTable {
     private var headers: List<String> = listOf()
     private val lines: MutableList<List<String>> = mutableListOf()
 
-    var cachedColumnWidths: MutableList<Int>? = null
+    private var cachedColumnWidths: MutableList<Int>? = null
+
+    protected fun clearCaches() {
+        cachedColumnWidths = null
+    }
     protected fun calculateColumnWidths(): MutableList<Int> {
         if (cachedColumnWidths == null) {
-            val columnWidths: MutableList<Int> = ArrayList<Int>()
+            val columnWidths: MutableList<Int> = ArrayList()
             for (column in headers.indices) {
                 var maxWidth = headers[column].length
                 for (line in lines) {

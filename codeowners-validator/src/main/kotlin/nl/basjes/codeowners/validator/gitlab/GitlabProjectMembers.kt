@@ -394,8 +394,8 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
 
                     // Is this a Shared Group?
                     if (sharedGroups.containsKey(approver)) {
-                        val sharedGroup: SharedGroup = sharedGroups.get(approver)!!
-                        val groupAccessLevel = sharedGroup.getGroupAccessLevel()
+                        val sharedGroup: SharedGroup = sharedGroups[approver]!!
+                        val groupAccessLevel = sharedGroup.groupAccessLevel
                         if (accessLevelCanApprove(groupAccessLevel)) {
                             // Success, we have found this valid approver to be the name of a shared group.
                             if (showAllApprovers) {
@@ -424,7 +424,7 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
                         } catch (_: GitLabApiException) {
                             // If error then group == null
                         }
-                        userCache.put(approver, user)
+                        userCache[approver] = user
                     }
                     if (user != null) {
                         report(
@@ -484,27 +484,22 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
         if (problemTable.isEmpty) {
             return
         }
-        when (failLevel) {
-            FailLevel.NEVER -> return
-            FailLevel.FATAL -> if (!problemTable.hasFatalErrors()) {
-                return
+        if (
+            when (failLevel) {
+                FailLevel.NEVER   -> false
+                FailLevel.FATAL   -> problemTable.hasFatalErrors()
+                FailLevel.ERROR   -> problemTable.hasFatalErrors() || problemTable.hasErrors()
+                FailLevel.WARNING -> problemTable.hasFatalErrors() || problemTable.hasErrors() || problemTable.hasWarnings()
             }
-
-            FailLevel.ERROR -> if (!problemTable.hasFatalErrors() && !problemTable.hasErrors()) {
-                return
-            }
-
-            FailLevel.WARNING -> if (!problemTable.hasFatalErrors() && !problemTable.hasErrors() && !problemTable.hasWarnings()) {
-                return
-            }
+        ) {
+            throw CodeOwnersValidationException(
+                "Found " +
+                "${problemTable.numberOfWarnings} warnings, " +
+                "${problemTable.numberOfErrors} errors and " +
+                "${problemTable.numberOfFatalErrors} fatal problems " +
+                "of the CODEOWNERS file in relation to the Gitlab project.\n$problemTable"
+            )
         }
-        throw CodeOwnersValidationException(
-            "Found " +
-            "${problemTable.numberOfWarnings} warnings, " +
-            "${problemTable.numberOfErrors} errors and " +
-            "${problemTable.numberOfFatalErrors} fatal problems " +
-            "of the CODEOWNERS file in relation to the Gitlab project.\n$problemTable"
-        )
     }
 
     companion object {
