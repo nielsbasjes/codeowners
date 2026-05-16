@@ -30,97 +30,97 @@ public class TestGitlabConfigurationProjectId {
     @Test
     @SetEnvironmentVariable(key = "CI_PROJECT_ID", value = "niels/project") // <<-- Is good
     public void testProjectIdDefaultEnvValidValue() {
-        ProjectId ProjectId = new ProjectId(null, null);
-        assertTrue(ProjectId.isValid());
-        assertEquals("niels/project", ProjectId.getValue());
+        ProjectId projectId = new ProjectId(null, null);
+        assertTrue(projectId.isValid());
+        assertEquals("niels/project", projectId.getValue());
     }
 
     @Test
     @SetEnvironmentVariable(key = "CI_PROJECT_ID", value = "foo bar") // <<-- Is bad
     public void testProjectIdDefaultEnvBadValue() {
-        ProjectId ProjectId = new ProjectId(null, null);
-        assertFalse(ProjectId.isValid());
-        assertNull(ProjectId.getValue());
+        ProjectId projectId = new ProjectId(null, null);
+        assertFalse(projectId.isValid());
+        assertNull(projectId.getValue());
     }
 
     @Test
     @SetEnvironmentVariable(key = "CI_PROJECT_ID", value = "") // <<-- Is bad
     public void testProjectIdDefaultEnvEmptyValue() {
-        ProjectId ProjectId = new ProjectId(null, null);
-        assertFalse(ProjectId.isValid());
-        assertNull(ProjectId.getValue());
+        ProjectId projectId = new ProjectId(null, null);
+        assertFalse(projectId.isValid());
+        assertNull(projectId.getValue());
     }
 
     @Test
 //    @SetEnvironmentVariable(key = "CI_PROJECT_ID", value = "") // <<-- Is bad
     public void testProjectIdDefaultEnvMissing() {
-        ProjectId ProjectId = new ProjectId(null, null);
-        assertFalse(ProjectId.isValid());
-        assertNull(ProjectId.getValue());
+        ProjectId projectid = new ProjectId(null, null);
+        assertFalse(projectid.isValid());
+        assertNull(projectid.getValue());
     }
 
     @Test
     @SetEnvironmentVariable(key = "MY_SPECIAL_PROJECT_ID", value = "niels/project") // <<-- Is good
     public void testProjectIdCustomEnvValidValue() {
-        ProjectId ProjectId = new ProjectId(null, "MY_SPECIAL_PROJECT_ID");
-        assertTrue(ProjectId.isValid());
-        assertEquals("niels/project", ProjectId.getValue());
+        ProjectId projectId = new ProjectId(null, "MY_SPECIAL_PROJECT_ID");
+        assertTrue(projectId.isValid());
+        assertEquals("niels/project", projectId.getValue());
     }
 
     @Test
     @SetEnvironmentVariable(key = "MY_SPECIAL_PROJECT_ID", value = "foo bar") // <<-- Is bad
     public void testProjectIdCustomEnvBadValue() {
-        ProjectId ProjectId = new ProjectId(null, "MY_SPECIAL_PROJECT_ID");
-        assertFalse(ProjectId.isValid());
-        assertNull(ProjectId.getValue());
+        ProjectId projectId = new ProjectId(null, "MY_SPECIAL_PROJECT_ID");
+        assertFalse(projectId.isValid());
+        assertNull(projectId.getValue());
     }
 
     @Test
     @SetEnvironmentVariable(key = "MY_SPECIAL_PROJECT_ID", value = "") // <<-- Is bad
     public void testProjectIdCustomEnvEmptyValue() {
-        ProjectId ProjectId = new ProjectId(null, "MY_SPECIAL_PROJECT_ID");
-        assertFalse(ProjectId.isValid());
-        assertNull(ProjectId.getValue());
+        ProjectId projectId = new ProjectId(null, "MY_SPECIAL_PROJECT_ID");
+        assertFalse(projectId.isValid());
+        assertNull(projectId.getValue());
     }
 
     @Test
 //    @SetEnvironmentVariable(key = "MY_SPECIAL_PROJECT_ID", value = "") // <<-- Is bad
     public void testProjectIdCustomEnvMissing() {
-        ProjectId ProjectId = new ProjectId(null, "MY_SPECIAL_PROJECT_ID");
-        assertFalse(ProjectId.isValid());
-        assertNull(ProjectId.getValue());
+        ProjectId projectId = new ProjectId(null, "MY_SPECIAL_PROJECT_ID");
+        assertFalse(projectId.isValid());
+        assertNull(projectId.getValue());
     }
 
     @Test
     public void testProjectIdCustomEnvNameEmpty() {
-        ProjectId ProjectId = new ProjectId(null, "");
-        assertFalse(ProjectId.isValid());
-        assertNull(ProjectId.getValue());
+        ProjectId projectId = new ProjectId(null, "");
+        assertFalse(projectId.isValid());
+        assertNull(projectId.getValue());
     }
 
     @Test
     @SetEnvironmentVariable(key = "MY_SPECIAL_PROJECT_ID", value = "niels/project") // <<-- Fallback
     public void testProjectIdDirectValidValue() {
-        ProjectId ProjectId = new ProjectId("otherproject", "MY_SPECIAL_PROJECT_ID");
-        assertTrue(ProjectId.isValid());
-        assertEquals("otherproject", ProjectId.getValue());
+        ProjectId projectId = new ProjectId("otherproject", "MY_SPECIAL_PROJECT_ID");
+        assertTrue(projectId.isValid());
+        assertEquals("otherproject", projectId.getValue());
     }
 
     @Test
     @SetEnvironmentVariable(key = "MY_SPECIAL_PROJECT_ID", value = "niels/project") // <<-- Fallback
     public void testProjectIdDirectBadValue() {
-        ProjectId ProjectId = new ProjectId("foo bar", "MY_SPECIAL_PROJECT_ID");
+        ProjectId projectId = new ProjectId("foo bar", "MY_SPECIAL_PROJECT_ID");
         // Do NOT use the fallback because that would cause confusion with the person configuring it.
-        assertFalse(ProjectId.isValid());
-        assertNull(ProjectId.getValue());
+        assertFalse(projectId.isValid());
+        assertNull(projectId.getValue());
     }
 
     @Test
     @SetEnvironmentVariable(key = "CI_PROJECT_ID", value = "niels/project") // <<-- Fallback
     public void testProjectIdDirectEmptyValueFallBackDefault() {
-        ProjectId ProjectId = new ProjectId("", null);
-        assertTrue(ProjectId.isValid());
-        assertEquals("niels/project", ProjectId.getValue());
+        ProjectId projectId = new ProjectId("", null);
+        assertTrue(projectId.isValid());
+        assertEquals("niels/project", projectId.getValue());
     }
 
     @Test
@@ -134,17 +134,17 @@ public class TestGitlabConfigurationProjectId {
     @Test
     @SetEnvironmentVariable(key = "MY_SPECIAL_PROJECT_ID", value = "niels/project") // <<-- Fallback
     public void testProjectIdDirectEmptyValueFallBackCustom() {
-        ProjectId ProjectId = new ProjectId("", "MY_SPECIAL_PROJECT_ID");
-        assertTrue(ProjectId.isValid());
-        assertEquals("niels/project", ProjectId.getValue());
+        ProjectId projectId = new ProjectId("", "MY_SPECIAL_PROJECT_ID");
+        assertTrue(projectId.isValid());
+        assertEquals("niels/project", projectId.getValue());
     }
 
     @Test
     @SetEnvironmentVariable(key = "MY_SPECIAL_PROJECT_ID", value = "niels/project") // <<-- Fallback
     public void testProjectIdDirectMissingFallBackCustom() {
-        ProjectId ProjectId = new ProjectId(null, "MY_SPECIAL_PROJECT_ID");
-        assertTrue(ProjectId.isValid());
-        assertEquals("niels/project", ProjectId.getValue());
+        ProjectId projectId = new ProjectId(null, "MY_SPECIAL_PROJECT_ID");
+        assertTrue(projectId.isValid());
+        assertEquals("niels/project", projectId.getValue());
     }
 
 }
