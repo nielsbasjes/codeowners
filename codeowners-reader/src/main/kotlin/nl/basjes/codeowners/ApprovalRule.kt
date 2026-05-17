@@ -22,7 +22,7 @@ class ApprovalRule(
      * @return All approvers (in the same order as they are in the file) that will be returned IF
      * the file pattern matches.
      */
-    val approvers: MutableList<String>
+    val approvers: List<String>
 ) : Rule(fileExpression) {
     override fun toString(): String {
         val regexString =

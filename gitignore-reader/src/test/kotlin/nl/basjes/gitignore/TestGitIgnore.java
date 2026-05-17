@@ -457,13 +457,13 @@ class TestGitIgnore {
         for (IgnoreRule ignoreRule : gitIgnore.getIgnoreRules$gitignore_reader()) {
             switch (ignoreRule.getIgnoreExpression()) {
                 case "*.log":
-                    assertEquals("^/?.*\\.log(/|$)", ignoreRule.getIgnorePattern().pattern());
+                    assertEquals("^/?.*\\.log(/|$)", ignoreRule.getIgnorePattern().getPattern());
                     break;
                 case "!important/*.log":
-                    assertEquals("^/?important/[^/]*\\.log(/|$)", ignoreRule.getIgnorePattern().pattern());
+                    assertEquals("^/?important/[^/]*\\.log(/|$)", ignoreRule.getIgnorePattern().getPattern());
                     break;
                 case "trace.*":
-                    assertEquals("^/?(.*/)?trace\\.[^/]*", ignoreRule.getIgnorePattern().pattern());
+                    assertEquals("^/?(.*/)?trace\\.[^/]*", ignoreRule.getIgnorePattern().getPattern());
                     break;
                 default:
                     fail("Unexpected expression:" + ignoreRule.getIgnoreExpression());

@@ -22,14 +22,13 @@ open class StringTable {
     private var headers: List<String> = listOf()
     private val lines: MutableList<List<String>> = mutableListOf()
 
-    private var cachedColumnWidths: MutableList<Int>? = null
+    private val cachedColumnWidths: MutableList<Int> = mutableListOf()
 
     protected fun clearCaches() {
-        cachedColumnWidths = null
+        cachedColumnWidths.clear()
     }
-    protected fun calculateColumnWidths(): MutableList<Int> {
-        if (cachedColumnWidths == null) {
-            val columnWidths: MutableList<Int> = mutableListOf()
+    protected fun calculateColumnWidths(): List<Int> {
+        if (cachedColumnWidths.isEmpty()) {
             for (column in headers.indices) {
                 var maxWidth = headers[column].length
                 for (line in lines) {
@@ -41,11 +40,10 @@ open class StringTable {
                         }
                     }
                 }
-                columnWidths.add(maxWidth)
+                cachedColumnWidths.add(maxWidth)
             }
-            cachedColumnWidths = columnWidths
         }
-        return cachedColumnWidths!!
+        return cachedColumnWidths
     }
 
     override fun toString(): String {
@@ -89,7 +87,7 @@ open class StringTable {
         val columns = max(columnWidths.size, fields.size)
 
         val sb = StringBuilder(512)
-        for (columnNr in 0..<columns) {
+        for (columnNr in 0 until columns) {
             var columnWidth = 1
             if (columnNr < columnWidths.size) {
                 columnWidth = columnWidths[columnNr]
@@ -114,7 +112,7 @@ open class StringTable {
         return this
     }
 
-    fun withHeaders(fields: MutableList<String>): StringTable {
+    fun withHeaders(fields: List<String>): StringTable {
         this.headers = fields.toList()
         return this
     }

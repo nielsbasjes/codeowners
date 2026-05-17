@@ -16,17 +16,12 @@
  */
 package nl.basjes.gitignore
 
-import jdk.incubator.vector.VectorOperators.LOG
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
-import java.io.StringReader
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.util.function.Consumer
-import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
 /**
@@ -40,7 +35,7 @@ class GitIgnore @JvmOverloads constructor(
     @JvmField
     val projectRelativeBaseDir: String
 
-    internal val ignoreRules: MutableList<IgnoreRule> = mutableListOf()
+    internal val ignoreRules: List<IgnoreRule>
     var verbose = false
         set(verbose) {
             field = verbose
@@ -57,8 +52,9 @@ class GitIgnore @JvmOverloads constructor(
     constructor(gitIgnoreContent: String, verbose: Boolean) : this("", gitIgnoreContent, verbose)
 
     init {
-        this.verbose = verbose
         this.projectRelativeBaseDir = standardizeFilename(projectRelativeBaseDir + GITIGNORE_PATH_SEPARATOR)
+
+        val allIgnoreRules: MutableList<IgnoreRule> = mutableListOf()
 
         for (line in gitIgnoreContent.lines()) {
             if (line.isBlank()) {
@@ -68,11 +64,13 @@ class GitIgnore @JvmOverloads constructor(
                 continue
             }
             if (line.startsWith("!")) {
-                ignoreRules.add(IgnoreRule(this.projectRelativeBaseDir, true, line.trim().substring(1), verbose))
+                allIgnoreRules.add(IgnoreRule(this.projectRelativeBaseDir, true, line.trim().substring(1), verbose))
             } else {
-                ignoreRules.add(IgnoreRule(this.projectRelativeBaseDir, false, line.trim(), verbose))
+                allIgnoreRules.add(IgnoreRule(this.projectRelativeBaseDir, false, line.trim(), verbose))
             }
         }
+        ignoreRules = allIgnoreRules.toList()
+        this.verbose = verbose // The setter NEEDS the ignoreRules !
     }
 
     /**
@@ -189,7 +187,7 @@ class GitIgnore @JvmOverloads constructor(
         /**
          * @return The basedir and ignore expression combined into a regular expression.
          */
-        val ignorePattern: Pattern
+        val ignorePattern: Regex
 
         init {
             val baseDirRegex: String?
@@ -239,7 +237,7 @@ class GitIgnore @JvmOverloads constructor(
                 // If there is a separator at the beginning or middle (or both) of the pattern,
                 // then the pattern is relative to the directory level of the particular .gitignore file itself.
                 // Otherwise, the pattern may also match at any level below the .gitignore level.
-                if (!Pattern.compile("./.").matcher(fileRegex).find()) {
+                if (!Regex("./.").containsMatchIn(fileRegex)) {
                     // If a path does not start with a /, the path is treated as if it starts with a globstar. README.md is treated the same way as /**/README.md
                     fileRegex = fileRegex.replace("^([^/*])".toRegex(), "**/$1")
                 }
@@ -331,18 +329,18 @@ class GitIgnore @JvmOverloads constructor(
 
             val finalRegex = baseDirRegex + fileRegex
             try {
-                this.ignorePattern = Pattern.compile(finalRegex)
+                this.ignorePattern = Regex(finalRegex)
                 if (verbose) {
                     LOG.info("IgnoreRule for expression {}   -->   Regex {}", this.fileExpression, fileRegex)
                 }
             } catch (pse: PatternSyntaxException) {
                 val errorMsg =
                     "You either have an invalid gitignore rule (which you should fix) " +
-                            "or you have found an edge case that should be fixed. " +
-                            "In the latter case please file a bug report to https://github.com/nielsbasjes/codeowners/issues " +
-                            "indicating that the expression >>>" + (if (negate) "!" else "") + this.fileExpression + "<<< " +
-                            "was converted to regex >>>" + finalRegex + "<<< " +
-                            "which triggered the error: " + pse.message
+                    "or you have found an edge case that should be fixed. " +
+                    "In the latter case please file a bug report to https://github.com/nielsbasjes/codeowners/issues " +
+                    "indicating that the expression >>>" + (if (negate) "!" else "") + this.fileExpression + "<<< " +
+                    "was converted to regex >>>" + finalRegex + "<<< " +
+                    "which triggered the error: " + pse.message
                 throw PatternSyntaxException(errorMsg, finalRegex, pse.index)
             }
         }
@@ -353,7 +351,7 @@ class GitIgnore @JvmOverloads constructor(
          * @return NULL: not matched, True: must be ignored, False: it must be UNignored
          */
         fun isIgnoredFile(filename: String): Boolean? {
-            if (!ignorePattern.matcher(filename).find()) {
+            if (!ignorePattern.containsMatchIn((filename))) {
                 if (verbose) {
                     LOG.info(
                         "NO MATCH     |{}| ~ |{}| --> |{}|", fileExpression,

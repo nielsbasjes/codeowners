@@ -23,46 +23,41 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.stream.Collectors
 
 internal class CodeOwnersLoader(codeownersContent: String) : CodeOwnersParserBaseVisitor<Void?>() {
-    // Map name of Section to Sections
-    val sections: MutableMap<String, Section> = LinkedHashMap()
+    // Map the LOWERCASED !! name of Section to Sections
+    val sections: MutableMap<String, Section> = mutableMapOf()
 
     private fun storeCurrentSection() {
         // Only if the previous Section had ANY rules do we keep it.
+
+        val currentSectionMapId = currentSection.name.lowercase()
+
         if (!currentSection.rules.isEmpty()) {
-            val existingSectionsWithSameName =
-                sections
-                    .values
-                    .map { it.name }
-                    .filter { it.equals(currentSection.name, ignoreCase = true) }
-                    .toList()
+            val existingSection = sections[currentSectionMapId]
+            if (existingSection == null) {
+                sections[currentSectionMapId] = currentSection
+                return
+            }
 
-            if (existingSectionsWithSameName.isEmpty()) {
-                sections[currentSection.name] = currentSection
-            } else {
-                val existingSection: Section? = sections[existingSectionsWithSameName[0]]
-                requireNotNull(existingSection) { "This should never happen, we just checked that it must exist"}
-                currentSection
-                    .defaultApprovers
-                    .forEach{ existingSection.addDefaultApprover(it) }
+            currentSection
+                .defaultApprovers
+                .forEach{ existingSection.addDefaultApprover(it) }
 
-                currentSection
-                    .rules
-                    .forEach{ existingSection.addRule(it) }
+            currentSection
+                .rules
+                .forEach{ existingSection.addRule(it) }
 
-                if (currentSection.isOptional != existingSection.isOptional) {
-                    // You cannot MIX these two, it is bad.
-                    LOG.error(
-                        "Merging two sections with a different Optional flag is BAD. Section [{}] has optional={} and Section [{}] has optional={}.",
-                        existingSection.name,
-                        existingSection.isOptional,
-                        currentSection.name,
-                        currentSection.isOptional
-                    )
-                    hasStructuralProblems = true
-                }
+            if (currentSection.isOptional != existingSection.isOptional) {
+                // You cannot MIX these two, it is bad.
+                LOG.error(
+                    "Merging two sections with a different Optional flag is BAD. Section [{}] has optional={} and Section [{}] has optional={}.",
+                    existingSection.name,
+                    existingSection.isOptional,
+                    currentSection.name,
+                    currentSection.isOptional
+                )
+                hasStructuralProblems = true
             }
         }
     }
@@ -92,14 +87,14 @@ internal class CodeOwnersLoader(codeownersContent: String) : CodeOwnersParserBas
             }
 
             // Having in the same section the same file pattern multiple times is bad.
-            val duplicates: MutableList<String> = section
-                .rules.stream()
-                .collect(Collectors.groupingBy(Rule::fileExpression, Collectors.counting()))
-                .entries.stream()
+            val duplicates: List<String> = section
+                .rules
+                .groupBy { it.fileExpression }
+                .mapValues { it.value.size }
                 .filter { it.value > 1 }
                 .map { it.key }
                 .sorted()
-                .collect(Collectors.toList())
+                .toList()
             if (!duplicates.isEmpty()) {
                 LOG.warn("In section [{}] these file patterns occur multiple times: {}", section.name, duplicates)
                 hasStructuralProblems = true
@@ -156,25 +151,17 @@ internal class CodeOwnersLoader(codeownersContent: String) : CodeOwnersParserBas
      */
     override fun visitApprovalRule(ctx: CodeOwnersParser.ApprovalRuleContext): Void? {
         val filePattern = ctx.fileExpression.text
-        val approvers = ctx.USERID().stream()
+        val approvers = ctx.USERID()
+            .asSequence()
             .map { it.text }
             .map { it.trim() }
-            .map { it.replace(
-                    "^\\([a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+\\)".toRegex(),
-                    ""
-                )
-            }
-            .map { it.replace(
-                    "\\([a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+\\)@".toRegex(),
-                    "@"
-                )
-            }
+            .map { it.replace("^\\([a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+\\)".toRegex(),"" )}
+            .map { it.replace("\\([a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+\\)@".toRegex(),"@")}
             .distinct()
-            .collect(Collectors.toList())
+            .toList()
         currentSection.addRule(ApprovalRule(filePattern, approvers))
         return null
     }
-
 
     /**
      * Internal parser method, do not use

@@ -20,12 +20,10 @@ import nl.basjes.codeowners.validator.utils.LogColor.RESET
 import nl.basjes.codeowners.validator.utils.Problem.Error
 import nl.basjes.codeowners.validator.utils.Problem.Fatal
 import nl.basjes.codeowners.validator.utils.Problem.Info
-import nl.basjes.codeowners.validator.utils.Problem.ProblemColor.COLOR_INFO_TAG
 import nl.basjes.codeowners.validator.utils.Problem.ProblemColor.COLOR_INFO_TEXT
 import nl.basjes.codeowners.validator.utils.Problem.Tags.INFO_TAG
 import nl.basjes.codeowners.validator.utils.Problem.Warning
 import org.slf4j.Logger
-import java.util.stream.Collectors
 
 class ProblemTable : StringTable() {
 
@@ -156,7 +154,7 @@ class ProblemTable : StringTable() {
             .forEach { (message, users) ->
             table.addRow(
                 message,
-                users.stream().sorted().distinct().collect(Collectors.joining(", "))
+                users.sorted().distinct().joinToString(", ")
             )
         }
         return "\n" + table

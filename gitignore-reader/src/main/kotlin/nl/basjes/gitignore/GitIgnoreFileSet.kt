@@ -338,20 +338,17 @@ class GitIgnoreFileSet @JvmOverloads constructor(
          */
         @JvmStatic
         fun getGlobalGitIgnore(xdgConfigHome: String?, home: String?): Path? {
-            val ignorePath = if (!xdgConfigHome.isNullOrEmpty()) {
-                File(xdgConfigHome).toPath().resolve("git").resolve("ignore")
-            } else {
-                if (!home.isNullOrEmpty()) {
-                    File(home).toPath().resolve(".config").resolve("git").resolve("ignore")
+            val ignorePath =
+                if (!xdgConfigHome.isNullOrEmpty()) {
+                    File(xdgConfigHome).toPath().resolve("git").resolve("ignore")
                 } else {
-                    return null
+                    if (!home.isNullOrEmpty()) {
+                        File(home).toPath().resolve(".config").resolve("git").resolve("ignore")
+                    } else {
+                        return null
+                    }
                 }
-            }
-            return if (ignorePath.isRegularFile()) {
-                    ignorePath
-                } else {
-                    null
-                }
+            return if (ignorePath.isRegularFile()) { ignorePath } else { null }
         }
     }
 }

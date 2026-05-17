@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import kotlin.io.path.isDirectory
 
 object Utils {
@@ -37,7 +36,7 @@ object Utils {
     fun findAllNonIgnored(
         gitIgnoreFileSet: GitIgnoreFileSet,
         baseDir: Path = gitIgnoreFileSet.projectBaseDir.toPath()
-    ): MutableList<Path> {
+    ): List<Path> {
         val wasProjectRelative = gitIgnoreFileSet.isAssumeQueriesAreProjectRelative
         // Because all files will be forced to be project relative we must change the gitIgnores matching.
         gitIgnoreFileSet.assumeQueriesAreProjectRelative()
@@ -59,18 +58,18 @@ object Utils {
         current: Path,
         baseDir: Path,
         maxRecursionDepth: Int
-    ): MutableList<Path> {
+    ): List<Path> {
         val found: MutableList<Path> = mutableListOf()
         val subDirs: MutableList<Path> = mutableListOf()
 
         if (!current.isDirectory()) {
             LOG.debug("Locate GI: Not DIR  {}", current)
-            return mutableListOf() // It must be a directory
+            return listOf() // It must be a directory
         }
 
         if (gitIgnoreFileSet.ignoreFile(baseDir.relativize(current).toString())) {
             LOG.debug("Locate GI: Ignored  {}", current)
-            return mutableListOf() // Is ignored
+            return listOf() // Is ignored
         }
 
         LOG.debug("Locate GI: Scan     {}", current)
@@ -93,7 +92,7 @@ object Utils {
             }
         } catch (e: IOException) {
             LOG.error("Unable to list the content of {} due to {}", current, e.toString())
-            return mutableListOf()
+            return listOf()
         }
 
         val nextMaxRecursionDepth = maxRecursionDepth - 1

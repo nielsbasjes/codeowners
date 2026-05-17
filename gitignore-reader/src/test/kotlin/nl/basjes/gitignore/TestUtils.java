@@ -115,7 +115,7 @@ public class TestUtils {
         List<GitIgnore.IgnoreRule> ignoreRules = gitIgnore.getIgnoreRules$gitignore_reader();
         assertEquals(1, ignoreRules.size());
         GitIgnore.IgnoreRule ignoreRule = ignoreRules.get(0);
-        assertEquals(expectedRegex, ignoreRule.getIgnorePattern().pattern(), "Incorrect regex generated");
+        assertEquals(expectedRegex, ignoreRule.getIgnorePattern().getPattern(), "Incorrect regex generated");
     }
 
 }

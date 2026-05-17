@@ -30,8 +30,7 @@ class Section(@JvmField val name: String) {
 
     val defaultApprovers: MutableList<String> = mutableListOf()
 
-    @JvmField val rules: MutableList<Rule> = mutableListOf()
-    fun getRules() = rules
+    val rules: MutableList<Rule> = mutableListOf()
 
     fun addDefaultApprover(name: String) {
         val cleanedName = name.trim()
@@ -51,7 +50,7 @@ class Section(@JvmField val name: String) {
      * @param filename The filename for which the approvers are requested.
      * @return The list of approver usernames for this filename in the order (as good as possible) as they appear in the code owner rules in this section.
      */
-    fun getApprovers(filename: String): MutableList<String> {
+    fun getApprovers(filename: String): List<String> {
         if (verbose) {
             LOG.info("# ---------------------------")
             LOG.info("# Section [{}]", this.name)
@@ -70,7 +69,7 @@ class Section(@JvmField val name: String) {
 
             // Here: rule instanceof ApprovalRule
             val approvalRule = rule as ApprovalRule
-            val ruleApprovers: MutableList<String> = approvalRule.approvers
+            val ruleApprovers: List<String> = approvalRule.approvers
             // GitHub: Order is important; the last matching pattern takes the most precedence.
             // Gitlab: When a file or directory matches multiple entries in the CODEOWNERS file, the users from last pattern matching the file or directory are used.
             approvers.clear()

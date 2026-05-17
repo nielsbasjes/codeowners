@@ -229,7 +229,7 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
         val results = ProblemTable()
 
         for (definedSection in codeOwners.allDefinedSections) {
-            for (rule in definedSection.getRules()) {
+            for (rule in definedSection.rules) {
                 // Only check the rules that provide approvers.
                 if (rule !is ApprovalRule) {
                     continue

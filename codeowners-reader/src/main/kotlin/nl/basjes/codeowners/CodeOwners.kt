@@ -20,9 +20,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.util.stream.Collectors
 
 internal val LOG: Logger = LoggerFactory.getLogger(CodeOwners::class.java)
 
@@ -61,13 +58,13 @@ class CodeOwners(codeownersContent: String) {
      */
     constructor(file: File) : this(file.readText())
 
-    val allDefinedSections: MutableSet<Section>
+    val allDefinedSections: Set<Section>
         /**
          * If the application needs to inspect the defined rules then this is the
          * way to retrieve all defined sections AFTER they were cleaned and merged !
          * @return The set of all sections in an undefined order !
          */
-        get() = sections.values.toMutableSet()
+        get() = sections.values.toSet()
 
     /**
      * Get all mandatory approvers for a specific filename.
@@ -109,7 +106,7 @@ class CodeOwners(codeownersContent: String) {
                 approvers.addAll(section.getApprovers(matchFileName))
             }
         }
-        val endResultApprovers = approvers.stream().distinct().collect(Collectors.toList())
+        val endResultApprovers = approvers.distinct().toList()
         if (verbose) {
             LOG.info("# ---------------------------")
             if (onlyMandatory) {

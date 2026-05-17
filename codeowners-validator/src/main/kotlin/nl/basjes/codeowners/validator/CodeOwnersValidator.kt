@@ -27,8 +27,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
-import java.util.*
-import java.util.stream.Collectors
+import java.util.TreeMap
 
 class CodeOwnersValidator(
     private val gitlab: GitlabConfiguration?,
@@ -45,7 +44,7 @@ class CodeOwnersValidator(
         NEWLY_CREATED_FILE,
     }
 
-    class FileOwners(val path: Path?, val fileType: FileType?) {
+    class FileOwners(val path: Path, val fileType: FileType) {
         val approvers: MutableList<String> = mutableListOf()
         @JvmField
         val mandatoryApprovers: MutableList<String> = mutableListOf()
@@ -192,12 +191,10 @@ class CodeOwnersValidator(
         // Get a list of all files in the project and sort them
         val allNonIgnoredFilesAndDirectoriesInProject =
             Utils.findAllNonIgnored(gitIgnores)
-                .stream()
                 .map { baseDirPath.relativize(it) }
                 .sorted()
                 .distinct()
-                .collect(Collectors.toList())
-
+                .toList()
 
         // Set everything to the requested verbosity
         codeOwners.verbose = verbose
