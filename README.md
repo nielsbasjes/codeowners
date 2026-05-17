@@ -13,13 +13,17 @@ In several systems (like GitHub and Gitlab) you can have a CODEOWNERS file which
 
 Reality: The syntax of these files can be tricky, and it is quite easy to write a config that has the effect that not all files are covered.
 
+# Major update
+The upcoming 2.0.0 release has been rewritten into Kotlin. This allows for more exact checks on nullability and improves code quality.
+Most of the API has not been changed so using this from Java should be a simple migration.
+
 # What is this
-1) A Java library to read a CODEOWNERS file.
-2) A Java library to read a/all .gitignore file(s) in directory tree.
-3) A Java library to validate the CODEOWNERS against the non-ignored project files.
+1) A Kotlin/Java library to read a CODEOWNERS file.
+2) A Kotlin/Java library to read a/all .gitignore file(s) in directory tree.
+3) A Kotlin/Java library to validate the CODEOWNERS against the non-ignored project files.
 3.1) This also includes the ability to validate against the actual users, groups and roles in Gitlab. (See [README-gitlab.md](README-gitlab.md))
 4) An extra rule for the Maven Enforcer plugin that wraps the validation library. (See Usage below)
-5) An example commandline script (using Koltin script) that wraps the validation library.
+5) An example commandline script (using Kotlin script) that wraps the validation library.
 
 The intended goal is to make the build fail if the codeowners file does not cover all files and directories in the project.
 
