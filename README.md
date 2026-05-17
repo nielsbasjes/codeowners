@@ -1,5 +1,5 @@
 [![Github actions Build status](https://img.shields.io/github/actions/workflow/status/nielsbasjes/codeowners/build.yml?branch=main)](https://github.com/nielsbasjes/codeowners/actions)
-[![Coverage Status](https://img.shields.io/codecov/c/github/nielsbasjes/codeowners)](https://app.codecov.io/gh/nielsbasjes/codeowners)
+[![Coverage Status](https://img.shields.io/codecov/c/github/nielsbasjes/codeowners/main)](https://app.codecov.io/gh/nielsbasjes/codeowners/tree/main)
 [![License](https://img.shields.io/:license-apache-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 [![Maven Central: codeowners-reader](https://img.shields.io/maven-central/v/nl.basjes.codeowners/codeowners-reader.svg?label=codeowners-reader)](https://central.sonatype.com/namespace/nl.basjes.codeowners)
 [![Maven Central: gitignore-reader](https://img.shields.io/maven-central/v/nl.basjes.gitignore/gitignore-reader.svg?label=gitignore-reader)](https://central.sonatype.com/namespace/nl.basjes.gitignore)
