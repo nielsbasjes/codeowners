@@ -36,7 +36,7 @@
     <jvm.version>11</jvm.version>
 
     <kotlin.compiler.jvmTarget>${jvm.version}</kotlin.compiler.jvmTarget>
-    <kotlin.version>2.3.20</kotlin.version>
+    <kotlin.version>2.3.21</kotlin.version>
 
     <!-- Needed to make the build reproducible https://reproducible-builds.org/ -->
     <project.build.outputTimestamp>2025-12-12T10:45:20Z</project.build.outputTimestamp>
