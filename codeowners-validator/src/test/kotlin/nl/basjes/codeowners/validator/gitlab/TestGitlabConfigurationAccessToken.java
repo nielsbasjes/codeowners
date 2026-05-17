@@ -37,6 +37,7 @@ public class TestGitlabConfigurationAccessToken {
         AccessToken accessToken = new AccessToken("MY_SECRET_TOKEN");
         assertTrue(accessToken.isValid());
         assertEquals("gltst-mySecretToken", accessToken.getValue());
+        assertEquals("gltst-*****en", accessToken.getSanitizedValue());
 
         // Ensure the actual token value is hidden in a toString()
         log.info("{}", accessToken);
@@ -50,6 +51,7 @@ public class TestGitlabConfigurationAccessToken {
         AccessToken accessToken = new AccessToken("MY_SECRET_TOKEN");
         assertTrue(accessToken.isValid());
         assertEquals("short", accessToken.getValue());
+        assertEquals("***", accessToken.getSanitizedValue());
 
         // Ensure the actual token value is hidden in a toString()
         log.info("{}", accessToken);
@@ -64,6 +66,7 @@ public class TestGitlabConfigurationAccessToken {
         assertFalse(accessToken.isValid());
         assertNull(accessToken.getValue());
         log.info("{}", accessToken);
+        assertEquals("<<<null>>>", accessToken.getSanitizedValue());
         assertTrue(accessToken.toString().contains("AccessToken could not be loaded: the value from environment variable \"MY_SECRET_TOKEN\" is NOT valid."));
     }
 
@@ -74,6 +77,7 @@ public class TestGitlabConfigurationAccessToken {
         assertFalse(accessToken.isValid());
         assertNull(accessToken.getValue());
         log.info("{}", accessToken);
+        assertEquals("<<<null>>>", accessToken.getSanitizedValue());
         assertTrue(accessToken.toString().contains("AccessToken could not be loaded: the value from environment variable \"MY_SECRET_TOKEN\" is NOT valid."));
     }
 
@@ -84,6 +88,7 @@ public class TestGitlabConfigurationAccessToken {
         assertFalse(accessToken.isValid());
         assertNull(accessToken.getValue());
         log.info("{}", accessToken);
+        assertEquals("<<<null>>>", accessToken.getSanitizedValue());
         assertTrue(accessToken.toString().contains("AccessToken could not be loaded: the environment variable \"MY_SECRET_TOKEN\" does not exist."));
     }
 
@@ -93,7 +98,18 @@ public class TestGitlabConfigurationAccessToken {
         assertFalse(accessToken.isValid());
         assertNull(accessToken.getValue());
         log.info("{}", accessToken);
+        assertEquals("<<<null>>>", accessToken.getSanitizedValue());
         assertTrue(accessToken.toString().contains("AccessToken could not be loaded: no environment variable was specified."));
+    }
+
+    @Test
+    public void testAccessTokenEnvNameBlank() {
+        AccessToken accessToken = new AccessToken("    ");
+        assertFalse(accessToken.isValid());
+        assertNull(accessToken.getValue());
+        log.info("{}", accessToken);
+        assertEquals("<<<null>>>", accessToken.getSanitizedValue());
+        assertTrue(accessToken.toString().contains("AccessToken could not be loaded: the environment variable name \"    \" is blank."));
     }
 
     @Test
@@ -102,6 +118,7 @@ public class TestGitlabConfigurationAccessToken {
         assertFalse(accessToken.isValid());
         assertNull(accessToken.getValue());
         log.info("{}", accessToken);
+        assertEquals("<<<null>>>", accessToken.getSanitizedValue());
         assertTrue(accessToken.toString().contains("AccessToken could not be loaded: no environment variable was specified."));
     }
 

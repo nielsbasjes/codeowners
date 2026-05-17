@@ -32,6 +32,21 @@ import static org.junit.jupiter.api.Assertions.fail;
 class TestCodeOwnersGetters {
 
     @Test
+    void verifyVerbose() {
+        CodeOwners codeOwners = new CodeOwners("docs/");
+        codeOwners.setVerbose(true);
+        assertTrue(codeOwners.getVerbose());
+        codeOwners.setVerbose(false);
+        assertFalse(codeOwners.getVerbose());
+
+        Section section = new Section("foo");
+        section.setVerbose(true);
+        assertTrue(section.getVerbose());
+        section.setVerbose(false);
+        assertFalse(section.getVerbose());
+    }
+
+    @Test
     void verifyGetters() {
         CodeOwners codeOwners = new CodeOwners(
             "[One][11] @docs-team\n" +

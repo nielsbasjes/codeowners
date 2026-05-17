@@ -38,6 +38,7 @@ public class TestGitlabConfigurationProjectId {
         assertTrue(projectId.isValid());
         assertEquals("niels/project", projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("niels/project", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("(via environment variable \"CI_PROJECT_ID\")"));
     }
 
@@ -48,6 +49,7 @@ public class TestGitlabConfigurationProjectId {
         assertFalse(projectId.isValid());
         assertNull(projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("<<<null>>>", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("the value from environment variable \"CI_PROJECT_ID\" is NOT valid"));
     }
 
@@ -58,6 +60,7 @@ public class TestGitlabConfigurationProjectId {
         assertFalse(projectId.isValid());
         assertNull(projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("<<<null>>>", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("the value from environment variable \"CI_PROJECT_ID\" is NOT valid"));
     }
 
@@ -68,6 +71,7 @@ public class TestGitlabConfigurationProjectId {
         assertFalse(projectId.isValid());
         assertNull(projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("<<<null>>>", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("the environment variable \"CI_PROJECT_ID\" does not exist"));
     }
 
@@ -78,6 +82,7 @@ public class TestGitlabConfigurationProjectId {
         assertTrue(projectId.isValid());
         assertEquals("niels/project", projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("niels/project", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("(via environment variable \"MY_SPECIAL_PROJECT_ID\")"));
     }
 
@@ -88,6 +93,7 @@ public class TestGitlabConfigurationProjectId {
         assertFalse(projectId.isValid());
         assertNull(projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("<<<null>>>", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("the value from environment variable \"MY_SPECIAL_PROJECT_ID\" is NOT valid"));
     }
 
@@ -98,6 +104,7 @@ public class TestGitlabConfigurationProjectId {
         assertFalse(projectId.isValid());
         assertNull(projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("<<<null>>>", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("the value from environment variable \"MY_SPECIAL_PROJECT_ID\" is NOT valid"));
     }
 
@@ -108,6 +115,7 @@ public class TestGitlabConfigurationProjectId {
         assertFalse(projectId.isValid());
         assertNull(projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("<<<null>>>", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("the environment variable \"MY_SPECIAL_PROJECT_ID\" does not exist"));
     }
 
@@ -121,12 +129,23 @@ public class TestGitlabConfigurationProjectId {
     }
 
     @Test
+    public void testProjectIdCustomEnvNameBlank() {
+        ProjectId projectId = new ProjectId(null, "    ");
+        assertFalse(projectId.isValid());
+        assertNull(projectId.getValue());
+        log.info("{}", projectId);
+        assertEquals("<<<null>>>", projectId.getSanitizedValue());
+        assertTrue(projectId.toString().contains("the environment variable name \"    \" is blank."));
+    }
+
+    @Test
     @SetEnvironmentVariable(key = "MY_SPECIAL_PROJECT_ID", value = "niels/project") // <<-- Fallback
     public void testProjectIdDirectValidValue() {
         ProjectId projectId = new ProjectId("otherproject", "MY_SPECIAL_PROJECT_ID");
         assertTrue(projectId.isValid());
         assertEquals("otherproject", projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("otherproject", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("(via property \"gitlab.projectId.id\")"));
     }
 
@@ -138,6 +157,7 @@ public class TestGitlabConfigurationProjectId {
         assertFalse(projectId.isValid());
         assertNull(projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("<<<null>>>", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("the value found using property \"gitlab.projectId.id\" is not valid"));
     }
 
@@ -148,6 +168,7 @@ public class TestGitlabConfigurationProjectId {
         assertTrue(projectId.isValid());
         assertEquals("niels/project", projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("niels/project", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("(via environment variable \"CI_PROJECT_ID\")"));
     }
 
@@ -158,6 +179,7 @@ public class TestGitlabConfigurationProjectId {
         assertTrue(projectId.isValid());
         assertEquals("niels/project", projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("niels/project", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("(via environment variable \"CI_PROJECT_ID\")"));
     }
 
@@ -168,6 +190,7 @@ public class TestGitlabConfigurationProjectId {
         assertTrue(projectId.isValid());
         assertEquals("niels/project", projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("niels/project", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("(via environment variable \"MY_SPECIAL_PROJECT_ID\")"));
     }
 
@@ -178,6 +201,7 @@ public class TestGitlabConfigurationProjectId {
         assertTrue(projectId.isValid());
         assertEquals("niels/project", projectId.getValue());
         log.info("{}", projectId);
+        assertEquals("niels/project", projectId.getSanitizedValue());
         assertTrue(projectId.toString().contains("(via environment variable \"MY_SPECIAL_PROJECT_ID\")"));
     }
 

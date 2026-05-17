@@ -19,11 +19,15 @@ package nl.basjes.gitignore;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junitpioneer.jupiter.ClearEnvironmentVariable;
+import org.junitpioneer.jupiter.EnvironmentVariableUtilsFacade;
+import org.junitpioneer.jupiter.SetEnvironmentVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,7 +46,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.condition.OS.WINDOWS;
 
 class TestGitIgnoreFiles {
@@ -111,6 +118,7 @@ class TestGitIgnoreFiles {
 
     static final String testTreeDir = "src/test/resources/testtree";
     static final File testTree = new File(testTreeDir);
+    static final File targetDirTestTree = new File(Objects.requireNonNull(TestGitIgnoreFiles.class.getClassLoader().getResource("testtree")).getFile());
 
     @Test
     void ensureExpectationsDoNotOverlap() {
@@ -133,13 +141,16 @@ class TestGitIgnoreFiles {
     }
 
     private void checkIgnoredList(List<String> ignore) {
+        checkIgnoredList(expectedIgnoredFiles, ignore);
+    }
+    private void checkIgnoredList(List<String> expectedIgnore, List<String> ignore) {
         List<String> ignored = ignore
             .stream()
             .map(filename -> standardizeFilename(new File(filename).getAbsolutePath())) // Needed for testing on Windows.
             .map(filename -> filename.replaceAll("^\\Q"+ standardizeFilename(testTree.getAbsolutePath()) + "\\E", ""))
             .sorted()
             .collect(Collectors.toList());
-        assertEquals(expectedIgnoredFiles, ignored);
+        assertEquals(expectedIgnore, ignored);
     }
 
     @Test
@@ -169,6 +180,92 @@ class TestGitIgnoreFiles {
 
         assertEquals(Paths.get(dirWithConfigGitIgnoreURL.toURI()).resolve(".config").resolve("git").resolve("ignore"), GitIgnoreFileSet.getGlobalGitIgnore(null, dirWithConfigGitIgnore));
         assertNull(GitIgnoreFileSet.getGlobalGitIgnore(dirWithConfigGitIgnore, dirWithConfigGitIgnore));
+    }
+
+    @Test
+    @DisabledOnOs(WINDOWS)
+    void testGetGlobalGitIgnoreUnreadableFiles() throws Exception {
+        URL dirWithGitIgnoreURL = this.getClass()
+            .getClassLoader()
+            .getResource("unreadable/.config");
+        assertNotNull(dirWithGitIgnoreURL);
+        String dirWithGitIgnore = dirWithGitIgnoreURL.getFile();
+
+        URL dirWithConfigGitIgnoreURL = this.getClass()
+            .getClassLoader()
+            .getResource("unreadable");
+        assertNotNull(dirWithConfigGitIgnoreURL);
+        String dirWithConfigGitIgnore = dirWithConfigGitIgnoreURL.getFile();
+
+        File ignoreFileToMakeUnreadable = new File(dirWithGitIgnore + "/git/ignore");
+
+        Path expectedIgnorePath = Paths.get(dirWithGitIgnoreURL.toURI()).resolve("git").resolve("ignore");
+
+        assertTrue(ignoreFileToMakeUnreadable.isFile(), "This " + ignoreFileToMakeUnreadable + " should be a File.");
+        assertTrue(ignoreFileToMakeUnreadable.canRead(), "This " + ignoreFileToMakeUnreadable + " should be readable.");
+
+        // Use Pioneer's underlying utility to inject it programmatically
+        EnvironmentVariableUtilsFacade.set("XDG_CONFIG_HOME", dirWithGitIgnore);
+        EnvironmentVariableUtilsFacade.set("HOME", dirWithConfigGitIgnore);
+
+        try {
+            LOG.info("Making {} unreadable", ignoreFileToMakeUnreadable);
+            assertTrue(ignoreFileToMakeUnreadable.setReadable(false, false));
+            assertTrue(ignoreFileToMakeUnreadable.isFile(), "This " + ignoreFileToMakeUnreadable + " should be a File.");
+            assertFalse(ignoreFileToMakeUnreadable.canRead(), "This " + ignoreFileToMakeUnreadable + " should NO LONGER be readable.");
+
+            // Check 1: Even if the file is not readable it should be found
+            assertEquals(expectedIgnorePath, GitIgnoreFileSet.getGlobalGitIgnore(null, dirWithConfigGitIgnore));
+            assertEquals(expectedIgnorePath, GitIgnoreFileSet.getGlobalGitIgnore(dirWithGitIgnore, null));
+
+            // Check 2: When trying to use it in a GitIgnoreFileSet it should all fail (for code coverage).
+            GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(targetDirTestTree, false);
+            gitIgnoreFileSet.addAllGitIgnoreFiles(true);
+        }
+        finally {
+            assertTrue(ignoreFileToMakeUnreadable.setReadable(true, false));
+            assertTrue(ignoreFileToMakeUnreadable.canRead(), "This " + ignoreFileToMakeUnreadable + " should be readable.");
+        }
+    }
+
+
+    @Test
+    @DisabledOnOs(WINDOWS)
+    void testUnreadableDirectory() throws Exception {
+        URL testTreeURL = this.getClass()
+            .getClassLoader()
+            .getResource("testtree");
+        assertNotNull(testTreeURL);
+
+        Path directoryToMakeUnreadable = Paths.get(testTreeURL.toURI()).resolve("dir1");
+        File directoryToMakeUnreadableAsFile = directoryToMakeUnreadable.toFile();
+
+        assertTrue(directoryToMakeUnreadableAsFile.isDirectory(), "This " + directoryToMakeUnreadableAsFile + " should be a Directory.");
+        assertTrue(directoryToMakeUnreadableAsFile.canRead(), "This " + directoryToMakeUnreadableAsFile + " should be readable.");
+        assertTrue(directoryToMakeUnreadableAsFile.canExecute(), "This " + directoryToMakeUnreadableAsFile + " should be executable.");
+
+        try {
+            LOG.info("Making {} unreadable", directoryToMakeUnreadableAsFile);
+            assertTrue(directoryToMakeUnreadableAsFile.setReadable(false, false));
+            assertTrue(directoryToMakeUnreadableAsFile.setExecutable(false, false));
+
+            assertTrue(directoryToMakeUnreadableAsFile.isDirectory(), "This " + directoryToMakeUnreadableAsFile + " should be a Directory.");
+            assertFalse(directoryToMakeUnreadableAsFile.canRead(), "This " + directoryToMakeUnreadableAsFile + " should NO LONGER be readable.");
+            assertFalse(directoryToMakeUnreadableAsFile.canExecute(), "This " + directoryToMakeUnreadableAsFile + " should NO LONGER be executable.");
+
+            // Check 2: When trying to use it in a GitIgnoreFileSet it should all fail (for code coverage).
+            IOException ioException = assertThrows(IOException.class, ()-> new GitIgnoreFileSet(targetDirTestTree, true));
+            assertTrue(ioException.getMessage().contains("Unable to load .gitignore files"));
+        }
+        finally {
+            LOG.info("Making {} readable", directoryToMakeUnreadableAsFile);
+            assertTrue(directoryToMakeUnreadableAsFile.setReadable(true, false));
+            assertTrue(directoryToMakeUnreadableAsFile.setExecutable(true, false));
+
+            assertTrue(directoryToMakeUnreadableAsFile.isDirectory(), "This " + directoryToMakeUnreadableAsFile + " should be a Directory.");
+            assertTrue(directoryToMakeUnreadableAsFile.canRead(), "This " + directoryToMakeUnreadableAsFile + " should be readable.");
+            assertTrue(directoryToMakeUnreadableAsFile.canExecute(), "This " + directoryToMakeUnreadableAsFile + " should be executable.");
+        }
     }
 
     @Test
@@ -203,6 +300,17 @@ class TestGitIgnoreFiles {
     }
 
     @Test
+    void testVerboseFlag() {
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree, false);
+        gitIgnoreFileSet.setVerbose(false);
+        assertFalse(gitIgnoreFileSet.getVerbose());
+        gitIgnoreFileSet.setVerbose(true);
+        assertTrue(gitIgnoreFileSet.getVerbose());
+    }
+
+    @Test
+    @ClearEnvironmentVariable(key = "XDG_CONFIG_HOME")
+    @ClearEnvironmentVariable(key = "HOME")
     void testIgnoreFile() throws IOException {
         GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree);
         gitIgnoreFileSet.setVerbose(true);
@@ -222,7 +330,11 @@ class TestGitIgnoreFiles {
                 }
             }
 
-            checkIgnoredList(ignore);
+            // Because we have excluded the global ignore file; the list of expected ignores must be updated.
+            List<String> adjustedExpectedIgnoredFiles = new ArrayList<>(expectedIgnoredFiles);
+            // This file is no longer ignored!
+            adjustedExpectedIgnoredFiles.remove("/dir5/ignored_from_global_gitignore");
+            checkIgnoredList(adjustedExpectedIgnoredFiles, ignore);
         }
     }
 
@@ -411,6 +523,13 @@ class TestGitIgnoreFiles {
         LOG.info("All non ignored files: {}", allNonIgnored);
 
         assertEquals(expectedKeepFiles, stripTestTreeBaseDir(allNonIgnored));
+
+        // Correct use: Relative path
+        assertEquals(true, gitIgnoreFileSet.isIgnoredFile("/README.md",                               true));
+        // Correct use: Absolute path
+        assertEquals(true, gitIgnoreFileSet.isIgnoredFile(testTree.getAbsolutePath() + "/README.md",  false));
+        // Wrong use: Relative path when absolute is needed.
+        assertThrows(IllegalArgumentException.class, () -> gitIgnoreFileSet.isIgnoredFile("/README.md", false));
     }
 
     @Test

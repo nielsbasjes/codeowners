@@ -159,6 +159,7 @@ class GitIgnoreFileSet @JvmOverloads constructor(
      * @param includeGlobalGitignore Whether to also include the global gitignore
      * @return List of the loaded gitIgnore files.
      */
+    @Throws(IOException::class)
     private fun addAllGitIgnoreFiles(
         current: Path,
         maxRecursionDepth: Int,
@@ -179,10 +180,7 @@ class GitIgnoreFileSet @JvmOverloads constructor(
             }
         }
 
-        var dirPath = current.toFile().path
-        if (!dirPath.endsWith(File.separator)) {
-            dirPath += File.separatorChar
-        }
+        val dirPath = current.toFile().path + File.separatorChar
 
         if (ignoreFile(dirPath)) {
             LOG.debug("Locate GI: Ignored  {}", current)
@@ -208,8 +206,8 @@ class GitIgnoreFileSet @JvmOverloads constructor(
                 }
             }
         } catch (e: IOException) {
-            LOG.error("Unable to find .gitignore files in {} due to {}", projectBaseDir, e.toString())
-            return mutableListOf()
+            LOG.error("Unable to load .gitignore files in {} due to {}", projectBaseDir, e.toString())
+            throw IOException("Unable to load .gitignore files in $projectBaseDir due to $e.", e)
         }
 
         val nextMaxRecursionDepth = maxRecursionDepth - 1
@@ -338,16 +336,15 @@ class GitIgnoreFileSet @JvmOverloads constructor(
          */
         @JvmStatic
         fun getGlobalGitIgnore(xdgConfigHome: String?, home: String?): Path? {
-            val ignorePath =
-                if (!xdgConfigHome.isNullOrEmpty()) {
-                    File(xdgConfigHome).toPath().resolve("git").resolve("ignore")
-                } else {
-                    if (!home.isNullOrEmpty()) {
-                        File(home).toPath().resolve(".config").resolve("git").resolve("ignore")
-                    } else {
-                        return null
-                    }
+            val gitConfigBaseDir =
+                when {
+                    !xdgConfigHome .isNullOrEmpty() -> File(xdgConfigHome).toPath()
+                    !home          .isNullOrEmpty() -> File(home         ).toPath().resolve(".config")
+                    else
+                        -> return null
                 }
+            val ignorePath = gitConfigBaseDir.resolve("git").resolve("ignore")
+
             return if (ignorePath.isRegularFile()) { ignorePath } else { null }
         }
     }

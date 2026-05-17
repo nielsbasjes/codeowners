@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.regex.PatternSyntaxException;
 
 import static nl.basjes.gitignore.TestUtils.assertIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNotIgnore;
@@ -317,6 +318,7 @@ class TestGitIgnore {
             "/dir4/**/*\n"
         );
         gitIgnore.setVerbose(true);
+        assertTrue(gitIgnore.getVerbose());
         LOG.info("GitIgnore:\n{}", gitIgnore);
         // NO Subdirs
         assertIgnore(gitIgnore, "/dir1/bar.txt");
@@ -620,6 +622,11 @@ class TestGitIgnore {
         IgnoreRule rule = new IgnoreRule("/", false, "debug.log", true);
         assertTrueAndNotNull(rule.isIgnoredFile("debug.log"));
         assertTrueAndNotNull(rule.isIgnoredFile("logs/debug.log"));
+    }
+
+    @Test
+    void testBadExpression() {
+        assertThrows(PatternSyntaxException.class, () -> new GitIgnore("[[[[[***+++"));
     }
 
     private void assertTrueAndNotNull(Boolean condition) {

@@ -53,6 +53,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.junit-pioneer</groupId>
+      <artifactId>junit-pioneer</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>${logback.version}</version>
@@ -93,6 +99,11 @@
         <version>${maven-surefire-plugin.version}</version>
         <configuration>
           <failIfNoTests>true</failIfNoTests>
+          <!-- https://junit-pioneer.org/docs/environment-variables/#warnings-for-reflective-access -->
+          <argLine>
+            --add-opens java.base/java.util=ALL-UNNAMED
+            --add-opens java.base/java.lang=ALL-UNNAMED
+          </argLine>
         </configuration>
       </plugin>
 
