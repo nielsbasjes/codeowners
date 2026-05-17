@@ -19,6 +19,8 @@ package nl.basjes.codeowners.validator.gitlab;
 import nl.basjes.codeowners.validator.gitlab.GitlabConfiguration.AccessToken;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -26,6 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestGitlabConfigurationAccessToken {
+
+    private static final Logger log = LoggerFactory.getLogger(TestGitlabConfigurationAccessToken.class);
 
     @Test
     @SetEnvironmentVariable(key = "MY_SECRET_TOKEN", value = "gltst-mySecretToken") // <<-- Is good
@@ -35,6 +39,7 @@ public class TestGitlabConfigurationAccessToken {
         assertEquals("gltst-mySecretToken", accessToken.getValue());
 
         // Ensure the actual token value is hidden in a toString()
+        log.info("{}", accessToken);
         assertFalse(accessToken.toString().contains("gltst-mySecretToken"));
         assertTrue(accessToken.toString().contains("gltst-*****en"));
     }
@@ -47,6 +52,7 @@ public class TestGitlabConfigurationAccessToken {
         assertEquals("short", accessToken.getValue());
 
         // Ensure the actual token value is hidden in a toString()
+        log.info("{}", accessToken);
         assertFalse(accessToken.toString().contains("short"));
         assertTrue(accessToken.toString().contains("***"));
     }
@@ -57,7 +63,8 @@ public class TestGitlabConfigurationAccessToken {
         AccessToken accessToken = new AccessToken("MY_SECRET_TOKEN");
         assertFalse(accessToken.isValid());
         assertNull(accessToken.getValue());
-        assertTrue(accessToken.toString().contains("AccessToken found via environment variable MY_SECRET_TOKEN is NOT valid"));
+        log.info("{}", accessToken);
+        assertTrue(accessToken.toString().contains("AccessToken could not be loaded: the value from environment variable \"MY_SECRET_TOKEN\" is NOT valid."));
     }
 
     @Test
@@ -66,7 +73,8 @@ public class TestGitlabConfigurationAccessToken {
         AccessToken accessToken = new AccessToken("MY_SECRET_TOKEN");
         assertFalse(accessToken.isValid());
         assertNull(accessToken.getValue());
-        assertTrue(accessToken.toString().contains("AccessToken found via environment variable MY_SECRET_TOKEN is NOT valid."));
+        log.info("{}", accessToken);
+        assertTrue(accessToken.toString().contains("AccessToken could not be loaded: the value from environment variable \"MY_SECRET_TOKEN\" is NOT valid."));
     }
 
     @Test
@@ -75,7 +83,8 @@ public class TestGitlabConfigurationAccessToken {
         AccessToken accessToken = new AccessToken("MY_SECRET_TOKEN");
         assertFalse(accessToken.isValid());
         assertNull(accessToken.getValue());
-        assertTrue(accessToken.toString().contains("AccessToken found via environment variable MY_SECRET_TOKEN is NOT valid."));
+        log.info("{}", accessToken);
+        assertTrue(accessToken.toString().contains("AccessToken could not be loaded: the environment variable \"MY_SECRET_TOKEN\" does not exist."));
     }
 
     @Test
@@ -83,7 +92,8 @@ public class TestGitlabConfigurationAccessToken {
         AccessToken accessToken = new AccessToken("");
         assertFalse(accessToken.isValid());
         assertNull(accessToken.getValue());
-        assertTrue(accessToken.toString().contains("AccessToken found via invalid environment variable \"null\" is NOT valid."));
+        log.info("{}", accessToken);
+        assertTrue(accessToken.toString().contains("AccessToken could not be loaded: no environment variable was specified."));
     }
 
     @Test
@@ -91,7 +101,8 @@ public class TestGitlabConfigurationAccessToken {
         AccessToken accessToken = new AccessToken(null);
         assertFalse(accessToken.isValid());
         assertNull(accessToken.getValue());
-        assertTrue(accessToken.toString().contains("AccessToken found via invalid environment variable \"null\" is NOT valid."));
+        log.info("{}", accessToken);
+        assertTrue(accessToken.toString().contains("AccessToken could not be loaded: no environment variable was specified."));
     }
 
 }

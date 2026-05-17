@@ -21,8 +21,8 @@ assert file.exists()
 String text = file.getText( "utf-8" )
 
 assert text.contains("[ERROR] Unable to load projectId from Gitlab:");
-assert text.contains("[ERROR]   ServerUrl='http://localhost:0' found via gitlab.serverUrl.url is valid.");
-assert text.contains("[ERROR]   ProjectId='niels/project' found via gitlab.projectId.id is valid.");
-assert text.contains("[ERROR]   AccessToken= 'gltst-*****ue' found via environment variable CHECK_USERS_TOKEN is valid.");
+assert text.contains("[ERROR]   ServerUrl='http://localhost:0' (via property \"gitlab.serverUrl.url\").");
+assert text.contains("[ERROR]   ProjectId='niels/project' (via property \"gitlab.projectId.id\").");
+assert text.contains("[ERROR]   AccessToken='gltst-*****ue' (via environment variable \"CHECK_USERS_TOKEN\").");
 
 return true

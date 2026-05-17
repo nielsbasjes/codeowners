@@ -80,8 +80,9 @@ class GitlabConfiguration @JvmOverloads constructor(
         }
     }
 
-    val isValid: Boolean
-        get() = serverUrl.isValid() && projectId.isValid() && accessToken.isValid()
+    val valid: Boolean
+        get() = serverUrl.valid && projectId.valid && accessToken.valid
+    fun isValid() = valid
 
     val isDefaultCIConfigRunningOutsideCI: Boolean
         /**
@@ -93,8 +94,8 @@ class GitlabConfiguration @JvmOverloads constructor(
             serverUrl.load()
             projectId.load()
             accessToken.load()
-            return serverUrl.isDefaultCIConfig && !serverUrl.isValid() &&
-                    projectId.isDefaultCIConfig && !projectId.isValid() && !accessToken.isValid()
+            return serverUrl.isDefaultCIConfig && !serverUrl.valid &&
+                   projectId.isDefaultCIConfig && !projectId.valid && !accessToken.valid
         }
 
     override fun toString(): String {
@@ -113,32 +114,40 @@ ${problemLevels.toString().prependIndent("  ")}
     abstract class EnvironmentValueLoader {
         abstract fun load()
 
-        private var source: String? = null
-        fun getSource(): String? = source
-        private var value: String? = null
-        private var loaded = false
-        private var valid = false
+        private var sourceOrErrorMessage: String? = null
 
-        fun isValid(): Boolean {
-            load()
-            return valid
-        }
+        protected var internalValue: String? = null
+        val value: String?
+            get() {
+                load()
+                if (!valid) {
+                    return null
+                }
+                return internalValue
+            }
+
+        private var loaded = false
+        private var internalValid = false
+        val valid: Boolean
+            get() {
+                load()
+                return internalValid
+            }
+        fun isValid() = valid
 
         protected open fun checkValidity(value: String?): Boolean {
             return value != null && NON_SPACE_STRING.matcher(value).matches()
         }
 
-        fun getValue(): String? {
-            load()
-            if (!valid) {
-                return null
-            }
-            return value
-        }
+        protected abstract val sanitizedValue: String
 
         fun toString(name: String): String {
             load()
-            return "$name='$value' found via $source" + (if (isValid()) " is valid." else " is NOT valid.")
+            return if (value == null) {
+                "$name could not be loaded: $sourceOrErrorMessage."
+            } else {
+                "$name='$sanitizedValue' $sourceOrErrorMessage."
+            }
         }
 
         /**
@@ -158,13 +167,18 @@ ${problemLevels.toString().prependIndent("  ")}
             if (loaded) {
                 return
             }
+            loaded = true
 
             // Explicitly specified
             if (!directValue.isNullOrEmpty()) {
-                value = directValue.trim()
-                source = propertyId
-                loaded = true
-                valid = checkValidity(value)
+                internalValue = directValue.trim()
+                internalValid = checkValidity(internalValue)
+                sourceOrErrorMessage =
+                    if (internalValid) {
+                        "(via property \"$propertyId\")"
+                    } else {
+                        "the value found using property \"$propertyId\" is not valid"
+                    }
                 return
             }
 
@@ -174,18 +188,31 @@ ${problemLevels.toString().prependIndent("  ")}
                 usedEnvVariableName = environmentVariableName
             }
 
-            if (usedEnvVariableName.isNullOrEmpty()) {
-                value = null
-                source = "invalid environment variable \"$usedEnvVariableName\""
-                loaded = true
-                valid = false
+            if (usedEnvVariableName == null) {
+                internalValue = null
+                internalValid = false
+                sourceOrErrorMessage = "no environment variable was specified"
                 return
             }
 
-            value = System.getenv(usedEnvVariableName) ?.trim { it <= ' ' }
-            source = "environment variable $usedEnvVariableName"
-            loaded = true
-            valid = checkValidity(value)
+            if (usedEnvVariableName.isBlank()) {
+                internalValue = null
+                internalValid = false
+                sourceOrErrorMessage = "the environment variable name \"$usedEnvVariableName\" is blank"
+                return
+            }
+
+            internalValue = System.getenv(usedEnvVariableName) ?.trim()
+            internalValid = checkValidity(internalValue)
+            if (internalValid) {
+                sourceOrErrorMessage = "(via environment variable \"$usedEnvVariableName\")"
+            } else {
+                if (internalValue == null) {
+                    sourceOrErrorMessage = "the environment variable \"$usedEnvVariableName\" does not exist"
+                } else {
+                    sourceOrErrorMessage = "the value from environment variable \"$usedEnvVariableName\" is NOT valid"
+                }
+            }
         }
 
         companion object {
@@ -208,6 +235,9 @@ ${problemLevels.toString().prependIndent("  ")}
             }
             return BASEURL_REGEX.matcher(value).matches()
         }
+
+        override val sanitizedValue: String
+            get() = value ?: "<<<null>>>"
 
         val isDefaultCIConfig: Boolean
             get() = (CI_SERVER_VARIABLE == environmentVariableName || environmentVariableName == null) && url == null
@@ -232,6 +262,9 @@ ${problemLevels.toString().prependIndent("  ")}
             load(id, "gitlab.projectId.id", environmentVariableName, CI_PROJECT_VARIABLE)
         }
 
+        override val sanitizedValue: String
+            get() = value ?: "<<<null>>>"
+
         val isDefaultCIConfig: Boolean
             get() = (CI_PROJECT_VARIABLE == environmentVariableName || environmentVariableName == null) && id == null
 
@@ -252,20 +285,20 @@ ${problemLevels.toString().prependIndent("  ")}
             load(null, "Not allowed", environmentVariableName, null)
         }
 
-        override fun toString(): String {
-            // We are NOT printing the entire token.
-            // The Gitlab tokens I have seen are usually "gl pat-" followed by about 20 random characters.
+        override val sanitizedValue: String
+            get() = value?.let {
+                // We are NOT printing the entire token.
+                // The Gitlab tokens I have seen are usually "gl pat-" followed by about 20 random characters.
+                if (it.length > 10 ) {
+                    it.substring(0, 6) + "*****" + it.substring(it.length - 2)
+                } else {
+                    "***"
+                }
+            } ?: "<<<null>>>"
 
-            if (!isValid()) {
-                return "AccessToken found via " + getSource() + " is NOT valid."
-            }
-            val token = getValue()
-            var cleanedToken = "***"
-            if (token!!.length > 10) {
-                cleanedToken =
-                    token.substring(0, 6) + "*****" + token.substring(token.length - 2)
-            }
-            return "AccessToken= '" + cleanedToken + "' found via " + getSource() + " is valid."
+        override fun toString(): String {
+            return toString("AccessToken")
         }
+
     }
 }

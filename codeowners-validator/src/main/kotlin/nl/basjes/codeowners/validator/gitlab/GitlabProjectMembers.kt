@@ -49,28 +49,28 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
     private val noValidApprovers: Level
 
     init {
-        require(configuration.isValid) { "Invalid Gitlab configuration: $configuration" }
+        require(configuration.valid) { "Invalid Gitlab configuration: $configuration" }
 
         val problemLevels: ProblemLevels = configuration.problemLevels
-        roleNoUsers = problemLevels.roleNoUsers
-        userUnknownEmail = problemLevels.userUnknownEmail
-        userDisabled = problemLevels.userDisabled
-        approverDoesNotExist = problemLevels.approverDoesNotExist
-        userTooLowPermissions = problemLevels.userTooLowPermissions
+        roleNoUsers            = problemLevels.roleNoUsers
+        userUnknownEmail       = problemLevels.userUnknownEmail
+        userDisabled           = problemLevels.userDisabled
+        approverDoesNotExist   = problemLevels.approverDoesNotExist
+        userTooLowPermissions  = problemLevels.userTooLowPermissions
         groupTooLowPermissions = problemLevels.groupTooLowPermissions
-        userNotProjectMember = problemLevels.userNotProjectMember
-        groupNotProjectMember = problemLevels.groupNotProjectMember
-        noValidApprovers = problemLevels.noValidApprovers
+        userNotProjectMember   = problemLevels.userNotProjectMember
+        groupNotProjectMember  = problemLevels.groupNotProjectMember
+        noValidApprovers       = problemLevels.noValidApprovers
 
         gitLabApi = GitLabApi(
-            configuration.serverUrl.getValue(),
-            configuration.accessToken.getValue()
+            configuration.serverUrl.value,
+            configuration.accessToken.value
         )
 
         projectId = configuration.projectId
 
         try {
-            gitLabApi.getProjectApi().getProject(projectId.getValue())
+            gitLabApi.getProjectApi().getProject(projectId.value)
         } catch (e: GitLabApiException) {
             throw CodeOwnersValidationException("Unable to load projectId from Gitlab: $configuration", e)
         }
@@ -100,32 +100,32 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
     }
 
     @get:Throws(CodeOwnersValidationException::class)
-    val allProjectMembers: MutableList<Member>
+    val allProjectMembers: List<Member>
         get() {
             try {
-                return gitLabApi.getProjectApi().getAllMembers(projectId.getValue())
+                return gitLabApi.getProjectApi().getAllMembers(projectId.value)
             } catch (e: GitLabApiException) {
                 throw CodeOwnersValidationException("Error while retrieving all project members.", e)
             }
         }
 
     @get:Throws(CodeOwnersValidationException::class)
-    val directProjectMembers: MutableList<Member>
+    val directProjectMembers: List<Member>
         get() {
             try {
-                return gitLabApi.getProjectApi().getMembers(projectId.getValue())
+                return gitLabApi.getProjectApi().getMembers(projectId.value)
             } catch (e: GitLabApiException) {
                 throw CodeOwnersValidationException("Error while retrieving direct project members.", e)
             }
         }
 
     @get:Throws(CodeOwnersValidationException::class)
-    val sharedGroups: MutableList<SharedGroup>
+    val sharedGroups: List<SharedGroup>
         get() {
             try {
                 // Get the direct shared groups of this project that have the right name.
                 val project =
-                    gitLabApi.getProjectApi().getProject(projectId.getValue())
+                    gitLabApi.getProjectApi().getProject(projectId.value)
                 return project.sharedWithGroups
             } catch (e: GitLabApiException) {
                 throw CodeOwnersValidationException("Error while retrieving project shared groups.", e)

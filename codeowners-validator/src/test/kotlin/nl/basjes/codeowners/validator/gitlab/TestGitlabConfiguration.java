@@ -51,9 +51,9 @@ public class TestGitlabConfiguration {
             }
         );
 
-        assertThat(exception.getMessage(), containsString("CI_SERVER_URL is NOT valid"));
-        assertThat(exception.getMessage(), containsString("CI_PROJECT_ID is valid"));
-        assertThat(exception.getMessage(), containsString("FETCH_USER_ACCESS_TOKEN is valid"));
+        assertThat(exception.getMessage(), containsString("the environment variable \"CI_SERVER_URL\" does not exist"));
+        assertThat(exception.getMessage(), containsString("(via environment variable \"CI_PROJECT_ID\")"));
+        assertThat(exception.getMessage(), containsString("(via environment variable \"FETCH_USER_ACCESS_TOKEN\")"));
         assertFalse(configuration.isDefaultCIConfigRunningOutsideCI());
     }
 
@@ -71,9 +71,9 @@ public class TestGitlabConfiguration {
             }
         );
 
-        assertThat(exception.getMessage(), containsString("CI_SERVER_URL is valid"));
-        assertThat(exception.getMessage(), containsString("CI_PROJECT_ID is valid"));
-        assertThat(exception.getMessage(), containsString("FETCH_USER_ACCESS_TOKEN is valid"));
+        assertThat(exception.getMessage(), containsString("(via environment variable \"CI_SERVER_URL\")"));
+        assertThat(exception.getMessage(), containsString("(via environment variable \"CI_PROJECT_ID\")"));
+        assertThat(exception.getMessage(), containsString("(via environment variable \"FETCH_USER_ACCESS_TOKEN\")"));
         assertFalse(configuration.isDefaultCIConfigRunningOutsideCI());
     }
 
@@ -92,9 +92,9 @@ public class TestGitlabConfiguration {
             }
         );
 
-        assertThat(exception.getMessage(), containsString("CI_SERVER_URL is valid"));
-        assertThat(exception.getMessage(), containsString("CI_PROJECT_ID is NOT valid"));
-        assertThat(exception.getMessage(), containsString("FETCH_USER_ACCESS_TOKEN is valid"));
+        assertThat(exception.getMessage(), containsString("(via environment variable \"CI_SERVER_URL\")"));
+        assertThat(exception.getMessage(), containsString("the value from environment variable \"CI_PROJECT_ID\" is NOT valid"));
+        assertThat(exception.getMessage(), containsString("(via environment variable \"FETCH_USER_ACCESS_TOKEN\")"));
         assertFalse(configuration.isDefaultCIConfigRunningOutsideCI());
     }
 
@@ -130,9 +130,9 @@ public class TestGitlabConfiguration {
             }
         );
 
-        assertThat(exception.getMessage(), containsString("gitlab.serverUrl.url is valid"));
-        assertThat(exception.getMessage(), containsString("CI_PROJECT_ID is valid"));
-        assertThat(exception.getMessage(), containsString("FETCH_USER_ACCESS_TOKEN is NOT valid"));
+        assertThat(exception.getMessage(), containsString("(via property \"gitlab.serverUrl.url\")"));
+        assertThat(exception.getMessage(), containsString("(via environment variable \"CI_PROJECT_ID\")"));
+        assertThat(exception.getMessage(), containsString("the value from environment variable \"FETCH_USER_ACCESS_TOKEN\" is NOT valid"));
         assertFalse(configuration.isDefaultCIConfigRunningOutsideCI());
     }
 

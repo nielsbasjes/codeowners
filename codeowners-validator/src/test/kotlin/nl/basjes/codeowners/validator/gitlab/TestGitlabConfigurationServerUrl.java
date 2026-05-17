@@ -19,6 +19,8 @@ package nl.basjes.codeowners.validator.gitlab;
 import nl.basjes.codeowners.validator.gitlab.GitlabConfiguration.ServerUrl;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,12 +29,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestGitlabConfigurationServerUrl {
 
+    private static final Logger log = LoggerFactory.getLogger(TestGitlabConfigurationServerUrl.class);
+
     @Test
     @SetEnvironmentVariable(key = "CI_SERVER_URL", value = "https://git.example.nl") // <<-- Is good
     public void testServerUrlDefaultEnvValidValue() {
         ServerUrl serverUrl = new ServerUrl(null, null);
         assertTrue(serverUrl.isValid());
         assertEquals("https://git.example.nl", serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("(via environment variable \"CI_SERVER_URL\")"));
     }
 
     @Test
@@ -41,6 +47,8 @@ public class TestGitlabConfigurationServerUrl {
         ServerUrl serverUrl = new ServerUrl(null, null);
         assertFalse(serverUrl.isValid());
         assertNull(serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("the value from environment variable \"CI_SERVER_URL\" is NOT valid"));
     }
 
     @Test
@@ -49,6 +57,8 @@ public class TestGitlabConfigurationServerUrl {
         ServerUrl serverUrl = new ServerUrl(null, null);
         assertFalse(serverUrl.isValid());
         assertNull(serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("the value from environment variable \"CI_SERVER_URL\" is NOT valid"));
     }
 
     @Test
@@ -57,6 +67,8 @@ public class TestGitlabConfigurationServerUrl {
         ServerUrl serverUrl = new ServerUrl(null, null);
         assertFalse(serverUrl.isValid());
         assertNull(serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("the environment variable \"CI_SERVER_URL\" does not exist"));
     }
 
     @Test
@@ -65,6 +77,8 @@ public class TestGitlabConfigurationServerUrl {
         ServerUrl serverUrl = new ServerUrl(null, "MY_SPECIAL_SERVER_URL");
         assertTrue(serverUrl.isValid());
         assertEquals("https://git.example.nl", serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("(via environment variable \"MY_SPECIAL_SERVER_URL\")"));
     }
 
     @Test
@@ -73,6 +87,8 @@ public class TestGitlabConfigurationServerUrl {
         ServerUrl serverUrl = new ServerUrl(null, "MY_SPECIAL_SERVER_URL");
         assertFalse(serverUrl.isValid());
         assertNull(serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("the value from environment variable \"MY_SPECIAL_SERVER_URL\" is NOT valid"));
     }
 
     @Test
@@ -81,6 +97,8 @@ public class TestGitlabConfigurationServerUrl {
         ServerUrl serverUrl = new ServerUrl(null, "MY_SPECIAL_SERVER_URL");
         assertFalse(serverUrl.isValid());
         assertNull(serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("the value from environment variable \"MY_SPECIAL_SERVER_URL\" is NOT valid"));
     }
 
     @Test
@@ -89,6 +107,8 @@ public class TestGitlabConfigurationServerUrl {
         ServerUrl serverUrl = new ServerUrl(null, "MY_SPECIAL_SERVER_URL");
         assertFalse(serverUrl.isValid());
         assertNull(serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("the environment variable \"MY_SPECIAL_SERVER_URL\" does not exist"));
     }
 
     @Test
@@ -96,6 +116,8 @@ public class TestGitlabConfigurationServerUrl {
         ServerUrl serverUrl = new ServerUrl(null, "");
         assertFalse(serverUrl.isValid());
         assertNull(serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("the environment variable \"CI_SERVER_URL\" does not exist"));
     }
 
     @Test
@@ -104,6 +126,8 @@ public class TestGitlabConfigurationServerUrl {
         ServerUrl serverUrl = new ServerUrl("https://git.example.com", "MY_SPECIAL_SERVER_URL");
         assertTrue(serverUrl.isValid());
         assertEquals("https://git.example.com", serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("(via property \"gitlab.serverUrl.url\")"));
     }
 
     @Test
@@ -113,6 +137,8 @@ public class TestGitlabConfigurationServerUrl {
         // Do NOT use the fallback because that would cause confusion with the person configuring it.
         assertFalse(serverUrl.isValid());
         assertNull(serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("the value found using property \"gitlab.serverUrl.url\" is not valid"));
     }
 
     @Test
@@ -121,6 +147,8 @@ public class TestGitlabConfigurationServerUrl {
         ServerUrl serverUrl = new ServerUrl("", null);
         assertTrue(serverUrl.isValid());
         assertEquals("https://git.example.nl", serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("(via environment variable \"CI_SERVER_URL\")"));
     }
 
     @Test
@@ -129,6 +157,8 @@ public class TestGitlabConfigurationServerUrl {
         ServerUrl serverUrl = new ServerUrl(null, null);
         assertTrue(serverUrl.isValid());
         assertEquals("https://git.example.nl", serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("(via environment variable \"CI_SERVER_URL\")"));
     }
 
     @Test
@@ -137,6 +167,8 @@ public class TestGitlabConfigurationServerUrl {
         ServerUrl serverUrl = new ServerUrl("", "MY_SPECIAL_SERVER_URL");
         assertTrue(serverUrl.isValid());
         assertEquals("https://git.example.nl", serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("(via environment variable \"MY_SPECIAL_SERVER_URL\")"));
     }
 
     @Test
@@ -145,6 +177,8 @@ public class TestGitlabConfigurationServerUrl {
         ServerUrl serverUrl = new ServerUrl(null, "MY_SPECIAL_SERVER_URL");
         assertTrue(serverUrl.isValid());
         assertEquals("https://git.example.nl", serverUrl.getValue());
+        log.info("{}", serverUrl);
+        assertTrue(serverUrl.toString().contains("(via environment variable \"MY_SPECIAL_SERVER_URL\")"));
     }
 
 }
