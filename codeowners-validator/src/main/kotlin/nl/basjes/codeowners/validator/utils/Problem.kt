@@ -85,11 +85,11 @@ sealed class Problem private constructor(
                 "Description='$description')"
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (o == null || javaClass != o.javaClass) {
+    override fun equals(other: Any?): Boolean {
+        if (other == null || javaClass != other.javaClass) {
             return false
         }
-        val problem = o as Problem
+        val problem = other as Problem
         return section     == problem.section &&
                expression  == problem.expression &&
                approver    == problem.approver &&

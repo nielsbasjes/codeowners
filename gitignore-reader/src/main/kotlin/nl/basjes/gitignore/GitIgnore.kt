@@ -16,6 +16,7 @@
  */
 package nl.basjes.gitignore
 
+import jdk.incubator.vector.VectorOperators.LOG
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedReader
@@ -40,7 +41,11 @@ class GitIgnore @JvmOverloads constructor(
     val projectRelativeBaseDir: String
 
     internal val ignoreRules: MutableList<IgnoreRule> = mutableListOf()
-    private var verbose = false
+    var verbose = false
+        set(verbose) {
+            field = verbose
+            ignoreRules.forEach{ it.setVerbose(verbose) }
+        }
 
     // Load the gitignore from a file
     constructor(file: File) : this("", file)
@@ -55,26 +60,18 @@ class GitIgnore @JvmOverloads constructor(
         this.verbose = verbose
         this.projectRelativeBaseDir = standardizeFilename(projectRelativeBaseDir + GITIGNORE_PATH_SEPARATOR)
 
-        val reader = BufferedReader(StringReader(gitIgnoreContent))
-        var line: String?
-        try {
-            while ((reader.readLine().also { line = it }) != null) {
-                line = line!!.trim { it <= ' ' }
-                if (line.isEmpty()) {
-                    continue
-                }
-                if (line.startsWith("#")) {
-                    continue
-                }
-                if (line.startsWith("!")) {
-                    ignoreRules.add(IgnoreRule(this.projectRelativeBaseDir, true, line.substring(1), verbose))
-                } else {
-                    ignoreRules.add(IgnoreRule(this.projectRelativeBaseDir, false, line, verbose))
-                }
+        for (line in gitIgnoreContent.lines()) {
+            if (line.isBlank()) {
+                continue
             }
-        } catch (io: IOException) {
-            // Effectively unreachable code: Reading using a StringReader from a non-null in memory String cannot fail.
-            LOG.error("Got an IOException while reading the gitignore file content: {}", io.toString())
+            if (line.startsWith("#")) {
+                continue
+            }
+            if (line.startsWith("!")) {
+                ignoreRules.add(IgnoreRule(this.projectRelativeBaseDir, true, line.trim().substring(1), verbose))
+            } else {
+                ignoreRules.add(IgnoreRule(this.projectRelativeBaseDir, false, line.trim(), verbose))
+            }
         }
     }
 
@@ -128,14 +125,10 @@ class GitIgnore @JvmOverloads constructor(
         }
 
         if (verbose) {
-            if (mustBeIgnored == null) {
-                LOG.info("Conclusion: Not matched: Not ignored")
-            } else {
-                if (mustBeIgnored) {
-                    LOG.info("Conclusion: Must be ignored")
-                } else {
-                    LOG.info("Conclusion: Must NOT be ignored")
-                }
+            when(mustBeIgnored) {
+                null  -> LOG.info("Conclusion: Not matched: Not ignored")
+                true  -> LOG.info("Conclusion: Must be ignored")
+                false -> LOG.info("Conclusion: Must NOT be ignored")
             }
         }
         return mustBeIgnored
@@ -161,10 +154,6 @@ class GitIgnore @JvmOverloads constructor(
         return !ignoreFile(filename)
     }
 
-    fun setVerbose(verbose: Boolean) {
-        this.verbose = verbose
-        ignoreRules.forEach(Consumer { rule: IgnoreRule? -> rule!!.setVerbose(verbose) })
-    }
 
     override fun toString(): String {
         val result = StringBuilder()
@@ -204,14 +193,16 @@ class GitIgnore @JvmOverloads constructor(
 
         init {
             val baseDirRegex: String?
-            if (projectRelativeBaseDir == null || "/" == projectRelativeBaseDir || projectRelativeBaseDir.trim { it <= ' ' }
-                    .isEmpty()) {
+            if (projectRelativeBaseDir == null ||
+                "/" == projectRelativeBaseDir ||
+                projectRelativeBaseDir.trim().isEmpty()
+            ) {
                 this.ignoreBasedir = "/"
                 baseDirRegex = "^/?" // The leading slash is optional
             } else {
                 // Enforce the base dir starts and ends with a single '/'
                 this.ignoreBasedir =
-                    ("/" + projectRelativeBaseDir.trim { it <= ' ' } + "/").replace("/+".toRegex(), "/")
+                    ("/" + projectRelativeBaseDir.trim() + "/").replace("/+".toRegex(), "/")
                 baseDirRegex = "^/?\\Q" + this.ignoreBasedir.substring(1) + "\\E"
             }
 
@@ -220,7 +211,7 @@ class GitIgnore @JvmOverloads constructor(
             this.isDirectoryMatch = !negate && fileExpression.endsWith("/")
 
             var fileRegex = fileExpression
-                .trim { it <= ' ' }  // Clear leading and trailing spaces
+                .trim()  // Clear leading and trailing spaces
 
                 // Strip the negation at the start of the line (if any)
                 .replace("^!".toRegex(), "")

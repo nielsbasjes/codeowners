@@ -22,6 +22,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.isDirectory
 
 object Utils {
     private val LOG: Logger = LoggerFactory.getLogger(Utils::class.java)
@@ -62,7 +63,7 @@ object Utils {
         val found: MutableList<Path> = mutableListOf()
         val subDirs: MutableList<Path> = mutableListOf()
 
-        if (!Files.isDirectory(current)) {
+        if (!current.isDirectory()) {
             LOG.debug("Locate GI: Not DIR  {}", current)
             return mutableListOf() // It must be a directory
         }

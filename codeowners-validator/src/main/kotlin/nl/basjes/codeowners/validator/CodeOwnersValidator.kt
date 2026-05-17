@@ -74,58 +74,26 @@ class CodeOwnersValidator(
         /**
          * @return TRUE if all existing files and directories have at least 1 mandatory code owner, else FALSE
          */
-        fun allExistingFilesHaveMandatoryCodeOwner(): Boolean {
-            for (fileOwners in values) {
-                if (fileOwners.fileType == FileType.FILE || fileOwners.fileType == FileType.NEWLY_CREATED_FILE) {
-                    if (fileOwners.mandatoryApprovers.isEmpty()) {
-                        return false
-                    }
-                }
-            }
-            return true
-        }
+        fun allExistingFilesHaveMandatoryCodeOwner() = values
+            .none { (it.fileType == FileType.FILE || it.fileType == FileType.NEWLY_CREATED_FILE ) && it.mandatoryApprovers.isEmpty() }
 
         /**
          * @return TRUE if all existing files and directories have at least 1 mandatory or optional code owner, else FALSE
          */
-        fun allExistingFilesHaveAnyCodeOwner(): Boolean {
-            for (fileOwners in values) {
-                if (fileOwners.fileType == FileType.FILE || fileOwners.fileType == FileType.NEWLY_CREATED_FILE) {
-                    if (fileOwners.approvers.isEmpty()) {
-                        return false
-                    }
-                }
-            }
-            return true
-        }
+        fun allExistingFilesHaveAnyCodeOwner() = values
+            .none { (it.fileType == FileType.FILE || it.fileType == FileType.NEWLY_CREATED_FILE ) && it.approvers.isEmpty() }
 
         /**
          * @return TRUE if all newly created files and directories have at least 1 mandatory code owner, else FALSE
          */
-        fun allNewlyCreatedFilesHaveMandatoryCodeOwner(): Boolean {
-            for (fileOwners in values) {
-                if (fileOwners.fileType == FileType.NEWLY_CREATED_FILE) {
-                    if (fileOwners.mandatoryApprovers.isEmpty()) {
-                        return false
-                    }
-                }
-            }
-            return true
-        }
+        fun allNewlyCreatedFilesHaveMandatoryCodeOwner() = values
+            .none { it.fileType == FileType.NEWLY_CREATED_FILE && it.mandatoryApprovers.isEmpty() }
 
         /**
          * @return TRUE if all existing files and directories have at least 1 mandatory or optional code owner, else FALSE
          */
-        fun allNewlyCreatedFilesHaveAnyCodeOwner(): Boolean {
-            for (fileOwners in values) {
-                if (fileOwners.fileType == FileType.NEWLY_CREATED_FILE) {
-                    if (fileOwners.approvers.isEmpty()) {
-                        return false
-                    }
-                }
-            }
-            return true
-        }
+        fun allNewlyCreatedFilesHaveAnyCodeOwner() = values
+            .none { it.fileType == FileType.NEWLY_CREATED_FILE && it.approvers.isEmpty() }
 
         // ------------------------------------------
         fun toTable(): String {
@@ -174,8 +142,8 @@ class CodeOwnersValidator(
                 log.info("Found GitLab configuration:\n{}", gitlab)
                 gitlabConfigurationIsValid = false
             } else {
-                gitlabConfigurationIsValid = gitlab.isValid
-                if (gitlab.isValid) {
+                gitlabConfigurationIsValid = gitlab.valid
+                if (gitlab.valid) {
                     if (verbose) {
                         log.info("Using GitLab configuration:\n{}", gitlab)
                     }
@@ -232,8 +200,8 @@ class CodeOwnersValidator(
 
 
         // Set everything to the requested verbosity
-        codeOwners.setVerbose(verbose)
-        gitIgnores.setVerbose(verbose)
+        codeOwners.verbose = verbose
+        gitIgnores.verbose = verbose
 
         for (path in allNonIgnoredFilesAndDirectoriesInProject) {
             val fullFile = File(baseDir.absoluteFile, path.toString())
@@ -287,7 +255,7 @@ class CodeOwnersValidator(
         val gitIgnores = GitIgnoreFileSet(baseDir, false)
             .assumeQueriesIncludeProjectBaseDir()
 
-        gitIgnores.setVerbose(verbose)
+        gitIgnores.verbose = verbose
 
         // Start with the internal files that are used by common SCMs.
         gitIgnores.add(

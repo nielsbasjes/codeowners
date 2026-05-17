@@ -37,7 +37,7 @@ abstract class Rule(
         val fileRegex = fileExpression
 
             // Clear leading and trailing spaces
-            .trim { it <= ' ' }
+            .trim()
 
             // The escaped spaces must become spaces again.
             .replace("\\ ", " ")

@@ -25,6 +25,8 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 
 /**
  * A class that holds a set of .gitignore files and also handles the interactions between them.
@@ -41,7 +43,14 @@ class GitIgnoreFileSet @JvmOverloads constructor(
     // This sorting is very important in the evaluation of the rules!
     private val gitIgnores = TreeMap<String, MutableList<GitIgnore>>()
 
-    private var verbose = false
+    var verbose: Boolean = false
+        set(verbose) {
+            field = verbose
+            gitIgnores
+                .values
+                .flatten()
+                .forEach { it.verbose = verbose }
+        }
 
     // Do we assume a query to be project relative if not explicitly stated?
     var isAssumeQueriesAreProjectRelative: Boolean = false
@@ -51,20 +60,6 @@ class GitIgnoreFileSet @JvmOverloads constructor(
         if (autoload) {
             addAllGitIgnoreFiles()
         }
-    }
-
-    /**
-     * Make all currently loaded gitignore files become verbose when used.
-     *
-     * @param verbose True: be verbose, False: be silent
-     */
-    fun setVerbose(verbose: Boolean): GitIgnoreFileSet {
-        this.verbose = verbose
-        gitIgnores
-            .values
-            .flatten()
-            .forEach { it.setVerbose(verbose) }
-        return this
     }
 
     /**
@@ -107,7 +102,7 @@ class GitIgnoreFileSet @JvmOverloads constructor(
         gitIgnores
             .computeIfAbsent(gitIgnore.projectRelativeBaseDir) { mutableListOf() }
             .add(gitIgnore)
-        gitIgnore.setVerbose(verbose)
+        gitIgnore.verbose = verbose
     }
 
     /**
@@ -170,9 +165,9 @@ class GitIgnoreFileSet @JvmOverloads constructor(
         includeGlobalGitignore: Boolean
     ): MutableList<Path> {
         val loadedGitIgnoreFiles: MutableList<Path> = mutableListOf()
-        val subDirs: MutableList<Path> = ArrayList<Path>()
+        val subDirs: MutableList<Path> = mutableListOf()
 
-        if (!Files.isDirectory(current)) {
+        if (!current.isDirectory()) {
             LOG.debug("Locate GI: Not DIR  {}", current)
             return mutableListOf() // It must be a directory
         }
@@ -276,7 +271,7 @@ class GitIgnoreFileSet @JvmOverloads constructor(
      */
     @JvmOverloads
     fun ignoreFile(filename: String, isProjectRelative: Boolean = this.isAssumeQueriesAreProjectRelative): Boolean {
-        return java.lang.Boolean.TRUE == isIgnoredFile(filename, isProjectRelative)
+        return true == isIgnoredFile(filename, isProjectRelative)
     }
 
     /**
@@ -343,8 +338,7 @@ class GitIgnoreFileSet @JvmOverloads constructor(
          */
         @JvmStatic
         fun getGlobalGitIgnore(xdgConfigHome: String?, home: String?): Path? {
-            val ignorePath: Path?
-            ignorePath = if (!xdgConfigHome.isNullOrEmpty()) {
+            val ignorePath = if (!xdgConfigHome.isNullOrEmpty()) {
                 File(xdgConfigHome).toPath().resolve("git").resolve("ignore")
             } else {
                 if (!home.isNullOrEmpty()) {
@@ -353,11 +347,11 @@ class GitIgnoreFileSet @JvmOverloads constructor(
                     return null
                 }
             }
-            return if (Files.isRegularFile(ignorePath)) {
-                ignorePath
-            } else {
-                null
-            }
+            return if (ignorePath.isRegularFile()) {
+                    ignorePath
+                } else {
+                    null
+                }
         }
     }
 }

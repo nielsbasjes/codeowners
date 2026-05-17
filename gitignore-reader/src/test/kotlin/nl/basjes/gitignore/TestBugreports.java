@@ -24,6 +24,7 @@ import java.io.File;
 import static nl.basjes.gitignore.TestUtils.assertIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNotIgnore;
 import static nl.basjes.gitignore.TestUtils.verifyGeneratedRegex;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestBugreports {
@@ -127,8 +128,8 @@ class TestBugreports {
         gitIgnoreFileSet.add(gitIgnore1);
         gitIgnoreFileSet.add(gitIgnore2);
 
-        assertTrue(gitIgnoreFileSet.isIgnoredFile("/tmp/foo/.git/foo"));
-        assertTrue(gitIgnoreFileSet.isIgnoredFile("/tmp/foo/.svn/bar"));
+        assertEquals(true, gitIgnoreFileSet.isIgnoredFile("/tmp/foo/.git/foo"));
+        assertEquals(true, gitIgnoreFileSet.isIgnoredFile("/tmp/foo/.svn/bar"));
     }
 
 }

@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import static java.lang.Boolean.TRUE;
 import static nl.basjes.gitignore.TestUtils.assertIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNotIgnore;
 import static nl.basjes.gitignore.TestUtils.assertNullMatch;
@@ -499,7 +498,7 @@ class TestGitIgnore {
         for (IgnoreRule ignoreRule : gitIgnore.getIgnoreRules$gitignore_reader()) {
             assertEquals(baseDir, ignoreRule.getIgnoreBasedir(), "Wrong basedir in rule");
         }
-        assertEquals(TRUE, gitIgnore.isIgnoredFile(matchingFilename), "The filename " + matchingFilename + " should have matched("+gitIgnore+").");
+        assertEquals(true, gitIgnore.isIgnoredFile(matchingFilename), "The filename " + matchingFilename + " should have matched("+gitIgnore+").");
     }
 
     @Test

@@ -29,7 +29,7 @@ open class StringTable {
     }
     protected fun calculateColumnWidths(): MutableList<Int> {
         if (cachedColumnWidths == null) {
-            val columnWidths: MutableList<Int> = ArrayList()
+            val columnWidths: MutableList<Int> = mutableListOf()
             for (column in headers.indices) {
                 var maxWidth = headers[column].length
                 for (line in lines) {

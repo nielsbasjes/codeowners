@@ -204,9 +204,9 @@ class TestGitIgnoreFiles {
 
     @Test
     void testIgnoreFile() throws IOException {
-        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree)
-            .setVerbose(true)
-            .assumeQueriesIncludeProjectBaseDir();
+        GitIgnoreFileSet gitIgnoreFileSet = new GitIgnoreFileSet(testTree);
+        gitIgnoreFileSet.setVerbose(true);
+        gitIgnoreFileSet.assumeQueriesIncludeProjectBaseDir();
 
         assertFalse(gitIgnoreFileSet.isEmpty(), "Unable to load any .gitignore files");
 

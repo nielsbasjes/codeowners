@@ -134,10 +134,10 @@ internal class CodeOwnersLoader(codeownersContent: String) : CodeOwnersParserBas
      * @return Nothing
      */
     override fun visitSection(ctx: CodeOwnersParser.SectionContext): Void? {
-        val section = Section(ctx.section.text.trim { it <= ' ' })
+        val section = Section(ctx.section.text.trim())
         section.isOptional = ctx.OPTIONAL() != null
         if (ctx.approvers != null) {
-            section.minimalNumberOfApprovers = ctx.approvers.text.trim { it <= ' ' }.toInt()
+            section.minimalNumberOfApprovers = ctx.approvers.text.trim().toInt()
         }
         for (user in ctx.USERID()) {
             section.addDefaultApprover(user.text)
@@ -158,7 +158,7 @@ internal class CodeOwnersLoader(codeownersContent: String) : CodeOwnersParserBas
         val filePattern = ctx.fileExpression.text
         val approvers = ctx.USERID().stream()
             .map { it.text }
-            .map { it.trim { chr -> chr <= ' ' } }
+            .map { it.trim() }
             .map { it.replace(
                     "^\\([a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+\\)".toRegex(),
                     ""

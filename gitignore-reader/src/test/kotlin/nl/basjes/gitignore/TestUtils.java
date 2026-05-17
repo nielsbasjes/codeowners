@@ -38,7 +38,7 @@ public class TestUtils {
     }
 
     private static void __assertIgnore(GitIgnore gitIgnore, String filename) {
-        assertSame(Boolean.TRUE,
+        assertSame(true,
             gitIgnore.isIgnoredFile(filename),
             "Filename \"" + filename + "\" should match but did not.\n" + gitIgnore);
         assertTrue(gitIgnore.ignoreFile(filename),
@@ -48,7 +48,7 @@ public class TestUtils {
 
         // Same but now with a windows path separator
         String wFilename = windowsFileName(filename);
-        assertSame(Boolean.TRUE,
+        assertSame(true,
             gitIgnore.isIgnoredFile(wFilename),
             "Filename \"" + wFilename + "\" should match but did not.\n" + gitIgnore);
         assertTrue(gitIgnore.ignoreFile(wFilename),

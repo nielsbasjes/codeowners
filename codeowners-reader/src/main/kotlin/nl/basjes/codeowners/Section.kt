@@ -19,7 +19,11 @@ package nl.basjes.codeowners
 class Section(@JvmField val name: String) {
     fun getName() = name
 
-    private var verbose = false
+    var verbose = false
+        set(verbose) {
+            field = verbose
+            rules.forEach { it.verbose = verbose }
+        }
     var isOptional: Boolean = false
 
     var minimalNumberOfApprovers: Int = 0
@@ -30,7 +34,7 @@ class Section(@JvmField val name: String) {
     fun getRules() = rules
 
     fun addDefaultApprover(name: String) {
-        val cleanedName = name.trim { it <= ' ' }
+        val cleanedName = name.trim()
         if (!defaultApprovers.contains(cleanedName)) {
             defaultApprovers.add(cleanedName)
         }
@@ -38,11 +42,6 @@ class Section(@JvmField val name: String) {
 
     fun addRule(rule: Rule) {
         rules.add(rule)
-    }
-
-    fun setVerbose(verbose: Boolean) {
-        this.verbose = verbose
-        rules.forEach { it.verbose = verbose }
     }
 
     val isDefaultSection: Boolean

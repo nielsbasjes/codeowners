@@ -28,7 +28,12 @@ internal val LOG: Logger = LoggerFactory.getLogger(CodeOwners::class.java)
 
 class CodeOwners(codeownersContent: String) {
 
-    private var verbose = false
+    /** True enables logging, False disables logging */
+    var verbose = false
+        set(verbose) {
+            field = verbose
+            sections.values.forEach { it.verbose = verbose }
+        }
 
     // Map name of Section to Sections
     private val sections: MutableMap<String, Section>
@@ -55,14 +60,6 @@ class CodeOwners(codeownersContent: String) {
      * @throws IOException In case of problems.
      */
     constructor(file: File) : this(file.readText())
-
-    /**
-     * @param verbose True enables logging, False disables logging
-     */
-    fun setVerbose(verbose: Boolean) {
-        this.verbose = verbose
-        sections.values.forEach { it.setVerbose(verbose) }
-    }
 
     val allDefinedSections: MutableSet<Section>
         /**
