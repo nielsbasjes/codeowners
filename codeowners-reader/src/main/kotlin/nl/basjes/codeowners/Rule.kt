@@ -22,9 +22,8 @@ abstract class Rule(
     /**
      * @return The provided file expression used to build this rule
      */
-    @JvmField val fileExpression: String
+    val fileExpression: String
 ) {
-    fun getFileExpression() = fileExpression
     /**
      * The Pattern which was constructed from the provided fileExpression
      */

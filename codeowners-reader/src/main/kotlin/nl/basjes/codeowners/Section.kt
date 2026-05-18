@@ -16,8 +16,7 @@
  */
 package nl.basjes.codeowners
 
-class Section(@JvmField val name: String) {
-    fun getName() = name
+class Section(val name: String) {
 
     var verbose = false
         set(verbose) {

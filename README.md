@@ -15,7 +15,7 @@ Reality: The syntax of these files can be tricky, and it is quite easy to write 
 
 # Major update
 The upcoming 2.0.0 release has been rewritten into Kotlin. This allows for more exact checks on nullability and improves code quality.
-Most of the API has not been changed so using this from Java should be a simple migration.
+Most of the API has not been changed so using this from Java should be a simple migration. This new version needs JVM 11 or newer.
 
 # What is this
 1) A Kotlin/Java library to read a CODEOWNERS file.
@@ -27,7 +27,7 @@ Most of the API has not been changed so using this from Java should be a simple 
 
 The intended goal is to make the build fail if the codeowners file does not cover all files and directories in the project.
 
-- The libraries for the CODEOWNERS and gitignore files are usable in Java 8 and newer.
+- The libraries for the CODEOWNERS and gitignore files are usable in Java 11 and newer.
 - The Maven Enforcer rule needs Java 11 or newer.
 
 # CodeOwners Enforcer rule

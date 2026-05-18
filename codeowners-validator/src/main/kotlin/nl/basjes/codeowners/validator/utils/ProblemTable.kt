@@ -24,6 +24,7 @@ import nl.basjes.codeowners.validator.utils.Problem.ProblemColor.COLOR_INFO_TEXT
 import nl.basjes.codeowners.validator.utils.Problem.Tags.INFO_TAG
 import nl.basjes.codeowners.validator.utils.Problem.Warning
 import org.slf4j.Logger
+import kotlin.collections.filterIsInstance
 
 class ProblemTable : StringTable() {
 
@@ -49,19 +50,19 @@ class ProblemTable : StringTable() {
     val numberOfProblems: Int
         get() = theProblems.size
 
-    val numberOfFatalErrors: Long
-        get() = theProblems.stream()
-            .filter { it is Fatal }
+    val numberOfFatalErrors: Int
+        get() = theProblems
+            .filterIsInstance<Fatal>()
             .count()
 
-    val numberOfErrors: Long
-        get() = theProblems.stream()
-            .filter { it is Error }
+    val numberOfErrors: Int
+        get() = theProblems
+            .filterIsInstance<Error>()
             .count()
 
-    val numberOfWarnings: Long
-        get() = theProblems.stream()
-            .filter { it is Warning }
+    val numberOfWarnings: Int
+        get() = theProblems
+            .filterIsInstance<Warning>()
             .count()
 
     fun contains(problem: Problem?): Boolean {

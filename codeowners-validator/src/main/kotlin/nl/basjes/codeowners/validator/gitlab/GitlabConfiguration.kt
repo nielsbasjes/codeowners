@@ -139,7 +139,7 @@ ${problemLevels.toString().prependIndent("  ")}
             return value != null && NON_SPACE_STRING.matcher(value).matches()
         }
 
-        protected abstract val sanitizedValue: String
+        abstract val sanitizedValue: String
 
         fun toString(name: String): String {
             load()

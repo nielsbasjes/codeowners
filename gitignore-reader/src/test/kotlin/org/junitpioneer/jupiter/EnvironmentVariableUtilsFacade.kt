@@ -14,17 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.junitpioneer.jupiter;
+package org.junitpioneer.jupiter
 
 /**
  * By putting my own class in the same package as the package private class I want to access ... I can use it.
  */
-public class EnvironmentVariableUtilsFacade {
-    public static void set(String name, String value) {
-        EnvironmentVariableUtils.set(name, value);
-    }
-    public static void clear(String name) {
-        EnvironmentVariableUtils.clear(name);
+object EnvironmentVariableUtilsFacade {
+    fun set(name: String?, value: String?) {
+        EnvironmentVariableUtils.set(name, value)
     }
 
+    fun clear(name: String?) {
+        EnvironmentVariableUtils.clear(name)
+    }
 }

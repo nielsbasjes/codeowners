@@ -14,26 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package nl.basjes.codeowners.validator.utils
 
-package nl.basjes.codeowners.validator.utils;
+import org.slf4j.event.Level
 
-import org.slf4j.event.Level;
-
-
-public class Line {
-    public Line(Level level, String message) {
-        this.level = level;
-        this.message = message;
-    }
-
-    public Level level;
-    public String message;
-
-    @Override
-    public String toString() {
+class Line(@JvmField var level: Level, @JvmField var message: String) {
+    override fun toString(): String {
         return "Line {" +
-            "level=" + level +
-            ", message='" + message + '\'' +
-            '}';
+                "level=" + level +
+                ", message='" + message + '\'' +
+                '}'
     }
 }

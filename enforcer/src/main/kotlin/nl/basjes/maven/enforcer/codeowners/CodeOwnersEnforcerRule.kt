@@ -56,13 +56,15 @@ class CodeOwnersEnforcerRule @Inject constructor(private val project: MavenProje
             baseDir = project.basedir
         }
 
+        val cleanBaseDir = baseDir ?: throw IllegalStateException("Unable to determine the basedir")
+
         val directoryOwners: DirectoryOwners?
         var pass = true
         try {
             val validator =
                 CodeOwnersValidator(gitlab, EnforcerLoggerSlf4j(log), verbose)
 
-            directoryOwners = validator.analyzeDirectory(baseDir!!, codeOwnersFile)
+            directoryOwners = validator.analyzeDirectory(cleanBaseDir, codeOwnersFile)
 
             if (showApprovers) {
                 log.info("Approvers:\n" + directoryOwners.toTable())
@@ -112,15 +114,11 @@ class CodeOwnersEnforcerRule @Inject constructor(private val project: MavenProje
      *
      * @return rule description
      */
-    override fun toString(): String {
-        return String.format(
-            "CodeOwnersEnforcerRule[codeOwnersFile=%s ; allFilesMustHaveCodeOwner=%b]",
-            codeOwnersFile, allFilesMustHaveCodeOwner
-        )
-    }
+    override fun toString() =
+        "CodeOwnersEnforcerRule[codeOwnersFile=${codeOwnersFile} ; allFilesMustHaveCodeOwner=${allFilesMustHaveCodeOwner}]"
 
     companion object {
-        private val log: Logger? = LoggerFactory.getLogger(CodeOwnersEnforcerRule::class.java)
+        private val log: Logger = LoggerFactory.getLogger(CodeOwnersEnforcerRule::class.java)
     }
 }
 

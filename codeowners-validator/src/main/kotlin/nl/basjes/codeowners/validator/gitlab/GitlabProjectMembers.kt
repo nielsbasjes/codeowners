@@ -148,18 +148,13 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
     ) {
         when (level) {
             Level.FATAL -> table.addProblem(
-                Fatal(
-                    section.getName(),
-                    approvalRule.getFileExpression(),
-                    approver,
-                    message
-                )
+                Fatal(section.name,approvalRule.fileExpression, approver, message)
             )
 
             Level.ERROR -> table.addProblem(
                 Problem.Error(
-                    section.getName(),
-                    approvalRule.getFileExpression(),
+                    section.name,
+                    approvalRule.fileExpression,
                     approver,
                     message
                 )
@@ -167,8 +162,8 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
 
             Level.WARNING -> table.addProblem(
                 Problem.Warning(
-                    section.getName(),
-                    approvalRule.getFileExpression(),
+                    section.name,
+                    approvalRule.fileExpression,
                     approver,
                     message
                 )
@@ -176,8 +171,8 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
 
             Level.INFO -> table.addProblem(
                 Problem.Info(
-                    section.getName(),
-                    approvalRule.getFileExpression(),
+                    section.name,
+                    approvalRule.fileExpression,
                     approver,
                     message
                 )
@@ -360,8 +355,8 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
                     }
 
                     // Is this a Member?
-                    if (allProjectMembers.containsKey(approver)) {
-                        val member: Member = allProjectMembers[approver]!!
+                    val member = allProjectMembers[approver]
+                    if (member != null) {
                         if (!usableAccount(member)) {
                             report(
                                 userDisabled, results, definedSection, rule, rawApprover,
@@ -393,8 +388,8 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
                     }
 
                     // Is this a Shared Group?
-                    if (sharedGroups.containsKey(approver)) {
-                        val sharedGroup: SharedGroup = sharedGroups[approver]!!
+                    val sharedGroup = sharedGroups[approver]
+                    if (sharedGroup != null) {
                         val groupAccessLevel = sharedGroup.groupAccessLevel
                         if (accessLevelCanApprove(groupAccessLevel)) {
                             // Success, we have found this valid approver to be the name of a shared group.
