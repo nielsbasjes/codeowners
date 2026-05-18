@@ -43,7 +43,7 @@
 
     <maven.version>3.9.16</maven.version>
     <maven.minimal.version>3.9.2</maven.minimal.version>
-    <enforcer-api.version>3.6.2</enforcer-api.version>
+    <enforcer-api.version>3.6.3</enforcer-api.version>
 
     <maven.compiler.source>${jvm.version}</maven.compiler.source>
     <maven.compiler.target>${jvm.version}</maven.compiler.target>
