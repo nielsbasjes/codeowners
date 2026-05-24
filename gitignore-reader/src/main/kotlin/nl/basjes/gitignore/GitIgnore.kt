@@ -33,7 +33,7 @@ class GitIgnore @JvmOverloads constructor(
     verbose: Boolean = false
 ) {
     @JvmField
-    val projectRelativeBaseDir: String
+    val projectRelativeBaseDir: String = standardizeFilename(projectRelativeBaseDir + GITIGNORE_PATH_SEPARATOR)
 
     internal val ignoreRules: List<IgnoreRule>
     var verbose = false
@@ -52,7 +52,6 @@ class GitIgnore @JvmOverloads constructor(
     constructor(gitIgnoreContent: String, verbose: Boolean) : this("", gitIgnoreContent, verbose)
 
     init {
-        this.projectRelativeBaseDir = standardizeFilename(projectRelativeBaseDir + GITIGNORE_PATH_SEPARATOR)
 
         val allIgnoreRules: MutableList<IgnoreRule> = mutableListOf()
 

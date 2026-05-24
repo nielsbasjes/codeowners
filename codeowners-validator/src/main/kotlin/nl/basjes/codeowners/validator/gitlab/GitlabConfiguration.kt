@@ -204,15 +204,16 @@ ${problemLevels.toString().prependIndent("  ")}
 
             internalValue = System.getenv(usedEnvVariableName) ?.trim()
             internalValid = checkValidity(internalValue)
-            if (internalValid) {
-                sourceOrErrorMessage = "(via environment variable \"$usedEnvVariableName\")"
-            } else {
-                if (internalValue == null) {
-                    sourceOrErrorMessage = "the environment variable \"$usedEnvVariableName\" does not exist"
+            sourceOrErrorMessage =
+                if (internalValid) {
+                    "(via environment variable \"$usedEnvVariableName\")"
                 } else {
-                    sourceOrErrorMessage = "the value from environment variable \"$usedEnvVariableName\" is NOT valid"
+                    if (internalValue == null) {
+                        "the environment variable \"$usedEnvVariableName\" does not exist"
+                    } else {
+                        "the value from environment variable \"$usedEnvVariableName\" is NOT valid"
+                    }
                 }
-            }
         }
 
         companion object {

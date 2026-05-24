@@ -16,8 +16,6 @@
  */
 package nl.basjes.codeowners
 
-import java.util.regex.Pattern
-
 abstract class Rule(
     /**
      * @return The provided file expression used to build this rule
@@ -27,7 +25,7 @@ abstract class Rule(
     /**
      * The Pattern which was constructed from the provided fileExpression
      */
-    val filePattern: Pattern
+    val filePattern: Regex
 
     var verbose: Boolean = false
 
@@ -62,7 +60,7 @@ abstract class Rule(
             // The Globstar "foo/**/bar" must also match "foo/bar"
             // Process trailing /** before middle /** to handle them correctly:
             // 1. Trailing: "foo/**" matches "foo/" and its contents, but NOT "foo" or "foobar"
-            .replace(                "/\\*\\*$".toRegex(),                "/.*"            )
+            .replace("/\\*\\*$".toRegex(), "/.*")
             // 2. Middle: "foo/**/bar" matches both "foo/bar" and "foo/anything/bar"
             .replace("/**", "(/.*)?")
 
@@ -92,14 +90,14 @@ abstract class Rule(
             // Remove duplication
             .replace("/+".toRegex(), "/")
 
-        filePattern = Pattern.compile(fileRegex)
+        filePattern = fileRegex.toRegex()
     }
 
     /**
      * @return True if the provided file matches the configured fileExpression. If not it returns false.
      */
     fun matches(filename: String): Boolean {
-        val matches = filePattern.matcher(filename).find()
+        val matches = filePattern.containsMatchIn(filename)
         if (verbose) {
             val result = if(matches) "MATCH   " else "NO MATCH"
             LOG.info("$result  |{}| ~ |{}| --> {}", fileExpression, filePattern, filename)

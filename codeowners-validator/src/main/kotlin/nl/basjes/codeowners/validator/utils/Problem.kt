@@ -16,7 +16,6 @@
  */
 package nl.basjes.codeowners.validator.utils
 
-import nl.basjes.codeowners.validator.utils.LogColor.RESET
 import nl.basjes.codeowners.validator.utils.Problem.ProblemColor.COLOR_ERROR_TAG
 import nl.basjes.codeowners.validator.utils.Problem.ProblemColor.COLOR_ERROR_TEXT
 import nl.basjes.codeowners.validator.utils.Problem.ProblemColor.COLOR_FATAL_TAG
@@ -44,7 +43,7 @@ sealed class Problem private constructor(
         ERROR_TAG   ("ERROR", COLOR_ERROR_TAG),
         FATAL_TAG   ("FATAL", COLOR_FATAL_TAG);
         override fun toString(): String {
-            return "[${color}${text}${RESET}]"
+            return "[${color}${text}${LogColor.RESET}]"
         }
     }
 

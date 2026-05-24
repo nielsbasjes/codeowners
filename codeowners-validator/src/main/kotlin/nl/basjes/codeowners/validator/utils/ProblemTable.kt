@@ -73,7 +73,7 @@ class ProblemTable : StringTable() {
         get() = theProblems.isEmpty()
 
     override fun toString(): String {
-        clearCaches();
+        clearCaches()
         val buffer = StringBuilder("\n")
         fun addLineInfo(line: String) {
             buffer.append("$INFO_TAG : ${COLOR_INFO_TEXT}${line}${RESET}\n")
@@ -104,7 +104,7 @@ class ProblemTable : StringTable() {
 
 
     fun toLog(logger: Logger) {
-        clearCaches();
+        clearCaches()
         logger.info(writeSeparator())
         logger.info(writeHeaders())
         logger.info(writeSeparator())
