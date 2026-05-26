@@ -37,6 +37,7 @@
 
     <kotlin.compiler.jvmTarget>${jvm.version}</kotlin.compiler.jvmTarget>
     <kotlin.version>2.3.21</kotlin.version>
+    <dokka-maven-plugin.version>2.1.0</dokka-maven-plugin.version>
 
     <!-- Needed to make the build reproducible https://reproducible-builds.org/ -->
     <project.build.outputTimestamp>2025-12-12T10:45:20Z</project.build.outputTimestamp>
@@ -233,13 +234,24 @@
             <executions>
               <execution>
                 <id>attach-javadocs</id>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
                 <configuration>
-                  <!-- TODO: Remove workaround for issue https://github.com/apache/maven-javadoc-plugin/issues/1244 when fixed -->
-                  <disableNoFonts>true</disableNoFonts>
+                  <!-- The creation of the javadoc jar is done for pure Kotlin projects by the dokka plugin. -->
+                  <skip>true</skip>
                 </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.jetbrains.dokka</groupId>
+            <artifactId>dokka-maven-plugin</artifactId>
+            <version>${dokka-maven-plugin.version}</version>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals>
+                  <goal>javadocJar</goal>
+                </goals>
               </execution>
             </executions>
           </plugin>
