@@ -37,7 +37,7 @@
 
     <kotlin.compiler.jvmTarget>${jvm.version}</kotlin.compiler.jvmTarget>
     <kotlin.version>2.3.21</kotlin.version>
-    <dokka-maven-plugin.version>2.1.0</dokka-maven-plugin.version>
+    <dokka-maven-plugin.version>2.2.0</dokka-maven-plugin.version>
 
     <!-- Needed to make the build reproducible https://reproducible-builds.org/ -->
     <project.build.outputTimestamp>2026-05-26T16:51:39Z</project.build.outputTimestamp>
