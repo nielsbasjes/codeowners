@@ -13,7 +13,7 @@ In several systems (like GitHub and Gitlab) you can have a CODEOWNERS file which
 
 Reality: The syntax of these files can be tricky, and it is quite easy to write a config that has the effect that not all files are covered.
 
-# Major update
+# Major update: Version 2.0.0
 The upcoming 2.0.0 release has been rewritten into Kotlin. This allows for more exact checks on nullability and improves code quality.
 Most of the API has not been changed so using this from Java should be a simple migration. This new version needs JVM 11 or newer.
 
@@ -71,7 +71,7 @@ In one of my projects it looks like this:
     <dependency>
       <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
       <artifactId>codeowners-enforcer-rules</artifactId>
-      <version>1.14.1</version>
+      <version>2.0.0</version>
     </dependency>
   </dependencies>
   <executions>
@@ -114,7 +114,7 @@ On some systems it must have a name that ends with `.main.kts`, if so then it  c
 ```kotlin
 #!/usr/bin/env -S kotlin -howtorun .main.kts
 
-@file:DependsOn("nl.basjes.codeowners:codeowners-validator:1.14.1")
+@file:DependsOn("nl.basjes.codeowners:codeowners-validator:2.0.0")
 
 import nl.basjes.codeowners.validator.CodeOwnersValidator
 import nl.basjes.codeowners.validator.CodeOwnersValidator.DirectoryOwners
