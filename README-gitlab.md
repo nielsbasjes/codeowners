@@ -209,12 +209,12 @@ In one of my projects it looks like this:
 <plugin>
   <groupId>org.apache.maven.plugins</groupId>
   <artifactId>maven-enforcer-plugin</artifactId>
-  <version>3.4.1</version>
+  <version>3.6.3</version>
   <dependencies>
     <dependency>
       <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
       <artifactId>codeowners-enforcer-rules</artifactId>
-      <version>1.14.1</version>
+      <version>2.0.0</version>
     </dependency>
   </dependencies>
   <executions>
@@ -252,12 +252,12 @@ In one of my projects it looks like this:
 <plugin>
   <groupId>org.apache.maven.plugins</groupId>
   <artifactId>maven-enforcer-plugin</artifactId>
-  <version>3.4.1</version>
+  <version>3.6.3</version>
   <dependencies>
     <dependency>
       <groupId>nl.basjes.maven.enforcer.codeowners</groupId>
       <artifactId>codeowners-enforcer-rules</artifactId>
-      <version>1.14.1</version>
+      <version>2.0.0</version>
     </dependency>
   </dependencies>
   <executions>

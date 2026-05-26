@@ -21,7 +21,7 @@
 // sudo snap install kotlin --classic
 
 @file:DependsOn("com.github.ajalt.clikt:clikt-jvm:5.1.0")
-@file:DependsOn("nl.basjes.codeowners:codeowners-validator:1.14.1")
+@file:DependsOn("nl.basjes.codeowners:codeowners-validator:2.0.0")
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.main

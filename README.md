@@ -66,7 +66,7 @@ In one of my projects it looks like this:
 <plugin>
   <groupId>org.apache.maven.plugins</groupId>
   <artifactId>maven-enforcer-plugin</artifactId>
-  <version>3.4.1</version>
+  <version>3.6.3</version>
   <dependencies>
     <dependency>
       <groupId>nl.basjes.maven.enforcer.codeowners</groupId>

@@ -4,19 +4,23 @@ This is intended as an overview of the major changes
 
 NEXT VERSION
 ===
- - Converted everything from Java to Kotlin to make the code cleaner and better for null safety.
- - Chaining setters is no longer possible (simply to keep the code clean)
- - This is a major update because some of the getters and setters have changed.
+- ...
 
-v.1.14.1
+v2.0.0
+===
+- Converted everything from Java to Kotlin to make the code cleaner and better for null safety.
+- Chaining setters is no longer possible (simply to keep the code clean)
+- This is a major update because some of the getters and setters have changed.
+
+v1.14.1
 ===
 - Fixed matching bug ".gitignore" also matched "foo.gitignore"
 
-v.1.14.0
+v1.14.0
 ===
 - Support for the Gitlab Exclusion rules for the codeowners
 
-v.1.13.0
+v1.13.0
 ===
 - Partial restructuring making the validation reusable in other situations
 - Added example commandline script (using Kotlin script)
