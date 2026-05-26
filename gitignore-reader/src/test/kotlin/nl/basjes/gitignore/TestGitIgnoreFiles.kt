@@ -23,7 +23,7 @@ import kotlin.test.Test
 import org.junit.jupiter.api.condition.DisabledOnOs
 import org.junit.jupiter.api.condition.OS
 import org.junitpioneer.jupiter.ClearEnvironmentVariable
-import org.junitpioneer.jupiter.EnvironmentVariableUtilsFacade
+import org.junitpioneer.jupiter.setEnvironmentVariable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -224,8 +224,8 @@ internal class TestGitIgnoreFiles {
         )
 
         // Use Pioneer's underlying utility to inject it programmatically
-        EnvironmentVariableUtilsFacade.set("XDG_CONFIG_HOME", dirWithGitIgnore)
-        EnvironmentVariableUtilsFacade.set("HOME", dirWithConfigGitIgnore)
+        setEnvironmentVariable("XDG_CONFIG_HOME", dirWithGitIgnore)
+        setEnvironmentVariable("HOME", dirWithConfigGitIgnore)
 
         try {
             LOG.info("Making {} unreadable", ignoreFileToMakeUnreadable)

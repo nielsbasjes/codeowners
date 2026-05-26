@@ -18,13 +18,8 @@ package org.junitpioneer.jupiter
 
 /**
  * By putting my own class in the same package as the package private class I want to access ... I can use it.
+ * This is a terrible workaround until this is available: https://github.com/junit-pioneer/junit-pioneer/pull/872
  */
-object EnvironmentVariableUtilsFacade {
-    fun set(name: String?, value: String?) {
-        EnvironmentVariableUtils.set(name, value)
-    }
-
-    fun clear(name: String?) {
-        EnvironmentVariableUtils.clear(name)
-    }
+fun setEnvironmentVariable(name: String?, value: String?) {
+    EnvironmentVariableUtils.set(name, value)
 }
