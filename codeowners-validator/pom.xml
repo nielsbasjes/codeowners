@@ -39,6 +39,8 @@
 
   <dependencyManagement>
     <dependencies>
+       <!-- gitlab-api 6.3.0 has internal dependency convergence problems with Jackson -->
+      <!-- https://github.com/gitlab4j/gitlab4j-api/issues/1321                       -->
       <dependency>
         <groupId>com.fasterxml.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
@@ -67,6 +69,8 @@
       <groupId>org.gitlab4j</groupId>
       <artifactId>gitlab4j-api</artifactId>
       <version>6.3.0</version>
+      <!-- Version 6.3.0 has internal dependency convergence problems with Jackson -->
+      <!-- https://github.com/gitlab4j/gitlab4j-api/issues/1321                    -->
       <exclusions>
         <exclusion>
           <!-- Because of dependency convergence problem -->
