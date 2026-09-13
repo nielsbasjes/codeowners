@@ -36,7 +36,7 @@
     <jvm.version>11</jvm.version>
 
     <kotlin.compiler.jvmTarget>${jvm.version}</kotlin.compiler.jvmTarget>
-    <kotlin.version>2.4.10</kotlin.version>
+    <kotlin.version>2.4.20</kotlin.version>
     <dokka-maven-plugin.version>2.2.0</dokka-maven-plugin.version>
 
     <!-- Needed to make the build reproducible https://reproducible-builds.org/ -->
@@ -337,7 +337,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>3.6.3</version>
+        <version>3.6.4</version>
         <executions>
           <execution>
             <id>Setup git commit hooks</id>
@@ -455,7 +455,7 @@
           <dependency>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>extra-enforcer-rules</artifactId>
-            <version>1.12.0</version>
+            <version>1.12.1</version>
           </dependency>
         </dependencies>
       </plugin>
