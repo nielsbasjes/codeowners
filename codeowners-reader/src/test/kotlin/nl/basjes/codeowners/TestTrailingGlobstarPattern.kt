@@ -16,6 +16,7 @@
  */
 package nl.basjes.codeowners
 
+import nl.basjes.codeowners.TestUtils.assertOwners
 import kotlin.test.Test
 
 internal class TestTrailingGlobstarPattern {
@@ -46,33 +47,33 @@ internal class TestTrailingGlobstarPattern {
         )
 
         // Match in root
-        TestUtils.assertOwners(codeOwners, "dirname/", "@match") // directory itself
-        TestUtils.assertOwners(codeOwners, "dirname/file", "@match") // files inside the directory
-        TestUtils.assertOwners(codeOwners, "dirname/subdir/file", "@match") // files in subdirectories
+        assertOwners(codeOwners, "dirname/",                          "@match") // directory itself
+        assertOwners(codeOwners, "dirname/file",                      "@match") // files inside the directory
+        assertOwners(codeOwners, "dirname/subdir/file",               "@match") // files in subdirectories
 
         // Match in subdir/
-        TestUtils.assertOwners(codeOwners, "subdir/dirname/", "@match") // directory itself
-        TestUtils.assertOwners(codeOwners, "subdir/dirname/file", "@match") // files inside the directory
-        TestUtils.assertOwners(codeOwners, "subdir/dirname/subdir/file", "@match") // files in subdirectories
+        assertOwners(codeOwners, "subdir/dirname/",                   "@match") // directory itself
+        assertOwners(codeOwners, "subdir/dirname/file",               "@match") // files inside the directory
+        assertOwners(codeOwners, "subdir/dirname/subdir/file",        "@match") // files in subdirectories
 
         // Match in subdir/subdir/
-        TestUtils.assertOwners(codeOwners, "subdir/subdir/dirname/", "@match") // directory itself
-        TestUtils.assertOwners(codeOwners, "subdir/subdir/dirname/file", "@match") // files inside the directory
-        TestUtils.assertOwners(codeOwners, "subdir/subdir/dirname/subdir/file", "@match") // files in subdirectories
+        assertOwners(codeOwners, "subdir/subdir/dirname/",            "@match") // directory itself
+        assertOwners(codeOwners, "subdir/subdir/dirname/file",        "@match") // files inside the directory
+        assertOwners(codeOwners, "subdir/subdir/dirname/subdir/file", "@match") // files in subdirectories
 
         // Do NOT match files with the name in root
-        TestUtils.assertOwners(codeOwners, "dirname", "@mismatch") // file with the same name
-        TestUtils.assertOwners(codeOwners, "dirname.properties", "@mismatch") // file starting with dirname
-        TestUtils.assertOwners(codeOwners, "dirname-something", "@mismatch") // file starting with dirname
+        assertOwners(codeOwners, "dirname",                           "@mismatch") // file with the same name
+        assertOwners(codeOwners, "dirname.properties",                "@mismatch") // file starting with dirname
+        assertOwners(codeOwners, "dirname-something",                 "@mismatch") // file starting with dirname
 
         // Do NOT match files with the name in subdir/
-        TestUtils.assertOwners(codeOwners, "subdir/dirname", "@mismatch") // file with the same name
-        TestUtils.assertOwners(codeOwners, "subdir/dirname.properties", "@mismatch") // file starting with dirname
-        TestUtils.assertOwners(codeOwners, "subdir/dirname-something", "@mismatch") // file starting with dirname
+        assertOwners(codeOwners, "subdir/dirname",                    "@mismatch") // file with the same name
+        assertOwners(codeOwners, "subdir/dirname.properties",         "@mismatch") // file starting with dirname
+        assertOwners(codeOwners, "subdir/dirname-something",          "@mismatch") // file starting with dirname
 
         // Do NOT match files with the name in subdir/subdir/
-        TestUtils.assertOwners(codeOwners, "subdir/subdir/dirname", "@mismatch") // file with the same name
-        TestUtils.assertOwners(codeOwners, "subdir/subdir/dirname.properties", "@mismatch") // file starting with dirname
-        TestUtils.assertOwners(codeOwners, "subdir/subdir/dirname-something", "@mismatch") // file starting with dirname
+        assertOwners(codeOwners, "subdir/subdir/dirname",             "@mismatch") // file with the same name
+        assertOwners(codeOwners, "subdir/subdir/dirname.properties",  "@mismatch") // file starting with dirname
+        assertOwners(codeOwners, "subdir/subdir/dirname-something",   "@mismatch") // file starting with dirname
     }
 }

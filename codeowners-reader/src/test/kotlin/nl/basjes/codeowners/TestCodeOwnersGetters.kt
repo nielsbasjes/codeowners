@@ -78,15 +78,16 @@ internal class TestCodeOwnersGetters {
                     assertEquals(2, rules.size)
 
                     rule0 = rules[0]
+                    assertTrue(rule0 is ApprovalRule)
                     assertEquals("docs/", rule0.fileExpression)
                     assertEquals("(/.*)?/docs/", rule0.filePattern.pattern)
-                    assertInstanceOf(ApprovalRule::class.java, rule0)
-                    assertEquals(mutableListOf(), (rule0 as ApprovalRule).approvers)
+                    assertEquals(mutableListOf(), rule0.approvers)
 
                     rule1 = rules[1]
+                    assertTrue(rule1 is ApprovalRule)
                     assertEquals("*.md", rule1.fileExpression)
                     assertEquals(".*\\.md(/|$)", rule1.filePattern.pattern)
-                    assertEquals(mutableListOf(), (rule1 as ApprovalRule).approvers)
+                    assertEquals(mutableListOf(), rule1.approvers)
                 }
 
                 "Two" -> {
@@ -99,14 +100,16 @@ internal class TestCodeOwnersGetters {
                     assertEquals(2, rules.size)
 
                     rule0 = rules[0]
+                    assertTrue(rule0 is ApprovalRule)
                     assertEquals("model/db/", rule0.fileExpression)
                     assertEquals("(/.*)?/model/db/", rule0.filePattern.pattern)
-                    assertEquals(mutableListOf(), (rule0 as ApprovalRule).approvers)
+                    assertEquals(mutableListOf(), rule0.approvers)
 
                     rule1 = rules[1]
+                    assertTrue(rule1 is ApprovalRule)
                     assertEquals("config/db/database-setup.md", rule1.fileExpression)
                     assertEquals("(/.*)?/config/db/database-setup\\.md(/|$)", rule1.filePattern.pattern)
-                    assertEquals(mutableListOf("@docs-team"), (rule1 as ApprovalRule).approvers)
+                    assertEquals(mutableListOf("@docs-team"), rule1.approvers)
                 }
 
                 "Three" -> {
@@ -118,14 +121,16 @@ internal class TestCodeOwnersGetters {
                     assertEquals(2, rules.size)
 
                     rule0 = rules[0]
+                    assertTrue(rule0 is ApprovalRule)
                     assertEquals("three1/", rule0.fileExpression)
                     assertEquals("(/.*)?/three1/", rule0.filePattern.pattern)
-                    assertEquals(mutableListOf(), (rule0 as ApprovalRule).approvers)
+                    assertEquals(mutableListOf(), rule0.approvers)
 
                     rule1 = rules[1]
+                    assertTrue(rule1 is ApprovalRule)
                     assertEquals("three2/", rule1.fileExpression)
                     assertEquals("(/.*)?/three2/", rule1.filePattern.pattern)
-                    assertEquals(mutableListOf("@docs-team"), (rule1 as ApprovalRule).approvers)
+                    assertEquals(mutableListOf("@docs-team"), rule1.approvers)
                 }
 
                 "Four" -> {
@@ -137,9 +142,10 @@ internal class TestCodeOwnersGetters {
                     assertEquals(1, rules.size)
 
                     rule0 = rules[0]
+                    assertTrue(rule0 is ApprovalRule)
                     assertEquals("four/", rule0.fileExpression)
                     assertEquals("(/.*)?/four/", rule0.filePattern.pattern)
-                    assertEquals(mutableListOf(), (rule0 as ApprovalRule).approvers)
+                    assertEquals(mutableListOf(), rule0.approvers)
                 }
 
                 else -> fail("The section name ${section.name} is not supported")

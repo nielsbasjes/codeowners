@@ -16,6 +16,7 @@
  */
 package nl.basjes.codeowners
 
+import nl.basjes.codeowners.TestUtils.assertOwners
 import kotlin.test.Test
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -26,9 +27,9 @@ import kotlin.test.assertNotNull
 
 internal class TestCodeOwners {
     private fun runChecks(codeOwners: CodeOwners) {
-        TestUtils.assertOwners(codeOwners, "Foo.txt", "@code", "@multiple", "@owners", "@dev-team")
-        TestUtils.assertOwners(codeOwners, "Foo.rb", "@ruby-owner", "@dev-team")
-        TestUtils.assertOwners(codeOwners, "#file_with_pound.rb", "@owner-file-with-pound", "@dev-team")
+        assertOwners(codeOwners, "Foo.txt", "@code", "@multiple", "@owners", "@dev-team")
+        assertOwners(codeOwners, "Foo.rb", "@ruby-owner", "@dev-team")
+        assertOwners(codeOwners, "#file_with_pound.rb", "@owner-file-with-pound", "@dev-team")
     }
 
     @Test
@@ -42,14 +43,14 @@ internal class TestCodeOwners {
         )
         //        codeOwners.setVerbose(true);
 //        LOG.info("CODEOWNERS:\n{}", codeOwners);
-        TestUtils.assertOwners(codeOwners, "/foo/.foo", "@user1")
-        TestUtils.assertOwners(codeOwners, "/foo/.foo/bar", "@user1")
-        TestUtils.assertOwners(codeOwners, "/foo/foo/.bar") // No users
-        TestUtils.assertOwners(codeOwners, "/foo/xfoo") // No users
-        TestUtils.assertOwners(codeOwners, "/foo/xfoo/bar")
-        TestUtils.assertOwners(codeOwners, "/foo/.foo/bar.xml", "@user2")
-        TestUtils.assertOwners(codeOwners, "/foo/foo") // No users
-        TestUtils.assertOwners(codeOwners, "/foo/foo/bar.xml", "@user2")
+        assertOwners(codeOwners, "/foo/.foo", "@user1")
+        assertOwners(codeOwners, "/foo/.foo/bar", "@user1")
+        assertOwners(codeOwners, "/foo/foo/.bar") // No users
+        assertOwners(codeOwners, "/foo/xfoo") // No users
+        assertOwners(codeOwners, "/foo/xfoo/bar")
+        assertOwners(codeOwners, "/foo/.foo/bar.xml", "@user2")
+        assertOwners(codeOwners, "/foo/foo") // No users
+        assertOwners(codeOwners, "/foo/foo/bar.xml", "@user2")
     }
 
     @Test
@@ -63,12 +64,12 @@ internal class TestCodeOwners {
         )
         codeOwners.verbose = true
         LOG.info("CODEOWNERS:\n{}", codeOwners)
-        TestUtils.assertOwners(codeOwners, "/tool-app/bar.txt", "@user1")
-        TestUtils.assertOwners(codeOwners, "/tool-app/foo/bar.txt", "@user1")
-        TestUtils.assertOwners(codeOwners, "/tool-app/bar.xml", "@user2")
-        TestUtils.assertOwners(codeOwners, "/tool-app/foo/bar.xml", "@user2")
-        TestUtils.assertOwners(codeOwners, "/bar.txt")
-        TestUtils.assertOwners(codeOwners, "/bar.xml", "@user2")
+        assertOwners(codeOwners, "/tool-app/bar.txt", "@user1")
+        assertOwners(codeOwners, "/tool-app/foo/bar.txt", "@user1")
+        assertOwners(codeOwners, "/tool-app/bar.xml", "@user2")
+        assertOwners(codeOwners, "/tool-app/foo/bar.xml", "@user2")
+        assertOwners(codeOwners, "/bar.txt")
+        assertOwners(codeOwners, "/bar.xml", "@user2")
     }
 
     @Test
@@ -85,35 +86,35 @@ internal class TestCodeOwners {
         codeOwners.verbose = true
         LOG.info("CODEOWNERS:\n{}", codeOwners)
         // NO Subdirs
-        TestUtils.assertOwners(codeOwners, "/dir1/bar.txt", "@user1")
-        TestUtils.assertOwners(codeOwners, "/dir1//bar.txt")
-        TestUtils.assertOwners(codeOwners, "/dir1/foo/bar.txt")
-        TestUtils.assertOwners(codeOwners, "/dir1/foo/foo/bar.txt")
-        TestUtils.assertOwners(codeOwners, "/dir1/foo/foo/foo/bar.txt")
+        assertOwners(codeOwners, "/dir1/bar.txt", "@user1")
+        assertOwners(codeOwners, "/dir1//bar.txt")
+        assertOwners(codeOwners, "/dir1/foo/bar.txt")
+        assertOwners(codeOwners, "/dir1/foo/foo/bar.txt")
+        assertOwners(codeOwners, "/dir1/foo/foo/foo/bar.txt")
 
         // Exactly 1 Subdir
-        TestUtils.assertOwners(codeOwners, "/dir2/bar.txt")
-        TestUtils.assertOwners(codeOwners, "/dir2//bar.txt")
-        TestUtils.assertOwners(codeOwners, "/dir2/foo/bar.txt", "@user2")
-        TestUtils.assertOwners(codeOwners, "/dir2/foo/foo/bar.txt")
-        TestUtils.assertOwners(codeOwners, "/dir2/foo/foo/foo/bar.txt")
+        assertOwners(codeOwners, "/dir2/bar.txt")
+        assertOwners(codeOwners, "/dir2//bar.txt")
+        assertOwners(codeOwners, "/dir2/foo/bar.txt", "@user2")
+        assertOwners(codeOwners, "/dir2/foo/foo/bar.txt")
+        assertOwners(codeOwners, "/dir2/foo/foo/foo/bar.txt")
 
         // Exactly 2 Subdirs
-        TestUtils.assertOwners(codeOwners, "/dir3/bar.txt")
-        TestUtils.assertOwners(codeOwners, "/dir3//bar.txt")
-        TestUtils.assertOwners(codeOwners, "/dir3/foo/bar.txt")
-        TestUtils.assertOwners(codeOwners, "/dir3/foo/foo/bar.txt", "@user3")
-        TestUtils.assertOwners(codeOwners, "/dir3///bar.txt")
-        TestUtils.assertOwners(codeOwners, "/dir3/a//bar.txt")
-        TestUtils.assertOwners(codeOwners, "/dir3//b/bar.txt")
-        TestUtils.assertOwners(codeOwners, "/dir3/foo/foo/foo/bar.txt")
+        assertOwners(codeOwners, "/dir3/bar.txt")
+        assertOwners(codeOwners, "/dir3//bar.txt")
+        assertOwners(codeOwners, "/dir3/foo/bar.txt")
+        assertOwners(codeOwners, "/dir3/foo/foo/bar.txt", "@user3")
+        assertOwners(codeOwners, "/dir3///bar.txt")
+        assertOwners(codeOwners, "/dir3/a//bar.txt")
+        assertOwners(codeOwners, "/dir3//b/bar.txt")
+        assertOwners(codeOwners, "/dir3/foo/foo/foo/bar.txt")
 
         // Any Subdirs
-        TestUtils.assertOwners(codeOwners, "/dir4/bar.txt", "@user4")
-        TestUtils.assertOwners(codeOwners, "/dir4//bar.txt", "@user4")
-        TestUtils.assertOwners(codeOwners, "/dir4/foo/bar.txt", "@user4")
-        TestUtils.assertOwners(codeOwners, "/dir4/foo/foo/bar.txt", "@user4")
-        TestUtils.assertOwners(codeOwners, "/dir4/foo/foo/foo/bar.txt", "@user4")
+        assertOwners(codeOwners, "/dir4/bar.txt", "@user4")
+        assertOwners(codeOwners, "/dir4//bar.txt", "@user4")
+        assertOwners(codeOwners, "/dir4/foo/bar.txt", "@user4")
+        assertOwners(codeOwners, "/dir4/foo/foo/bar.txt", "@user4")
+        assertOwners(codeOwners, "/dir4/foo/foo/foo/bar.txt", "@user4")
     }
 
 

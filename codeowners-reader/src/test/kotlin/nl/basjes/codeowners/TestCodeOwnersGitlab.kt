@@ -16,6 +16,7 @@
  */
 package nl.basjes.codeowners
 
+import nl.basjes.codeowners.TestUtils.assertOwners
 import kotlin.test.Test
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -32,9 +33,9 @@ internal class TestCodeOwnersGitlab {
                     "internal\\ stuff/README.md @user2\n"
         )
 
-        TestUtils.assertOwners(codeOwners, "internalstuff/README.md", "@user1")
-        TestUtils.assertOwners(codeOwners, "internal stuff/README.md", "@user2")
-        TestUtils.assertOwners(codeOwners, "internal  stuff/README.md") // No owners
+        assertOwners(codeOwners, "internalstuff/README.md", "@user1")
+        assertOwners(codeOwners, "internal stuff/README.md", "@user2")
+        assertOwners(codeOwners, "internal  stuff/README.md") // No owners
     }
 
     @Test
@@ -54,9 +55,9 @@ internal class TestCodeOwnersGitlab {
 
         codeOwners.verbose = true
         // The Code Owners for the README.md in the root directory are @user1, @user2, and @user3 + @user5 because of the extra rule for all *.md files.
-        TestUtils.assertOwners(codeOwners, "README.md", "@user1", "@user2", "@user3", "@user5")
+        assertOwners(codeOwners, "README.md", "@user1", "@user2", "@user3", "@user5")
         // The Code Owners for internal/README.md are @user4 and @user3 + @user5 because of the extra rule for all *.md files.
-        TestUtils.assertOwners(codeOwners, "internal/README.md", "@user3", "@user4", "@user5")
+        assertOwners(codeOwners, "internal/README.md", "@user3", "@user4", "@user5")
     }
 
     @Test
@@ -67,14 +68,14 @@ internal class TestCodeOwnersGitlab {
         // This will match /README.md, /internal/README.md, /app/lib/README.md
 
         val codeOwnersRoot = CodeOwners("README.md @username")
-        TestUtils.assertOwners(codeOwnersRoot, "/README.md", "@username")
-        TestUtils.assertOwners(codeOwnersRoot, "/internal/README.md", "@username")
-        TestUtils.assertOwners(codeOwnersRoot, "/app/lib/README.md", "@username")
+        assertOwners(codeOwnersRoot, "/README.md",                        "@username")
+        assertOwners(codeOwnersRoot, "/internal/README.md",               "@username")
+        assertOwners(codeOwnersRoot, "/app/lib/README.md",                "@username")
 
         val codeOwnersSubdir = CodeOwners("internal/README.md @username")
-        TestUtils.assertOwners(codeOwnersSubdir, "/internal/README.md", "@username")
-        TestUtils.assertOwners(codeOwnersSubdir, "/docs/internal/README.md", "@username")
-        TestUtils.assertOwners(codeOwnersSubdir, "/docs/api/internal/README.md", "@username")
+        assertOwners(codeOwnersSubdir, "/internal/README.md",             "@username")
+        assertOwners(codeOwnersSubdir, "/docs/internal/README.md",        "@username")
+        assertOwners(codeOwnersSubdir, "/docs/api/internal/README.md",    "@username")
     }
 
     @Test
@@ -96,26 +97,26 @@ internal class TestCodeOwnersGitlab {
                     "/docs/*/README.md @user4"
         )
 
-        TestUtils.assertOwners(codeOwners, "/docs/test.md", "@user1")
+        assertOwners(codeOwners, "/docs/test.md",           "@user1")
 
-        TestUtils.assertOwners(codeOwners, "/docs/index.md", "@user2")
-        TestUtils.assertOwners(codeOwners, "/docs/index.html", "@user2")
-        TestUtils.assertOwners(codeOwners, "/docs/index.xml", "@user2")
+        assertOwners(codeOwners, "/docs/index.md",          "@user2")
+        assertOwners(codeOwners, "/docs/index.html",        "@user2")
+        assertOwners(codeOwners, "/docs/index.xml",         "@user2")
 
-        TestUtils.assertOwners(codeOwners, "/docs/qa_specs.rb", "@user3")
-        TestUtils.assertOwners(codeOwners, "/docs/spec_helpers.rb", "@user3")
-        TestUtils.assertOwners(codeOwners, "/docs/runtime.spec", "@user3")
+        assertOwners(codeOwners, "/docs/qa_specs.rb",       "@user3")
+        assertOwners(codeOwners, "/docs/spec_helpers.rb",   "@user3")
+        assertOwners(codeOwners, "/docs/runtime.spec",      "@user3")
 
-        TestUtils.assertOwners(codeOwners, "/docs/api/README.md", "@user4")
+        assertOwners(codeOwners, "/docs/api/README.md",     "@user4")
     }
 
     @Test
     fun gitlabGlobstarPaths() {
         //This will match /docs/index.md, /docs/api/index.md, /docs/api/graphql/index.md
         val codeOwners = CodeOwners("/docs/**/index.md @username")
-        TestUtils.assertOwners(codeOwners, "/docs/index.md", "@username")
-        TestUtils.assertOwners(codeOwners, "/docs/api/index.md", "@username")
-        TestUtils.assertOwners(codeOwners, "/docs/api/graphql/index.md", "@username")
+        assertOwners(codeOwners, "/docs/index.md",              "@username")
+        assertOwners(codeOwners, "/docs/api/index.md",          "@username")
+        assertOwners(codeOwners, "/docs/api/graphql/index.md",  "@username")
     }
 
     @Test
@@ -130,10 +131,10 @@ internal class TestCodeOwnersGitlab {
                     "config/db/database-setup.md @docs-team"
         )
 
-        TestUtils.assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team")
-        TestUtils.assertOwners(codeOwners, "/something/README.md", "@docs-team")
+        assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team")
+        assertOwners(codeOwners, "/something/README.md", "@docs-team")
 
-        TestUtils.assertOwners(codeOwners, "/model/db/README.md", "@docs-team", "@database-team")
+        assertOwners(codeOwners, "/model/db/README.md", "@docs-team", "@database-team")
     }
 
     @Test
@@ -150,10 +151,10 @@ internal class TestCodeOwnersGitlab {
         )
 
         LOG.info("Merged codeowners:\n{}", codeOwners)
-        TestUtils.assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team2")
-        TestUtils.assertOwners(codeOwners, "/something/README.md", "@docs-team2")
-        TestUtils.assertOwners(codeOwners, "README.md", "@docs-team2")
-        TestUtils.assertOwners(codeOwners, "MatchWildCard.txt", "@default-user1", "@default-user2")
+        assertOwners(codeOwners, "docs/api/graphql/index.md",   "@docs-team2")
+        assertOwners(codeOwners, "/something/README.md",        "@docs-team2")
+        assertOwners(codeOwners, "README.md",                   "@docs-team2")
+        assertOwners(codeOwners, "MatchWildCard.txt",           "@default-user1", "@default-user2")
         assertTrue(codeOwners.hasStructuralProblems)
     }
 
@@ -169,10 +170,10 @@ internal class TestCodeOwnersGitlab {
         )
 
         LOG.info("Merged codeowners:\n{}", codeOwners)
-        TestUtils.assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team1")
-        TestUtils.assertOwners(codeOwners, "/something/README.md", "@docs-team2")
-        TestUtils.assertOwners(codeOwners, "README.md", "@docs-team2")
-        TestUtils.assertOwners(codeOwners, "MatchWildCard.txt", "@default-user1", "@default-user2")
+        assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team1")
+        assertOwners(codeOwners, "/something/README.md", "@docs-team2")
+        assertOwners(codeOwners, "README.md", "@docs-team2")
+        assertOwners(codeOwners, "MatchWildCard.txt", "@default-user1", "@default-user2")
         assertFalse(codeOwners.hasStructuralProblems)
     }
 
@@ -190,10 +191,10 @@ internal class TestCodeOwnersGitlab {
         )
 
         LOG.info("Merged codeowners:\n------------------\n{}\n------------------", codeOwners)
-        TestUtils.assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team1")
-        TestUtils.assertOwners(codeOwners, "/something/README.md", "@docs-team2")
-        TestUtils.assertOwners(codeOwners, "README.md", "@docs-team2")
-        TestUtils.assertOwners(codeOwners, "MatchWildCard.txt", "@default-user1", "@default-user2")
+        assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team1")
+        assertOwners(codeOwners, "/something/README.md", "@docs-team2")
+        assertOwners(codeOwners, "README.md", "@docs-team2")
+        assertOwners(codeOwners, "MatchWildCard.txt", "@default-user1", "@default-user2")
         assertTrue(codeOwners.hasStructuralProblems)
 
         assertEquals(
@@ -210,12 +211,12 @@ internal class TestCodeOwnersGitlab {
     @Test
     fun gitlabCodeOwnersExample() {
         val codeOwners = CodeOwners(GITLAB_CODEOWNERS_DOC_EXAMPLE)
-        TestUtils.assertOwners(codeOwners, "Foo.txt", "@code", "@multiple", "@owners", "@dev-team")
-        TestUtils.assertOwners(codeOwners, "Foo.rb", "@ruby-owner", "@dev-team")
-        TestUtils.assertOwners(codeOwners, "#file_with_pound.rb", "@owner-file-with-pound", "@dev-team")
+        assertOwners(codeOwners, "Foo.txt", "@code", "@multiple", "@owners", "@dev-team")
+        assertOwners(codeOwners, "Foo.rb", "@ruby-owner", "@dev-team")
+        assertOwners(codeOwners, "#file_with_pound.rb", "@owner-file-with-pound", "@dev-team")
 
-        TestUtils.assertOwners(codeOwners, "README.md", "@docs", "@docs-team", "@code", "@multiple", "@owners")
-        TestUtils.assertOwners(codeOwners, "docs/README.md", "@docs", "@docs-team", "@root-docs")
+        assertOwners(codeOwners, "README.md", "@docs", "@docs-team", "@code", "@multiple", "@owners")
+        assertOwners(codeOwners, "docs/README.md", "@docs", "@docs-team", "@root-docs")
     }
 
     @Test
@@ -226,7 +227,7 @@ internal class TestCodeOwnersGitlab {
         )
         val codeOwnersString = codeOwners.toString()
         LOG.info("\n{}", codeOwnersString)
-        TestUtils.assertOwners(codeOwners, "README.md", "@docs-team")
+        assertOwners(codeOwners, "README.md", "@docs-team")
     }
 
     @Test
@@ -252,14 +253,14 @@ internal class TestCodeOwnersGitlab {
         )
 
         codeOwners.verbose = false
-        TestUtils.assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team")
+        assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team")
         TestUtils.assertMandatoryOwners(codeOwners, "docs/api/graphql/index.md")
 
         codeOwners.verbose = true
-        TestUtils.assertOwners(codeOwners, "/something/README.md", "@docs-team")
+        assertOwners(codeOwners, "/something/README.md", "@docs-team")
         TestUtils.assertMandatoryOwners(codeOwners, "/something/README.md")
 
-        TestUtils.assertOwners(codeOwners, "/model/db/README.md", "@docs-team", "@database-team")
+        assertOwners(codeOwners, "/model/db/README.md", "@docs-team", "@database-team")
 
         codeOwners.verbose = false
         assertEquals(
@@ -296,7 +297,7 @@ internal class TestCodeOwnersGitlab {
         )
 
         codeOwners.verbose = false
-        TestUtils.assertOwners(
+        assertOwners(
             codeOwners,
             "docs/api/graphql/index.md",
             "@docs-team",
@@ -306,7 +307,7 @@ internal class TestCodeOwnersGitlab {
         TestUtils.assertMandatoryOwners(codeOwners, "docs/api/graphql/index.md")
 
         codeOwners.verbose = true
-        TestUtils.assertOwners(
+        assertOwners(
             codeOwners,
             "/something/README.md",
             "@docs-team",
@@ -315,7 +316,7 @@ internal class TestCodeOwnersGitlab {
         )
         TestUtils.assertMandatoryOwners(codeOwners, "/something/README.md")
 
-        TestUtils.assertOwners(
+        assertOwners(
             codeOwners,
             "/model/db/README.md",
             "@docs-team",
@@ -333,7 +334,7 @@ internal class TestCodeOwnersGitlab {
             "user_1_foo@example.nl"
         )
 
-        TestUtils.assertOwners(
+        assertOwners(
             codeOwners,
             "/config/db/database-setup.md",
             "@docs-team",
@@ -385,11 +386,11 @@ internal class TestCodeOwnersGitlab {
         )
 
         codeOwners.verbose = true
-        TestUtils.assertOwners(codeOwners, "README.md", "@username")
-        TestUtils.assertOwners(codeOwners, "pom.xml")
-        TestUtils.assertOwners(codeOwners, "something.rb", "@username", "@ruby-team")
-        TestUtils.assertOwners(codeOwners, "/somedir/something.rb", "@username", "@ruby-team")
-        TestUtils.assertOwners(codeOwners, "/config/something.rb", "@username")
+        assertOwners(codeOwners, "README.md", "@username")
+        assertOwners(codeOwners, "pom.xml")
+        assertOwners(codeOwners, "something.rb", "@username", "@ruby-team")
+        assertOwners(codeOwners, "/somedir/something.rb", "@username", "@ruby-team")
+        assertOwners(codeOwners, "/config/something.rb", "@username")
 
         // Test the toString also
         codeOwners.verbose = false
@@ -411,9 +412,9 @@ internal class TestCodeOwnersGitlab {
         )
 
         codeOwners.verbose = true
-        TestUtils.assertOwners(codeOwners, "README.md", "@default-owner")
-        TestUtils.assertOwners(codeOwners, "something.rb")
-        TestUtils.assertOwners(codeOwners, "/special/something.rb") // << NOT @ruby-owner
+        assertOwners(codeOwners, "README.md", "@default-owner")
+        assertOwners(codeOwners, "something.rb")
+        assertOwners(codeOwners, "/special/something.rb") // << NOT @ruby-owner
     }
 
     @Test
@@ -426,10 +427,10 @@ internal class TestCodeOwnersGitlab {
         )
 
         codeOwners.verbose = true
-        TestUtils.assertOwners(codeOwners, "something.rb", "@ruby-team")
-        TestUtils.assertOwners(codeOwners, "/config/something.rb")
-        TestUtils.assertOwners(codeOwners, "/config/subdir/something.rb")
-        TestUtils.assertOwners(codeOwners, "/config/routes.rb") // << NOT @ops
+        assertOwners(codeOwners, "something.rb", "@ruby-team")
+        assertOwners(codeOwners, "/config/something.rb")
+        assertOwners(codeOwners, "/config/subdir/something.rb")
+        assertOwners(codeOwners, "/config/routes.rb") // << NOT @ops
     }
 
     @Test
@@ -444,9 +445,9 @@ internal class TestCodeOwnersGitlab {
         )
 
         codeOwners.verbose = true
-        TestUtils.assertOwners(codeOwners, "something.rb", "@ruby-team")
-        TestUtils.assertOwners(codeOwners, "/config/something.rb", "@ops-team")
-        TestUtils.assertOwners(codeOwners, "/config/something.conf", "@ops-team")
+        assertOwners(codeOwners, "something.rb", "@ruby-team")
+        assertOwners(codeOwners, "/config/something.rb", "@ops-team")
+        assertOwners(codeOwners, "/config/something.conf", "@ops-team")
     }
 
     @Test
@@ -465,18 +466,18 @@ internal class TestCodeOwnersGitlab {
         )
 
         codeOwners.verbose = true
-        TestUtils.assertOwners(codeOwners, "README.md", "@quality") // Not for *.md
-        TestUtils.assertOwners(codeOwners, "docs/README.md", "@quality") // Not for *.md
-        TestUtils.assertOwners(codeOwners, "subdir/README.md", "@quality") // Not for *.md
-        TestUtils.assertOwners(codeOwners, "Something.rb", "@quality", "@changemanagement")
-        TestUtils.assertOwners(codeOwners, "docs/Something.rb", "@quality") // Not in /docs/
-        TestUtils.assertOwners(codeOwners, "subdir/Something.rb", "@quality", "@changemanagement")
-        TestUtils.assertOwners(codeOwners, "Foo.gitignore", "@quality", "@changemanagement")
-        TestUtils.assertOwners(codeOwners, ".gitignore", "@quality") // Not .gitignore
-        TestUtils.assertOwners(codeOwners, "docs/Foo.gitignore", "@quality") // Not in /docs/
-        TestUtils.assertOwners(codeOwners, "docs/.gitignore", "@quality") // Not in /docs/ AND Not .gitignore
-        TestUtils.assertOwners(codeOwners, "subdir/Foo.gitignore", "@quality", "@changemanagement")
-        TestUtils.assertOwners(codeOwners, "subdir/.gitignore", "@quality") // Not .gitignore
+        assertOwners(codeOwners, "README.md", "@quality") // Not for *.md
+        assertOwners(codeOwners, "docs/README.md", "@quality") // Not for *.md
+        assertOwners(codeOwners, "subdir/README.md", "@quality") // Not for *.md
+        assertOwners(codeOwners, "Something.rb", "@quality", "@changemanagement")
+        assertOwners(codeOwners, "docs/Something.rb", "@quality") // Not in /docs/
+        assertOwners(codeOwners, "subdir/Something.rb", "@quality", "@changemanagement")
+        assertOwners(codeOwners, "Foo.gitignore", "@quality", "@changemanagement")
+        assertOwners(codeOwners, ".gitignore", "@quality") // Not .gitignore
+        assertOwners(codeOwners, "docs/Foo.gitignore", "@quality") // Not in /docs/
+        assertOwners(codeOwners, "docs/.gitignore", "@quality") // Not in /docs/ AND Not .gitignore
+        assertOwners(codeOwners, "subdir/Foo.gitignore", "@quality", "@changemanagement")
+        assertOwners(codeOwners, "subdir/.gitignore", "@quality") // Not .gitignore
     }
 
 
@@ -488,12 +489,12 @@ internal class TestCodeOwnersGitlab {
                     ".gitignore @two\n"
         )
         codeOwners.verbose = true
-        TestUtils.assertOwners(codeOwners, ".gitignore", "@two") // Last match in a section is used
-        TestUtils.assertOwners(codeOwners, "foo.gitignore", "@one")
-        TestUtils.assertOwners(codeOwners, "/.gitignore", "@two") // Last match in a section is used
-        TestUtils.assertOwners(codeOwners, "/foo.gitignore", "@one")
-        TestUtils.assertOwners(codeOwners, "/subdir/.gitignore", "@two")
-        TestUtils.assertOwners(codeOwners, "/subdir/foo.gitignore", "@one")
+        assertOwners(codeOwners, ".gitignore", "@two") // Last match in a section is used
+        assertOwners(codeOwners, "foo.gitignore", "@one")
+        assertOwners(codeOwners, "/.gitignore", "@two") // Last match in a section is used
+        assertOwners(codeOwners, "/foo.gitignore", "@one")
+        assertOwners(codeOwners, "/subdir/.gitignore", "@two")
+        assertOwners(codeOwners, "/subdir/foo.gitignore", "@one")
     }
 
     companion object {
