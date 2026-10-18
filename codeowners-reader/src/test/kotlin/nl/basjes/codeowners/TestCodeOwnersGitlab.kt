@@ -28,9 +28,10 @@ internal class TestCodeOwnersGitlab {
     @Test
     fun gitlabPathsWithSpaces() {
         // Paths containing whitespace must be escaped with backslashes: path\ with\ spaces/*.md.
-        val codeOwners = CodeOwners(
-            "internalstuff/README.md @user1\n" +
-                    "internal\\ stuff/README.md @user2\n"
+        val codeOwners = CodeOwners("""
+            internalstuff/README.md @user1
+            internal\ stuff/README.md @user2
+            """.trimIndent()
         )
 
         assertOwners(codeOwners, "internalstuff/README.md", "@user1")
@@ -40,17 +41,18 @@ internal class TestCodeOwnersGitlab {
 
     @Test
     fun gitlabSections() {
-        val codeOwners = CodeOwners(
-            "[README Owners]\n" +
-                    "README.md @user1 @user2\n" +
-                    "internal/README.md @user4\n" +
-                    "\n" +
-                    "[README other owners]\n" +
-                    "README.md @user3 \n" +
-                    "\n" +
-                    "[README default] @user5\n" +
-                    "*.md\n" +
-                    "SomethingElse.md @user3"
+        val codeOwners = CodeOwners("""
+            [README Owners]
+            README.md @user1 @user2
+            internal/README.md @user4
+
+            [README other owners]
+            README.md @user3
+
+            [README default] @user5
+            *.md
+            SomethingElse.md @user3
+            """.trimIndent()
         )
 
         codeOwners.verbose = true
@@ -80,21 +82,22 @@ internal class TestCodeOwnersGitlab {
 
     @Test
     fun gitlabWildcardPaths() {
-        val codeOwners = CodeOwners(
-            "# Any markdown files in the docs directory\n" +
-                    "/docs/*.md @user1\n" +
-                    "\n" +
-                    "# /docs/index file of any filetype\n" +
-                    "# For example: /docs/index.md, /docs/index.html, /docs/index.xml\n" +
-                    "/docs/index.* @user2\n" +
-                    "\n" +
-                    "# Any file in the docs directory with 'spec' in the name.\n" +
-                    "# For example: /docs/qa_specs.rb, /docs/spec_helpers.rb, /docs/runtime.spec\n" +
-                    "/docs/*spec* @user3\n" +
-                    "\n" +
-                    "# README.md files one level deep within the docs directory\n" +
-                    "# For example: /docs/api/README.md\n" +
-                    "/docs/*/README.md @user4"
+        val codeOwners = CodeOwners("""
+            # Any markdown files in the docs directory
+            /docs/*.md @user1
+
+            # /docs/index file of any filetype
+            # For example: /docs/index.md, /docs/index.html, /docs/index.xml
+            /docs/index.* @user2
+
+            # Any file in the docs directory with 'spec' in the name.
+            # For example: /docs/qa_specs.rb, /docs/spec_helpers.rb, /docs/runtime.spec
+            /docs/*spec* @user3
+
+            # README.md files one level deep within the docs directory
+            # For example: /docs/api/README.md
+            /docs/*/README.md @user4
+            """.trimIndent()
         )
 
         assertOwners(codeOwners, "/docs/test.md",           "@user1")
@@ -121,14 +124,15 @@ internal class TestCodeOwnersGitlab {
 
     @Test
     fun gitlabSectionsDefaults() {
-        val codeOwners = CodeOwners(
-            "[Documentation] @docs-team\n" +
-                    "docs/\n" +
-                    "README.md\n" +
-                    "\n" +
-                    "[Database] @database-team\n" +
-                    "model/db/\n" +
-                    "config/db/database-setup.md @docs-team"
+        val codeOwners = CodeOwners("""
+            [Documentation] @docs-team
+            docs/
+            README.md
+
+            [Database] @database-team
+            model/db/
+            config/db/database-setup.md @docs-team
+            """.trimIndent()
         )
 
         assertOwners(codeOwners, "docs/api/graphql/index.md", "@docs-team")
@@ -139,15 +143,17 @@ internal class TestCodeOwnersGitlab {
 
     @Test
     fun gitlabMergeSectionsProblems() {
-        val codeOwners = CodeOwners(
-            "[  Documentation  ] @default-user1\n" +
-                    "*\n" +
-                    "docs/ @docs-team1\n" +
-                    "README.md @docs-team1\n" +
-                    "\n" +
-                    "[DoCuMeNtAtIoN] @default-user2\n" +  // According to Gitlab this should merge with the previous section.
-                    "docs/ @docs-team2\n" +
-                    "README.md @docs-team2\n"
+        // According to Gitlab the second section should merge with the previous section.
+        val codeOwners = CodeOwners("""
+            [  Documentation  ] @default-user1
+            *
+            docs/ @docs-team1
+            README.md @docs-team1
+
+            [DoCuMeNtAtIoN] @default-user2
+            docs/ @docs-team2
+            README.md @docs-team2
+            """.trimIndent()
         )
 
         LOG.info("Merged codeowners:\n{}", codeOwners)
@@ -160,13 +166,15 @@ internal class TestCodeOwnersGitlab {
 
     @Test
     fun gitlabMergeSectionsNoProblems() {
-        val codeOwners = CodeOwners(
-            "[Documentation] @default-user1\n" +
-                    "*\n" +
-                    "docs/ @docs-team1\n" +
-                    "\n" +
-                    "[DoCuMeNtAtIoN] @default-user2\n" +  // According to Gitlab this should merge with the previous section.
-                    "README.md @docs-team2\n"
+        // According to Gitlab the second section should merge with the previous section.
+        val codeOwners = CodeOwners("""
+            [Documentation] @default-user1
+            *
+            docs/ @docs-team1
+
+            [DoCuMeNtAtIoN] @default-user2
+            README.md @docs-team2
+            """.trimIndent()
         )
 
         LOG.info("Merged codeowners:\n{}", codeOwners)

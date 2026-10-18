@@ -70,7 +70,7 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
         projectId = configuration.projectId
 
         try {
-            gitLabApi.getProjectApi().getProject(projectId.value)
+            gitLabApi.projectApi.getProject(projectId.value)
         } catch (e: GitLabApiException) {
             throw CodeOwnersValidationException("Unable to load projectId from Gitlab: $configuration", e)
         }
@@ -103,7 +103,7 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
     val allProjectMembers: List<Member>
         get() {
             try {
-                return gitLabApi.getProjectApi().getAllMembers(projectId.value)
+                return gitLabApi.projectApi.getAllMembers(projectId.value)
             } catch (e: GitLabApiException) {
                 throw CodeOwnersValidationException("Error while retrieving all project members.", e)
             }
@@ -113,7 +113,7 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
     val directProjectMembers: List<Member>
         get() {
             try {
-                return gitLabApi.getProjectApi().getMembers(projectId.value)
+                return gitLabApi.projectApi.getMembers(projectId.value)
             } catch (e: GitLabApiException) {
                 throw CodeOwnersValidationException("Error while retrieving direct project members.", e)
             }
@@ -125,7 +125,7 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
             try {
                 // Get the direct shared groups of this project that have the right name.
                 val project =
-                    gitLabApi.getProjectApi().getProject(projectId.value)
+                    gitLabApi.projectApi.getProject(projectId.value)
                 return project.sharedWithGroups
             } catch (e: GitLabApiException) {
                 throw CodeOwnersValidationException("Error while retrieving project shared groups.", e)
@@ -135,7 +135,7 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
     @Throws(GitLabApiException::class)
     fun getGroup(groupId: String?): Group? {
         // Get the direct shared groups of this project that have the right name.
-        return gitLabApi.getGroupApi().getGroup(groupId)
+        return gitLabApi.groupApi.getGroup(groupId)
     }
 
     private fun report(
@@ -322,7 +322,7 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
 
                     if (EMAIL_ADDRESS.matches(approver)) {
                         try {
-                            val userByEmail = gitLabApi.getUserApi().getUserByEmail(approver)
+                            val userByEmail = gitLabApi.userApi.getUserByEmail(approver)
                             if (userByEmail == null) {
                                 // Unable to find the user by email.
                                 // This is VERY common to happen because Gitlab does not allow a normal user
@@ -415,7 +415,7 @@ class GitlabProjectMembers(configuration: GitlabConfiguration) : AutoCloseable {
                     var user = userCache[approver]
                     if (user == null && !userCache.containsKey(approver)) {
                         try {
-                            user = gitLabApi.getUserApi().getUser(approver)
+                            user = gitLabApi.userApi.getUser(approver)
                         } catch (_: GitLabApiException) {
                             // If error then group == null
                         }
